@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"pnpm --filter admin-console build\"}",
+  "error": "Exit code 1\n\n> admin-console@0.0.0 build /home/ubuntu/workspace/search-agentcore-gateway/.claude/worktrees/design-spec-update/packages/admin-console\n> next build\n\n  \u001b[1m\u001b[38;2;173;127;168m▲ Next.js 14.2.0\u001b[39m\u001b[22m\n\n \u001b[37m\u001b[1m \u001b[22m\u001b[39m Creating an optimized production build ...\n\n> Build error occurred\nError: error TS5083: Cannot read file '/home/ubuntu/workspace/search-agentcore-gateway/.claude/worktrees/design-spec-update/tsconfig.json'.\n\n    at getTypeScriptConfiguration (/home/ubuntu/worksp...",
+  "timestamp": "2026-05-23T23:34:09.388Z",
+  "retry_count": 1
+}

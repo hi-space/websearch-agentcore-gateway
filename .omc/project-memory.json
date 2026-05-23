@@ -58,6 +58,12 @@
       "type": "file"
     },
     {
+      "path": "packages/search-router/src/handler.ts",
+      "accessCount": 13,
+      "lastAccessed": 1779578991969,
+      "type": "file"
+    },
+    {
       "path": "packages/adapters/src/index.ts",
       "accessCount": 12,
       "lastAccessed": 1779537506939,
@@ -67,12 +73,6 @@
       "path": "packages/shared/src/index.ts",
       "accessCount": 11,
       "lastAccessed": 1779535996715,
-      "type": "file"
-    },
-    {
-      "path": "packages/search-router/src/handler.ts",
-      "accessCount": 11,
-      "lastAccessed": 1779541884643,
       "type": "file"
     },
     {
@@ -118,6 +118,12 @@
       "type": "file"
     },
     {
+      "path": "tsconfig.base.json",
+      "accessCount": 8,
+      "lastAccessed": 1779579255989,
+      "type": "file"
+    },
+    {
       "path": "packages/shared/package.json",
       "accessCount": 7,
       "lastAccessed": 1779537200247,
@@ -130,15 +136,15 @@
       "type": "file"
     },
     {
-      "path": "tsconfig.base.json",
-      "accessCount": 7,
-      "lastAccessed": 1779538902935,
-      "type": "file"
-    },
-    {
       "path": "infra/lib/security/kms.ts",
       "accessCount": 7,
       "lastAccessed": 1779541884694,
+      "type": "file"
+    },
+    {
+      "path": "packages/search-router/src/__tests__/handler.test.ts",
+      "accessCount": 7,
+      "lastAccessed": 1779579023347,
       "type": "file"
     },
     {
@@ -178,27 +184,21 @@
       "type": "file"
     },
     {
+      "path": "pnpm-workspace.yaml",
+      "accessCount": 6,
+      "lastAccessed": 1779579227436,
+      "type": "file"
+    },
+    {
       "path": "packages/adapters/tsconfig.json",
       "accessCount": 5,
       "lastAccessed": 1779537202571,
       "type": "file"
     },
     {
-      "path": "pnpm-workspace.yaml",
-      "accessCount": 5,
-      "lastAccessed": 1779537825327,
-      "type": "file"
-    },
-    {
       "path": "infra/lib/nag-suppressions.ts",
       "accessCount": 5,
       "lastAccessed": 1779541910810,
-      "type": "file"
-    },
-    {
-      "path": "packages/search-router/src/__tests__/handler.test.ts",
-      "accessCount": 5,
-      "lastAccessed": 1779541926716,
       "type": "file"
     },
     {
@@ -304,9 +304,15 @@
       "type": "file"
     },
     {
+      "path": "docs/superpowers/plans/2026-05-23-admin-bff.md",
+      "accessCount": 3,
+      "lastAccessed": 1779579217985,
+      "type": "file"
+    },
+    {
       "path": "packages/search-router/package.json",
-      "accessCount": 2,
-      "lastAccessed": 1779537277397,
+      "accessCount": 3,
+      "lastAccessed": 1779579227454,
       "type": "file"
     },
     {
@@ -317,8 +323,14 @@
     },
     {
       "path": "packages/search-router/tsconfig.json",
+      "accessCount": 2,
+      "lastAccessed": 1779579227468,
+      "type": "file"
+    },
+    {
+      "path": "packages/admin-console/package.json",
       "accessCount": 1,
-      "lastAccessed": 1779537211850,
+      "lastAccessed": 1779579234849,
       "type": "file"
     }
   ],

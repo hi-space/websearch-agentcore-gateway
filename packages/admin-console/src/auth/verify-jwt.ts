@@ -22,6 +22,10 @@ export function makeVerifier(cfg: VerifierConfig, factory: VerifierFactory = def
     const payload = await v.verify(token);
     const groups = payload['cognito:groups'] ?? [];
     const role: AuthCtx['role'] = groups.includes('admin') ? 'admin' : groups.includes('editor') ? 'editor' : 'viewer';
-    return { sub: payload.sub, email: payload.email, role };
+    const result: AuthCtx = { sub: payload.sub, role };
+    if (payload.email) {
+      result.email = payload.email;
+    }
+    return result;
   };
 }

@@ -5,6 +5,10 @@
     "outDir": "./.next",
     "allowJs": true,
     "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
     "plugins": [
       {
         "name": "next"

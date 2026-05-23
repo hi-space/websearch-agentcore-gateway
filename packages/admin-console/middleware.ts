@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { makeVerifier } from './src/auth/verify-jwt.js';
-import { extractToken } from './src/auth/middleware-helpers.js';
+import { makeVerifier } from '@/src/auth/verify-jwt';
+import { extractToken } from '@/src/auth/middleware-helpers';
 
 const verify = makeVerifier({
   userPoolId: process.env.COGNITO_USER_POOL_ID!,
