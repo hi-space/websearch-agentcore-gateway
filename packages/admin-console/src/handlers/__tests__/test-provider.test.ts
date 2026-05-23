@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { testProvider } from '../test-provider.js';
+import { testProvider } from '../test-provider';
 
 describe('testProvider', () => {
   it('invokes the search-router Lambda with a probe query', async () => {

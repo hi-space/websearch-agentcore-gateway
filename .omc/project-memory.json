@@ -9,7 +9,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "pnpm tsc --noEmit 2>&1 | head -50",
+    "buildCommand": "cd packages/admin-console && rm -rf .next && pnpm build 2>&1 | tail -40",
     "testCommand": "pnpm test 2>&1 | grep -E \"passed|failed|Test Files\"",
     "lintCommand": null,
     "devCommand": null,
@@ -47,8 +47,8 @@
     },
     {
       "path": "infra/lib/network/vpc.ts",
-      "accessCount": 20,
-      "lastAccessed": 1779541926665,
+      "accessCount": 21,
+      "lastAccessed": 1779580149118,
       "type": "file"
     },
     {
@@ -124,6 +124,12 @@
       "type": "file"
     },
     {
+      "path": "infra/lib/security/kms.ts",
+      "accessCount": 8,
+      "lastAccessed": 1779580134683,
+      "type": "file"
+    },
+    {
       "path": "packages/shared/package.json",
       "accessCount": 7,
       "lastAccessed": 1779537200247,
@@ -136,12 +142,6 @@
       "type": "file"
     },
     {
-      "path": "infra/lib/security/kms.ts",
-      "accessCount": 7,
-      "lastAccessed": 1779541884694,
-      "type": "file"
-    },
-    {
       "path": "packages/search-router/src/__tests__/handler.test.ts",
       "accessCount": 7,
       "lastAccessed": 1779579023347,
@@ -149,8 +149,14 @@
     },
     {
       "path": "infra/bin/app.ts",
-      "accessCount": 6,
-      "lastAccessed": 1779539327392,
+      "accessCount": 7,
+      "lastAccessed": 1779580138204,
+      "type": "file"
+    },
+    {
+      "path": "packages/admin-console/package.json",
+      "accessCount": 7,
+      "lastAccessed": 1779580174349,
       "type": "file"
     },
     {
@@ -325,12 +331,6 @@
       "path": "packages/search-router/tsconfig.json",
       "accessCount": 2,
       "lastAccessed": 1779579227468,
-      "type": "file"
-    },
-    {
-      "path": "packages/admin-console/package.json",
-      "accessCount": 1,
-      "lastAccessed": 1779579234849,
       "type": "file"
     }
   ],

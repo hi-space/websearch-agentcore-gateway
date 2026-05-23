@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { getMetrics } from '../get-metrics.js';
+import { getMetrics } from '../get-metrics';
 
 describe('getMetrics', () => {
   it('returns p95 latency + error rate per provider', async () => {

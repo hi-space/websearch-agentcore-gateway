@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { writeAudit } from '../log.js';
+import { writeAudit } from '../log';
 
 describe('writeAudit', () => {
   it('writes an audit row to AuditLogTable', async () => {

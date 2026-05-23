@@ -1,6 +1,8 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse, type NextRequest } from 'next/server';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { updateProvider } from '../../../../src/handlers/update-provider.js';
+import { updateProvider } from '../../../../src/handlers/update-provider';
 
 const ddb = new DynamoDBClient({});
 

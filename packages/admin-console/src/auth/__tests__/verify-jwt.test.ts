@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { makeVerifier } from '../verify-jwt.js';
+import { makeVerifier } from '../verify-jwt';
 
 const stubJwt = {
   verify: vi.fn().mockResolvedValue({

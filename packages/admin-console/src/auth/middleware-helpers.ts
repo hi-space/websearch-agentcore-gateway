@@ -1,4 +1,4 @@
-import type { AuthCtx } from './verify-jwt.js';
+import type { AuthCtx } from './verify-jwt';
 
 export function extractToken(authHeader: string | null): string | null {
   if (!authHeader) return null;

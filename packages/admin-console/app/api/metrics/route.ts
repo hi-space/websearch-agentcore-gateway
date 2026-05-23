@@ -1,6 +1,8 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { CloudWatchClient } from '@aws-sdk/client-cloudwatch';
-import { getMetrics } from '../../../src/handlers/get-metrics.js';
+import { getMetrics } from '../../../src/handlers/get-metrics';
 
 const cw = new CloudWatchClient({});
 

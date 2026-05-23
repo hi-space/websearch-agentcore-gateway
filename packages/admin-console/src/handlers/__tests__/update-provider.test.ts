@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { updateProvider } from '../update-provider.js';
+import { updateProvider } from '../update-provider';
 
 describe('updateProvider', () => {
   it('updates enabled+quota and writes audit', async () => {

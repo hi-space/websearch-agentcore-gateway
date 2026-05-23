@@ -1,7 +1,7 @@
 import { GetItemCommand, type DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { marshall } from '@aws-sdk/util-dynamodb';
 import { GetSecretValueCommand, type SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
-import { writeAudit } from '../audit/log.js';
+import { writeAudit } from '../audit/log';
 
 export async function revealSecret(
   ddb: DynamoDBClient,

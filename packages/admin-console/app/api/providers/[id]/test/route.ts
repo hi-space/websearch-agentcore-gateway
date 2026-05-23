@@ -1,6 +1,8 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse, type NextRequest } from 'next/server';
 import { LambdaClient } from '@aws-sdk/client-lambda';
-import { testProvider } from '../../../../../src/handlers/test-provider.js';
+import { testProvider } from '../../../../../src/handlers/test-provider';
 
 const lambda = new LambdaClient({});
 

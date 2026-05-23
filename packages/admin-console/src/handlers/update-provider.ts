@@ -5,7 +5,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { z } from 'zod';
-import { writeAudit } from '../audit/log.js';
+import { writeAudit } from '../audit/log';
 
 export const UpdateBody = z.object({
   enabled: z.boolean(),

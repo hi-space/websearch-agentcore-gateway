@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { listProviders } from '../list-providers.js';
+import { listProviders } from '../list-providers';
 
 describe('listProviders', () => {
   it('returns rows redacted (no secret value)', async () => {

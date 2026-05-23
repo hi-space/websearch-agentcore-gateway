@@ -1,7 +1,9 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse, type NextRequest } from 'next/server';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
-import { revealSecret } from '../../../../../../src/handlers/reveal-secret.js';
+import { revealSecret } from '../../../../../../src/handlers/reveal-secret';
 
 const ddb = new DynamoDBClient({});
 const sm = new SecretsManagerClient({});

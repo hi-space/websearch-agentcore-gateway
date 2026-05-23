@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { extractToken, requireRole } from '../middleware-helpers.js';
+import { extractToken, requireRole } from '../middleware-helpers';
 
 describe('extractToken', () => {
   it('reads "Authorization: Bearer ..."', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { putSecret } from '../put-secret.js';
+import { putSecret } from '../put-secret';
 
 describe('putSecret', () => {
   it('stores via PutSecretValue and writes audit (no value in audit)', async () => {

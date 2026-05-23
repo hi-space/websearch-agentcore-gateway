@@ -1,8 +1,10 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse, type NextRequest } from 'next/server';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
 import { z } from 'zod';
-import { putSecret } from '../../../../../src/handlers/put-secret.js';
+import { putSecret } from '../../../../../src/handlers/put-secret';
 
 const ddb = new DynamoDBClient({});
 const sm = new SecretsManagerClient({});

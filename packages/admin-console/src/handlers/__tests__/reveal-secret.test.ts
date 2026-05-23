@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { revealSecret } from '../reveal-secret.js';
+import { revealSecret } from '../reveal-secret';
 
 describe('revealSecret', () => {
   it('returns secret value once and writes audit (without value)', async () => {
