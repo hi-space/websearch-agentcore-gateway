@@ -8,6 +8,7 @@ import { ConfigTableConstruct } from './data/config-table.js';
 import { QuotaTableConstruct } from './data/quota-table.js';
 import { SearchRouterFn } from './compute/search-router-fn.js';
 import { AgentCoreGateway } from './gateway/agentcore-gateway.js';
+import { AlarmsConstruct } from './observability/alarms.js';
 
 export class SearchGatewayStack extends Stack {
   readonly searchRouter: SearchRouterFn;
@@ -38,5 +39,6 @@ export class SearchGatewayStack extends Stack {
       }]
     });
     new CfnOutput(this, 'GatewayId', { value: gateway.gatewayId });
+    new AlarmsConstruct(this, 'Alarms');
   }
 }
