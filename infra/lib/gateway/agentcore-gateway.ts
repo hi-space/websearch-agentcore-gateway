@@ -82,8 +82,13 @@ export class AgentCoreGateway extends Construct {
       policy: AwsCustomResourcePolicy.fromStatements([
         new PolicyStatement({
           effect: Effect.ALLOW,
-          actions: ['bedrock-agentcore:CreateTarget', 'bedrock-agentcore:DeleteTarget', 'iam:PassRole'],
+          actions: ['bedrock-agentcore:CreateTarget', 'bedrock-agentcore:DeleteTarget'],
           resources: ['*']
+        }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['iam:PassRole'],
+          resources: [invokeRole.roleArn]
         })
       ]),
       timeout: Duration.minutes(5)
