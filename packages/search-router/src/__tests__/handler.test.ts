@@ -63,4 +63,50 @@ describe('search-router handler', () => {
     const out = await handler(makeEvent('search_nonexistent', { query: 'q' }));
     expect(out.error).toMatchObject({ code: 'INVALID_ARGUMENT' });
   });
+
+  it('fetches and passes secret when adapter requires API key', async () => {
+    const keyAdapter = {
+      name: 'tavily',
+      category: 'web' as const,
+      requiresApiKey: true,
+      search: vi.fn().mockResolvedValue([{
+        url: 'https://x', title: 't', snippet: 's', source: 'tavily'
+      }])
+    };
+    const fakeSecrets = { get: vi.fn().mockResolvedValue('secret123') };
+    fakeQuota.consume.mockResolvedValue(undefined);
+
+    const handler = createHandler({
+      adapters: { tavily: keyAdapter },
+      quota: fakeQuota,
+      limits: { tavily: { rpm: 10, daily: 100 } },
+      secrets: fakeSecrets,
+      secretArns: { tavily: 'arn:aws:secretsmanager:us-east-1:1:secret:tavily' }
+    });
+
+    const out = await handler(makeEvent('search_tavily', { query: 'test' }));
+    expect(fakeSecrets.get).toHaveBeenCalledWith('arn:aws:secretsmanager:us-east-1:1:secret:tavily');
+    expect(keyAdapter.search).toHaveBeenCalledWith('test', undefined, 'secret123');
+    expect(out.results).toHaveLength(1);
+  });
+
+  it('returns INTERNAL error when secret cache or ARN is missing for an API-key adapter', async () => {
+    const keyAdapter = {
+      name: 'tavily',
+      category: 'web' as const,
+      requiresApiKey: true,
+      search: vi.fn()
+    };
+    fakeQuota.consume.mockResolvedValue(undefined);
+
+    const handler = createHandler({
+      adapters: { tavily: keyAdapter },
+      quota: fakeQuota,
+      limits: { tavily: { rpm: 10, daily: 100 } }
+    });
+
+    const out = await handler(makeEvent('search_tavily', { query: 'test' }));
+    expect(out.error).toMatchObject({ code: 'INTERNAL', provider: 'tavily' });
+    expect(keyAdapter.search).not.toHaveBeenCalled();
+  });
 });
