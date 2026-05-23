@@ -1,5 +1,6 @@
 import type { Adapter } from '@search-gateway/shared';
 import { arxivAdapter } from './arxiv.js';
+import { exaAdapter } from './exa.js';
 
 const registry = new Map<string, Adapter>();
 
@@ -16,5 +17,6 @@ export function listAdapters(): Adapter[] {
 }
 
 registerAdapter(arxivAdapter);
+registerAdapter(exaAdapter);
 
-export { arxivAdapter };
+export { arxivAdapter, exaAdapter };
