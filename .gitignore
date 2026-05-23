@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.turbo/
+cdk.out/
+.cdk.staging/
+coverage/
+.env
+.env.local
+*.log
+.DS_Store
+.idea/
+.vscode/settings.json
