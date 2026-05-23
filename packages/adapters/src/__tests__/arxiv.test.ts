@@ -40,7 +40,7 @@ describe('arxivAdapter (specifics)', () => {
     expect(results).toHaveLength(2);
     expect(results[0]!.title).toBe('Quantum Computing Breakthrough');
     expect(results[0]!.url).toBe('http://arxiv.org/abs/2401.00001v1');
-    expect(results[0]!.source).toBe('arxiv');
+    expect(results[0]!.provider).toBe('arxiv');
   });
 
   it('maps a 5xx upstream to UPSTREAM_ERROR', async () => {

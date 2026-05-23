@@ -25,7 +25,7 @@ describe('search-router handler', () => {
   it('returns SearchResult[] on success', async () => {
     fakeQuota.consume.mockResolvedValue(undefined);
     fakeAdapter.search.mockResolvedValue([{
-      url: 'http://arxiv.org/abs/1', title: 't', snippet: 's', source: 'arxiv'
+      url: 'http://arxiv.org/abs/1', title: 't', snippet: 's', provider: 'arxiv'
     }]);
     const handler = createHandler({
       adapters: { arxiv: fakeAdapter },
@@ -34,7 +34,7 @@ describe('search-router handler', () => {
     });
     const out = await handler(makeEvent('search_arxiv', { query: 'quantum' }));
     expect(out).toMatchObject({
-      results: [{ url: 'http://arxiv.org/abs/1', title: 't', snippet: 's', source: 'arxiv' }]
+      results: [{ url: 'http://arxiv.org/abs/1', title: 't', snippet: 's', provider: 'arxiv' }]
     });
     expect(fakeQuota.consume).toHaveBeenCalledWith('arxiv', { rpm: 60, daily: 1000 });
   });
@@ -70,7 +70,7 @@ describe('search-router handler', () => {
       category: 'web' as const,
       requiresApiKey: true,
       search: vi.fn().mockResolvedValue([{
-        url: 'https://x', title: 't', snippet: 's', source: 'tavily'
+        url: 'https://x', title: 't', snippet: 's', provider: 'tavily'
       }])
     };
     const fakeSecrets = { get: vi.fn().mockResolvedValue('secret123') };
@@ -86,7 +86,7 @@ describe('search-router handler', () => {
 
     const out = await handler(makeEvent('search_tavily', { query: 'test' }));
     expect(fakeSecrets.get).toHaveBeenCalledWith('arn:aws:secretsmanager:us-east-1:1:secret:tavily');
-    expect(keyAdapter.search).toHaveBeenCalledWith('test', undefined, 'secret123');
+    expect(keyAdapter.search).toHaveBeenCalledWith('test', { topK: 10, apiKey: 'secret123' });
     expect(out.results).toHaveLength(1);
   });
 

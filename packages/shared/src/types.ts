@@ -8,14 +8,17 @@ export const SearchResult = z.object({
   title: z.string().min(1),
   snippet: z.string(),
   publishedAt: z.string().datetime().optional(),
-  source: z.string().min(1),
+  provider: z.string().min(1),
+  rank: z.number().int().positive().optional(),
   score: z.number().optional(),
   raw: z.unknown().optional()
 });
 export type SearchResult = z.infer<typeof SearchResult>;
 
 export const SearchOpts = z.object({
-  topK: z.number().int().positive().max(50).default(10)
+  topK: z.number().int().positive().max(50).optional().default(10),
+  apiKey: z.string().optional(),
+  baseUrl: z.string().url().optional()
 });
 export type SearchOpts = z.infer<typeof SearchOpts>;
 
@@ -23,5 +26,5 @@ export interface Adapter {
   readonly name: string;
   readonly category: Category;
   readonly requiresApiKey: boolean;
-  search(query: string, opts?: SearchOpts, secret?: string): Promise<SearchResult[]>;
+  search(query: string, opts?: SearchOpts): Promise<SearchResult[]>;
 }

@@ -78,7 +78,7 @@ export const arxivAdapter: Adapter = {
         url: e.id,
         title: (e.title ?? '').trim(),
         snippet: (e.summary ?? '').trim(),
-        source: 'arxiv',
+        provider: 'arxiv',
         ...(e.published ? { publishedAt: e.published } : {})
       }));
   }

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   type Adapter,
   type SearchResult,
+  type SearchOpts,
   ErrorCode,
   SearchError,
   createLogger,
@@ -58,16 +59,17 @@ export function createHandler(deps: HandlerDeps) {
     try {
       await deps.quota.consume(provider, limits);
 
-      let secret: string | undefined;
+      let opts: SearchOpts | undefined;
       if (adapter.requiresApiKey) {
         const arn = deps.secretArns?.[provider];
         if (!arn || !deps.secrets) {
           throw new SearchError(ErrorCode.INTERNAL, `missing secret for ${provider}`, { provider });
         }
-        secret = await deps.secrets.get(arn);
+        const secret = await deps.secrets.get(arn);
+        opts = { topK: 10, apiKey: secret };
       }
 
-      const results = await adapter.search(parsed.query, undefined, secret);
+      const results = await adapter.search(parsed.query, opts);
 
       emitMetric({
         namespace: 'SearchGateway',
