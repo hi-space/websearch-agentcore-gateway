@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "preserve"
+  },
+  "include": ["packages/admin-console/app/**/*", "packages/admin-console/src/**/*", "packages/admin-console/middleware.ts"]
+}
