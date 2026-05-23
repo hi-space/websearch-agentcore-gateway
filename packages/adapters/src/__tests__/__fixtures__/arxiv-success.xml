@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <id>http://arxiv.org/abs/2401.00001v1</id>
+    <updated>2026-01-01T00:00:00Z</updated>
+    <published>2026-01-01T00:00:00Z</published>
+    <title>Quantum Computing Breakthrough</title>
+    <summary>An abstract about quantum computing.</summary>
+    <author><name>Author One</name></author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2401.00002v1</id>
+    <updated>2026-02-01T00:00:00Z</updated>
+    <published>2026-02-01T00:00:00Z</published>
+    <title>Another Result</title>
+    <summary>Another abstract.</summary>
+    <author><name>Author Two</name></author>
+  </entry>
+</feed>
