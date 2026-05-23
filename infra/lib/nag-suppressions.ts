@@ -26,6 +26,18 @@ export function applyV1NagSuppressions(stack: Stack): void {
     {
       id: 'AwsSolutions-DDB3',
       reason: 'QuotaTable holds ephemeral RPM/daily counters with TTL and RemovalPolicy.DESTROY; PITR is unnecessary cost. ConfigTable (durable) already has PITR enabled.'
+    },
+    {
+      id: 'AwsSolutions-CFR1',
+      reason: 'Admin Console is internal-only for v1 walking skeleton; geo-restrictions will be enforced with CloudFront policies and WAF rules in v1.5+'
+    },
+    {
+      id: 'AwsSolutions-CFR3',
+      reason: 'CloudFront access logging is deferred to v1.5 when centralized observability stack is deployed.'
+    },
+    {
+      id: 'AwsSolutions-CFR4',
+      reason: 'CloudFront default viewer certificate enforces TLSv1.2+; custom certificate and explicit MinimumProtocolVersion are deferred to v1.5 when custom domain is configured.'
     }
   ]);
 }

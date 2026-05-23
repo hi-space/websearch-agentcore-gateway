@@ -2,6 +2,7 @@ import { Stack, StackProps, CfnOutput } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { IVpc } from 'aws-cdk-lib/aws-ec2';
 import { ITable } from 'aws-cdk-lib/aws-dynamodb';
+import { IKey } from 'aws-cdk-lib/aws-kms';
 import { NetworkConstruct } from '../network/index.js';
 import { KmsConstruct } from '../security/kms.js';
 import { ConfigTableConstruct } from '../data/config-table.js';
@@ -14,17 +15,24 @@ import { applyV1NagSuppressions } from '../nag-suppressions.js';
 
 export class SearchStack extends Stack {
   readonly searchRouter: SearchRouterFn;
+  readonly vpc: IVpc;
+  readonly configTable: ITable;
+  readonly kmsSecretsKey: IKey;
 
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
     const network = new NetworkConstruct(this, 'Network');
     const kms = new KmsConstruct(this, 'Kms');
-    const configTable = new ConfigTableConstruct(this, 'Config', { kmsKey: kms.ddbKey });
+    const configTableConstruct = new ConfigTableConstruct(this, 'Config', { kmsKey: kms.ddbKey });
     const quotaTable = new QuotaTableConstruct(this, 'Quota', { kmsKey: kms.ddbKey });
+
+    this.vpc = network.vpc;
+    this.configTable = configTableConstruct.table as ITable;
+    this.kmsSecretsKey = kms.secretsKey;
 
     // Seed ConfigTable with provider configurations
     new ConfigSeed(this, 'ConfigSeed', {
-      table: configTable.table as ITable,
+      table: configTableConstruct.table as ITable,
       providers: [
         { providerId: 'arxiv', enabled: true },
         { providerId: 'exa', enabled: false },
