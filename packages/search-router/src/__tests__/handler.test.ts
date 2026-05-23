@@ -109,6 +109,87 @@ describe('search-router handler', () => {
     expect(out.error).toMatchObject({ code: 'INTERNAL', provider: 'tavily' });
     expect(keyAdapter.search).not.toHaveBeenCalled();
   });
+
+  it('emits per-provider metrics for unified search', async () => {
+    const arxivAdapter = {
+      name: 'arxiv',
+      category: 'academic' as const,
+      requiresApiKey: false,
+      search: vi.fn().mockResolvedValue([
+        { url: 'http://arxiv.org/abs/1', title: 't', snippet: 's', provider: 'arxiv', rank: 1 }
+      ])
+    };
+    const exaAdapter = {
+      name: 'exa',
+      category: 'web' as const,
+      requiresApiKey: false,
+      search: vi.fn().mockResolvedValue([
+        { url: 'http://exa.ai/result', title: 'e', snippet: 'es', provider: 'exa', rank: 1 }
+      ])
+    };
+    const perplexityAdapter = {
+      name: 'perplexity',
+      category: 'web' as const,
+      requiresApiKey: false,
+      search: vi.fn().mockRejectedValue(new Error('rate limited'))
+    };
+    const youAdapter = {
+      name: 'you',
+      category: 'web' as const,
+      requiresApiKey: false,
+      search: vi.fn().mockResolvedValue([])
+    };
+
+    fakeQuota.consume.mockResolvedValue(undefined);
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const handler = createHandler({
+      adapters: { arxiv: arxivAdapter, exa: exaAdapter, perplexity: perplexityAdapter, you: youAdapter },
+      quota: fakeQuota,
+      limits: {
+        arxiv: { rpm: 60, daily: 1000 },
+        exa: { rpm: 60, daily: 1000 },
+        perplexity: { rpm: 60, daily: 1000 },
+        you: { rpm: 60, daily: 1000 }
+      },
+      unified: {
+        builtinTools: [],
+        callBuiltin: vi.fn()
+      }
+    });
+
+    const out = await handler(makeEvent('search_unified', { query: 'quantum' }));
+
+    expect('results' in out).toBe(true);
+    if (!('results' in out)) return;
+    expect(out.results).toHaveLength(2);
+    expect(out.providersUsed).toContain('arxiv');
+    expect(out.providersUsed).toContain('exa');
+    expect(out.providersUsed).toContain('you');
+    expect(out.providersUsed).not.toContain('perplexity');
+
+    const logCalls = consoleSpy.mock.calls;
+    const metricsJson = logCalls.map((call) => {
+      try { return JSON.parse(call[0] as string); } catch { return null; }
+    }).filter(Boolean);
+
+    const unifiedMetric = metricsJson.find((m: { Provider?: string }) => m.Provider === 'unified');
+    expect(unifiedMetric).toBeDefined();
+    expect(unifiedMetric).toMatchObject({ Provider: 'unified', Status: 'Ok' });
+
+    const arxivMetric = metricsJson.find(
+      (m: { Provider?: string; Source?: string }) => m.Provider === 'arxiv' && m.Source === 'unified'
+    );
+    expect(arxivMetric).toBeDefined();
+
+    const perplexityErrMetric = metricsJson.find(
+      (m: { Provider?: string; Status?: string; Source?: string }) =>
+        m.Provider === 'perplexity' && m.Status === 'Error' && m.Source === 'unified'
+    );
+    expect(perplexityErrMetric).toBeDefined();
+
+    consoleSpy.mockRestore();
+  });
 });
 
 describe('handler search_unified', () => {

@@ -21,6 +21,10 @@ export type RouterResult =
   | { error: { code: string; message: string; provider?: string; retryAfterSec?: number } };
 
 const ArgsSchema = z.object({ query: z.string().min(1).max(2048) });
+const UnifiedArgsSchema = z.object({
+  query: z.string().min(1).max(2048),
+  topK: z.number().int().positive().max(50).optional()
+});
 
 export interface HandlerDeps {
   adapters: Record<string, Adapter>;
@@ -42,22 +46,56 @@ export function createHandler(deps: HandlerDeps) {
     const start = Date.now();
     const tool = event.toolName;
 
-    // Handle search_unified before provider-specific dispatch
     if (tool === 'search_unified') {
       if (!deps.unified) {
         const err = new SearchError(ErrorCode.INTERNAL, 'unified not configured');
         return { error: err.toJSON() as { code: string; message: string; provider?: string; retryAfterSec?: number } };
       }
-      const args = z.object({ query: z.string().min(1).max(2048), topK: z.number().int().positive().max(50).optional() }).parse(event.arguments);
+      let unifiedArgs;
+      try {
+        unifiedArgs = UnifiedArgsSchema.parse(event.arguments);
+      } catch {
+        const err = new SearchError(ErrorCode.INVALID_ARGUMENT, 'invalid arguments');
+        return { error: err.toJSON() as { code: string; message: string; provider?: string; retryAfterSec?: number } };
+      }
       const out = await runUnified({
-        query: args.query,
-        topK: args.topK,
+        query: unifiedArgs.query,
+        topK: unifiedArgs.topK,
         lambdaAdapters: deps.adapters,
         builtinTools: deps.unified.builtinTools,
         callBuiltin: deps.unified.callBuiltin,
         apiKeys: deps.unified.apiKeys
       });
-      // runUnified bypasses per-tool quota; fan-out legs are unmetered for v1
+
+      for (const provider of out.providersUsed) {
+        emitMetric({
+          namespace: 'SearchGateway',
+          dimensions: { Provider: provider, Status: 'Ok', Source: 'unified' },
+          metrics: { Invocations: 1 },
+          unit: { Invocations: 'Count' }
+        });
+      }
+      for (const e of out.errors) {
+        log.error('unified leg failed', { provider: e.provider });
+        emitMetric({
+          namespace: 'SearchGateway',
+          dimensions: { Provider: e.provider, Status: 'Error', Source: 'unified' },
+          metrics: { Invocations: 1, Errors: 1 },
+          unit: { Invocations: 'Count' }
+        });
+      }
+      emitMetric({
+        namespace: 'SearchGateway',
+        dimensions: { Provider: 'unified', Status: 'Ok' },
+        metrics: {
+          Invocations: 1,
+          LatencyMs: Date.now() - start,
+          ResultCount: out.results.length,
+          ProvidersUsed: out.providersUsed.length
+        },
+        unit: { LatencyMs: 'Milliseconds', Invocations: 'Count', ResultCount: 'Count', ProvidersUsed: 'Count' }
+      });
+
       return { results: out.results, providersUsed: out.providersUsed };
     }
 
