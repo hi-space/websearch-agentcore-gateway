@@ -1,6 +1,9 @@
 # Search AgentCore Gateway — Design
 
-- Status: Draft (awaiting user review)
+- Status: Updated 2026-05-23 — reflects v1.0 implementation decisions and the
+  shift from React-SPA + API-Gateway to Next.js-on-Lambda + CloudFront-WAF.
+  Roadmap re-organised around subsystems (see §8, §11) rather than version
+  labels.
 - Author: Hi-space + Claude
 - Date: 2026-05-23
 - Audience: Enterprise customers deploying into their own AWS account
@@ -43,7 +46,11 @@ multi-tenant secrets — is repetitive and error-prone.
   adapter SDK + sample adapters in `examples/` only; v2 ships these as
   defaults).
 - Multi-region failover.
-- Including built-in (Tavily/Brave) results inside `search_unified` (v1.5).
+- `answer_with_search` (LLM-synthesised answer over fan-out results) — v2.
+- Confluence default adapter — sample only in v1; default in v2.
+- mTLS or external-API-key auth surfaces (the admin console is human-only;
+  if non-human REST consumers appear, API Gateway is reintroduced as a
+  separate origin in v2 — see §2.3).
 
 ### 1.4 Primary user personas
 - **Enterprise platform engineer** — deploys via `cdk deploy`, reuses existing
@@ -70,19 +77,26 @@ multi-tenant secrets — is repetitive and error-prone.
 | Academic | Semantic Scholar | Lambda adapter | hard |
 
 ### 2.2 v1 surfaces
-- MCP endpoint via AgentCore Gateway (the data-plane consumed by clients)
-- Admin web console (CloudFront → S3 → API Gateway → Admin Lambda)
-- CloudWatch dashboards & SNS alarms (machine-facing observability layer)
-- Audit log surface (DDB + S3 Object Lock)
+- MCP endpoint via AgentCore Gateway (the data-plane consumed by clients).
+- Admin Console — Next.js (App Router) on a single Lambda Function URL,
+  fronted by CloudFront + WAF. Cognito JWT is verified in Next.js middleware;
+  the same app serves both the SSR pages and `/api/*` route handlers (the
+  BFF). No API Gateway in v1.
+- CloudWatch dashboards & SNS alarms (machine-facing observability layer).
+- Audit log surface (DDB + S3 Object Lock).
 
 ### 2.3 Out of scope for v1 — listed explicitly
-- Multi-tenancy, SaaS, marketplace listing
-- Built-in code/news adapters (samples only)
-- Built-in internal-search adapters (Confluence sample only)
-- `answer_with_search` / synthesis tools (v2)
+- Multi-tenancy, SaaS, marketplace listing.
+- Built-in code/news adapters (samples only).
+- Built-in internal-search adapters (Confluence sample only).
+- `answer_with_search` / synthesis tools (v2).
 - Automatic provider key rotation that actually mints keys (provider APIs
-  generally don't support it)
-- Including Tavily/Brave inside `search_unified` (v1.5)
+  generally don't support it).
+- API Gateway as the admin origin. Reintroduced only if v2 surfaces a
+  non-human REST API that needs mTLS, usage plans, or per-method throttling.
+- Including Tavily/Brave inside `search_unified` is **in scope** for v1
+  via the two-stage fan-out pattern (§5.2); the older deferral note has
+  been removed.
 
 ---
 
@@ -137,8 +151,11 @@ multi-tenant secrets — is repetitive and error-prone.
 
 ### 3.5 Authentication
 - **Cognito User Pool** with email + password + MFA (TOTP or SMS).
-- **Roles:** `Admins` and `Viewers` (Cognito groups → ID-token claim → API
-  Gateway authorizer → IAM scope).
+- **Roles:** `Admins` and `Viewers` (Cognito groups → ID-token claim →
+  Next.js middleware decision → role-scoped IAM credentials when calling
+  AWS APIs).
+- JWT verification: `aws-jwt-verify` in Next.js middleware on every
+  `/api/*` route. Public assets bypass the middleware.
 - Advanced security on (compromised credentials, adaptive auth).
 - **Step-up MFA** is required for high-risk admin actions (secret reveal).
 
@@ -168,13 +185,14 @@ Plain-text reveal is supported in v1 with the following non-negotiable guards:
      │                 │
      │ MCP/HTTPS       │ HTTPS
      │                 ▼
-     │       CloudFront + WAF ── S3 (Admin SPA, OAC)
-     │                 │ /api/*
+     │           CloudFront + WAF
+     │                 │ (all paths)
      │                 ▼
-     │           API Gateway + WAF
-     │                 │  (Cognito JWT authorizer)
-     │                 ▼
-     │           Admin Lambda (in VPC)
+     │       Admin Console — Next.js (App Router)
+     │       on Lambda Function URL (in VPC)
+     │         ├─ middleware: Cognito JWT verify (aws-jwt-verify)
+     │         ├─ pages   : SSR/CSR Admin UI
+     │         └─ /api/*  : route handlers (BFF)
      │                 │
      │   ┌─────────────┼────────────────────────┐
      │   ▼             ▼                        ▼
@@ -192,7 +210,8 @@ Plain-text reveal is supported in v1 with the following non-negotiable guards:
 search-router Lambda (in VPC)
   ├─ QuotaService (DDB)
   ├─ Adapters: exa / searxng / arxiv / pubmed / semanticscholar
-  ├─ search_unified: parallel fan-out → URL-canonical dedupe → RRF
+  ├─ search_unified: two-stage fan-out (built-ins via MCP re-invoke
+  │                  + own Lambda adapters) → URL-canonical dedupe → RRF
   ├─ Secrets via Secrets-Manager VPC endpoint (KMS-CMK)
   └─ Metrics via CloudWatch EMF
 
@@ -220,15 +239,25 @@ Adapters call:
   `{ url, title, snippet, publishedAt?, source, score?, raw? }`
 - Per-provider call timeout 8 s; Lambda cap 12 s.
 
-#### Admin Lambda (Node.js 20, ARM64, VPC, 15 s timeout)
-- BFF for the Admin UI; routes:
-  - `GET /providers`, `PUT /providers/:id`
-  - `POST /providers/:id/secret`, `POST /providers/:id/secret/reveal`,
-    `POST /providers/:id/test`
-  - `GET /metrics?provider=&window=`, `GET /audit?from=&to=`
-- IAM: write to Secrets Manager only under `search-agentcore-gateway/*`.
+#### Admin Console — Next.js on Lambda (Node.js 20, ARM64, VPC, 15 s timeout)
+- Single Next.js (App Router) app deployed as one Lambda Function URL.
+- Hosts both the SSR/CSR pages (Admin UI) and `/api/*` route handlers
+  (the BFF).
+- Cognito JWT verification runs in `middleware.ts` for every `/api/*`
+  request; `aws-jwt-verify` checks signature + audience + Cognito group
+  claim, then attaches the role to the request context.
+- BFF routes (Next.js route handlers):
+  - `GET /api/providers`, `PUT /api/providers/:id`
+  - `POST /api/providers/:id/secret`,
+    `POST /api/providers/:id/secret/reveal`,
+    `POST /api/providers/:id/test`
+  - `GET /api/metrics?provider=&window=`, `GET /api/audit?from=&to=`
+- IAM: writes to Secrets Manager only under `search-agentcore-gateway/*`.
 - Synchronous transactional flow: ConfigTable → Gateway control-plane →
   AuditLog (with rollback at each step).
+- Per-method throttling that API Gateway used to provide is replaced by
+  (a) a CloudFront rate-based WAF rule and (b) per-route Zod validation
+  + small in-process token-bucket on mutating routes.
 
 #### Reconciler Lambda (15-min schedule)
 - Diffs ConfigTable vs Gateway state, corrects drift, emits alarm.
@@ -244,13 +273,23 @@ Adapters call:
   Daily export to S3 Object Lock (governance mode, 7 yr retention default).
 
 #### Cognito User Pool
-- Email + password + MFA. Groups `Admins` / `Viewers` map to API GW IAM scope.
+- Email + password + MFA. Groups `Admins` / `Viewers` are read from the
+  ID-token claim by Next.js middleware; the middleware decides whether the
+  request reaches the route handler at all (Viewers cannot reach mutating
+  routes).
 - Advanced security on. Step-up MFA enforced for reveal endpoint.
 
-#### CloudFront + S3 (Admin SPA)
-- React (Vite + TS) + Amplify UI Authenticator.
-- S3 bucket private; OAC; CloudFront viewer protocol HTTPS-only, TLS 1.2 min;
-  managed security headers + custom CSP/HSTS; CloudFront-scoped WAF.
+#### CloudFront (admin entry point)
+- Single distribution; only origin is the Admin Console Lambda Function URL.
+- Viewer protocol HTTPS-only, TLS 1.2 min; AWS-managed security-headers
+  policy + custom CSP/HSTS.
+- WAF v2 attached at the CloudFront scope (managed common /
+  known-bad-inputs / IP-reputation / anonymous-IP / SQLi rule sets, plus a
+  rate-based rule on `/api/*`).
+- No S3 origin and no API Gateway origin in v1 — the Next.js app serves
+  static assets, SSR, and `/api/*` from one Lambda. Static assets are
+  cached at the CloudFront edge with the standard Next.js immutable
+  fingerprinted-asset policy.
 
 #### SearXNG (Fargate)
 - Public image `searxng/searxng` (or customer-mirrored ECR), 1 task in
@@ -265,24 +304,31 @@ Adapters call:
 - VPC: 2 private subnets (multi-AZ), 1 NAT GW, **no public subnets** for
   Lambdas/ECS. Optional reuse of an existing VPC via stack props
   (`existingVpcId`, `subnetIds`, `securityGroupIds`).
-- VPC interface endpoints: `secretsmanager`, `kms`, `logs`, `monitoring`,
-  `events`, `sts`, `bedrock-agentcore`, `bedrock-agentcore-control`. Gateway
-  endpoints: `dynamodb`, `s3`. All endpoints have resource policies pinning
-  to this account/VPC.
+- VPC interface endpoints (v1.0 baseline, codified in
+  `infra/lib/network/vpc.ts`): `secretsmanager`, `kms`, `logs`,
+  `monitoring`, `events`, `sts`. Gateway endpoints: `dynamodb`, `s3`.
+  `bedrock-agentcore` / `bedrock-agentcore-control` interface endpoints
+  are added once their service names are GA in the target region; until
+  then the Gateway control-plane is reached over NAT and the data-plane
+  is reached by AgentCore itself (outside the VPC). All endpoints have
+  resource policies pinning to this account/VPC.
 - Security groups: deny-by-default; named SGs with descriptions; default SG
-  unused. Provider Lambda SG egress 443 → NAT and VPC endpoints. Admin Lambda
-  SG egress to VPC endpoints only (no NAT).
+  unused. Provider Lambda SG egress 443 → NAT and VPC endpoints. Admin
+  Console Lambda SG egress to VPC endpoints only (no NAT).
 - NACLs: ephemeral port range only.
-- KMS CMKs (4): `secrets`, `ddb`, `s3`, `logs`. Auto-rotation on.
-- WAF v2: AWS managed common/known-bad-inputs/IP-reputation/anonymous-IP/SQLi;
-  rate-based rule; optional `customAllowedCidrs` allowlist.
-- API Gateway: regional endpoint, request validator, per-method throttling,
-  optional mTLS.
+- KMS CMKs (4): `secrets`, `ddb`, `s3`/`logs` shared, plus a dedicated
+  `logs` key — see `infra/lib/security/kms.ts`. All have auto-rotation on
+  and `RemovalPolicy.RETAIN`.
+- WAF v2 (CloudFront-scoped): AWS managed common /
+  known-bad-inputs / IP-reputation / anonymous-IP / SQLi; rate-based rule
+  on `/api/*`; optional `customAllowedCidrs` allowlist.
 - CloudTrail: management + data events on Secrets Manager, ConfigTable,
   AuditLogTable, audit S3 bucket. Multi-region.
 - AWS Config baseline rule pack applied; GuardDuty + Security Hub optional
-  via stack prop.
-- cdk-nag (AwsSolutions + HIPAA) gates `cdk synth`.
+  via stack prop (default off — see security-hardening subsystem in §11).
+- cdk-nag (AwsSolutions + HIPAA) gates `cdk synth`. v1.0 carries explicit
+  suppressions documented in `infra/lib/nag-suppressions.ts`; the
+  security-hardening subsystem closes them.
 
 #### Observability layer
 - CloudWatch dashboard (CDK-synthesised) with per-provider rows (invocations,
@@ -302,8 +348,9 @@ Adapters call:
 | Provider call, normalize, dedupe, rank | search-router Lambda |
 | Quota enforcement | search-router (Lambda hard) / alarms only (built-in) |
 | Configuration source of truth | DDB ConfigTable |
-| Config → Gateway propagation | Admin Lambda (sync) + Reconciler (drift) |
-| AuthN / AuthZ | Cognito + API GW authorizer + IAM |
+| Config → Gateway propagation | Admin Console BFF (sync) + Reconciler (drift) |
+| AuthN / AuthZ | Cognito + Next.js middleware + IAM |
+| Edge protection (rate limit, WAF rules) | CloudFront + WAF v2 |
 | Secrets at rest | Secrets Manager (KMS-CMK) |
 | Observability | CloudWatch (metrics, logs, dashboards, alarms) |
 | Audit | DDB AuditLogTable + S3 Object Lock + CloudTrail |
@@ -330,30 +377,39 @@ Error mapping is in §6.1.
 ### 5.2 `search_unified`
 
 - Args: `{ query, categories?: ["web","academic"], topK = 10 }`.
-- Resolve enabled Lambda providers in scope (ConfigTable cached 30 s).
-- `Promise.allSettled([...adapter.search(q)])` — each call still goes through
-  its own QuotaService.
+- Resolve enabled providers in scope (ConfigTable cached 30 s) — both
+  Lambda adapters and Gateway built-ins.
+- Two-stage fan-out:
+  1. **Lambda adapters** — `Promise.allSettled([...adapter.search(q)])`,
+     each going through its own QuotaService.
+  2. **Gateway built-ins (Tavily/Brave)** — search-router opens an MCP
+     session back to its own Gateway and re-invokes `search_tavily` /
+     `search_brave` as native tools. This stays inside the AgentCore data
+     plane (built-in quotas, retries, auth) while letting us merge the
+     results.
 - Canonicalise URLs (lowercase host, strip `utm_*` / `fbclid`, trailing
   slash) and dedupe.
 - Reciprocal Rank Fusion: `score = Σ 1 / (k + rank_i)`, k = 60.
 - Slice top-K; respond with results + `providersUsed`, `providersFailed`,
   `latencyMsByProvider`.
-- Tavily/Brave are **not** part of v1 fan-out (they live outside our code
-  path).
+- A built-in stage failure is recorded in `providersFailed` but does not
+  fail the whole call; the Lambda-adapter stage is treated symmetrically.
 
-### 5.3 Admin save (PUT `/providers/:id`)
+### 5.3 Admin save (PUT `/api/providers/:id`)
 
-1. WAF + Cognito JWT authorizer + Admin role check.
-2. Admin Lambda: validate body; check role.
-3. Secrets Manager `PutSecretValue` (new version) if key supplied.
-4. Provider ping using the same adapter the runtime uses.
+1. CloudFront + WAF (rate-based + managed rule sets).
+2. Next.js middleware: verify Cognito JWT, extract group claim, enforce
+   `Admins` for mutating routes.
+3. Route handler: Zod-validate body; idempotency key check.
+4. Secrets Manager `PutSecretValue` (new version) if key supplied.
+5. Provider ping using the same adapter the runtime uses.
    - On failure: discard the new secret version (`AWSPENDING` stage) and
      return 400 InvalidKey.
-5. ConfigTable `Put` (new state).
-6. AgentCore Gateway control-plane update (target/tool registration).
+6. ConfigTable `Put` (new state).
+7. AgentCore Gateway control-plane update (target/tool registration).
    - On failure after retry: rollback ConfigTable, return 502.
-7. AuditLog `Put` (before, after, actor, reason?).
-8. CloudWatch `ConfigChange` metric.
+8. AuditLog `Put` (before, after, actor, reason?).
+9. CloudWatch `ConfigChange` metric.
 
 Idempotency keys are required on mutating endpoints.
 
@@ -372,7 +428,8 @@ Idempotency keys are required on mutating endpoints.
 
 ### 5.5 Dashboard data fetch
 
-- Admin Lambda → CloudWatch `GetMetricData` batch (≤ 500 queries).
+- Admin Console BFF route (`GET /api/metrics`) → CloudWatch
+  `GetMetricData` batch (≤ 500 queries).
 - Builds per-provider × per-metric series; for built-in providers, uses
   Gateway-native metrics + math expressions for cost estimates.
 - Browser caches client-side 30 s; auto-refresh 60 s.
@@ -448,7 +505,9 @@ All errors carry `traceId`, `provider`, `requestId` in metadata.
 ### 6.6 Known limitations (must be documented to customers)
 - Built-in providers' quotas are soft only; real enforcement depends on the
   upstream provider's own controls.
-- `search_unified` does not include built-ins in v1.
+- `search_unified` includes built-ins via two-stage fan-out (§5.2). Because
+  the built-in stage is an extra MCP hop, its tail latency adds to the
+  unified-call p95 budget — the SLO in §7.7 already accounts for this.
 - Single region; failover to a second region is v2.
 - Estimated cost is unitCost × invocations and is not guaranteed to match
   the provider invoice.
@@ -465,31 +524,37 @@ All errors carry `traceId`, `provider`, `requestId` in metadata.
 search-agentcore-gateway/
 ├─ docs/
 │  ├─ superpowers/specs/2026-05-23-search-agentcore-gateway-design.md
+│  ├─ superpowers/plans/                # one file per subsystem (§11)
 │  ├─ adapter-authoring.md
 │  ├─ deployment.md
 │  ├─ operations.md
-│  └─ security.md
+│  └─ security.md                       # STRIDE doc lands in security-hardening
+├─ DESIGN.md                            # UI design system (admin-console)
 ├─ packages/
 │  ├─ shared/         # types, logger, metrics, errors, secrets, telemetry
 │  ├─ adapters/       # exa, searxng, arxiv, pubmed, semanticscholar
-│  ├─ search-router/  # provider Lambda; quota, unified, RRF, breaker
-│  ├─ admin-api/      # admin BFF Lambda; routes, services, RBAC
-│  ├─ reconciler/     # 15-min drift correction Lambda
-│  └─ admin-ui/       # React/Vite/TS, Amplify UI auth
+│  ├─ search-router/  # provider Lambda; quota, unified (two-stage), RRF, breaker
+│  ├─ admin-console/  # Next.js (App Router): pages + /api/* route handlers
+│  └─ reconciler/     # 15-min drift correction Lambda
 ├─ infra/             # CDK app
 │  └─ lib/
 │     ├─ stack.ts
 │     ├─ network/    (vpc, endpoints, waf)
 │     ├─ data/       (config, quota, audit tables)
-│     ├─ compute/    (search-router, admin, reconciler functions)
+│     ├─ compute/    (search-router, admin-console, reconciler functions)
 │     ├─ gateway/    (agentcore-gateway, targets)
-│     ├─ frontend/   (admin-ui-bucket, cloudfront, cognito)
+│     ├─ frontend/   (cloudfront-distribution, cognito-user-pool)
 │     ├─ searxng/    (fargate-service, private-alb, task-definition)
 │     ├─ observability/ (dashboard, alarms)
-│     └─ security/   (kms, iam helpers)
+│     └─ security/   (kms, iam helpers, nag-suppressions)
 ├─ examples/         # newsapi-adapter, confluence-adapter, rotation-template
 └─ search-providers.example.yaml
 ```
+
+The Admin Console is one Next.js app, not two packages. The single
+deployable target is a Lambda (Function URL) behind CloudFront — no
+separate S3 bucket and no API Gateway. The previous `admin-spa` /
+`admin-api` split has been merged.
 
 ### 7.2 Test pyramid
 
@@ -530,7 +595,8 @@ suite as a merge gate.
    release tag: production with manual approval.
 
 ### 7.6 Local dev
-- `pnpm dev:ui` (Vite, mocked backend)
+- `pnpm --filter admin-console dev` (Next.js dev server with mocked AWS
+  clients via `aws-sdk-client-mock`)
 - `pnpm dev:lambda search-router` (esbuild watch + AWS Lambda RIE)
 - `pnpm test:adapter exa --record` (refresh fixtures)
 - `cdk synth --context env=dev`
@@ -546,43 +612,216 @@ suite as a merge gate.
 
 ---
 
-## 8. Roadmap (post-v1)
+## 8. Roadmap (subsystems, not version labels)
 
-- **v1.5:** include built-ins in `search_unified`; `answer_with_search`
-  synthesis tool; Confluence default adapter.
-- **v2:** SAML/OIDC federation; multi-tenancy; multi-region failover; news
-  & code default adapters; real automatic rotation for providers that
-  support it.
+v1.0 (the walking skeleton — `arxiv` only, single MCP tool, hard quota,
+KMS, EMF, one alarm) is in place. Subsequent work is sliced by **subsystem**.
+Each subsystem is its own implementation plan and ends in working software
+that can be exercised independently. Order, dependencies, and "done" criteria
+are defined in §11.
+
+| Subsystem | Headline outcome |
+|---|---|
+| `multi-provider-search` | 6 more MCP tools (5 providers + `search_unified`). |
+| `admin-bff` | Cognito + Next.js route handlers; provider CRUD, secret PUT/test/reveal; curl-driven acceptance. |
+| `admin-ui` | Next.js pages over the BFF, applying the design system in `/DESIGN.md`. |
+| `searxng-adapter` | Self-hosted Fargate metasearch, default-disabled. |
+| `operability-and-audit` | Full dashboard, full alarm set, Reconciler, AuditLogTable S3-Object-Lock export, CloudTrail data events. |
+| `security-hardening` | All cdk-nag suppressions removed; STRIDE doc; IAM least-priv; GuardDuty / Security Hub stack props. |
+
+**Post-v1 (v2 candidates).** SAML/OIDC federation; multi-tenancy;
+multi-region failover; `answer_with_search` synthesis tool; Confluence as
+default adapter; news/code default adapters; provider-API auto-rotation
+where supported; reintroducing API Gateway as a separate origin if a
+non-human REST consumer surface needs mTLS or usage plans.
 
 ---
 
 ## 9. Open questions / explicit deferrals
 
-- Optional PrivateLink-only exposure of the Gateway (private MCP) — listed
-  for v1.5 if customers ask.
+- Optional PrivateLink-only exposure of the Gateway (private MCP) — defer
+  to v2 unless a customer asks during the operability subsystem rollout.
 - Whether to add `EnableGuardDuty` / `EnableSecurityHub` as default-on
   rather than opt-in — left default-off in v1 because customers commonly
-  manage these centrally.
-- Customer-supplied KMS keys — supported via stack props but not enforced
-  default; default is to create new CMKs in the stack.
+  manage these centrally; revisit during the security-hardening subsystem.
+- Customer-supplied KMS keys — supported via stack props but not the
+  default; default remains "create new CMKs in the stack".
+- AgentCore Gateway control-plane API shape (`createGateway`,
+  `createTarget`) is recorded in v1.0 against the SDK at implementation
+  time. If AWS ships an L1 CFN type before the next subsystem starts, the
+  multi-provider-search plan switches to it; the design intent is
+  preserved either way.
 
 ---
 
-## 10. Acceptance criteria (used to size the implementation plan)
+## 10. Acceptance criteria (per subsystem)
 
-A v1 release is complete when:
-1. `cdk deploy` succeeds into a clean account, including SearXNG Fargate.
-2. An MCP client (Claude Desktop or a smoke test client) can list and call
-   `search_tavily`, `search_brave`, `search_exa`, `search_searxng`,
-   `search_arxiv`, `search_pubmed`, `search_semanticscholar`, and
-   `search_unified`.
-3. Admin can log in, enable a provider, save a key, see "test connection"
-   pass, watch the metric appear in the dashboard, and see the audit log
-   record.
-4. Admin can reveal a secret with step-up MFA + reason, and the reveal is
-   in audit + S3 archive.
-5. Hard-quota providers actually return `RATE_LIMITED` once over cap.
-6. Soft-quota built-ins fire `ProviderQuotaApproaching` /
-   `ProviderQuotaExceeded` alarms once thresholds breached.
-7. cdk-nag passes; no new IAM-policy-snapshot regressions.
-8. Reconciler corrects an artificially-induced drift within 15 minutes.
+Acceptance is defined per subsystem rather than as a single "v1 ships"
+gate. The aggregate "everything green" gate lives in
+`security-hardening` (§11), which is the last subsystem.
+
+**v1.0 walking skeleton (already in tree)**
+1. `cdk deploy` succeeds into a clean account, single arxiv tool exposed.
+2. An MCP client can list and call `search_arxiv`.
+3. Hard quota returns `RATE_LIMITED` once over cap.
+4. The arXiv-upstream-error alarm transitions to ALARM under induced load.
+5. cdk-nag passes (with the suppressions in `nag-suppressions.ts`).
+
+Each later subsystem inherits all v1.0 criteria and adds its own —
+listed in §11.
+
+---
+
+## 11. Subsystem map
+
+The roadmap in §8 enumerates the subsystems; this section is the
+authoritative reference for **what each subsystem owns, what it depends
+on, and how we decide it is done**. Plans live under
+`docs/superpowers/plans/` named `2026-05-23-<subsystem>.md`.
+
+### 11.1 Dependency order
+
+```
+v1.0 walking skeleton (done)
+        │
+        ▼
+multi-provider-search ────────────────┐
+        │                              │
+        ▼                              │
+admin-bff                              │
+        │                              │
+        ├──► admin-ui                  │
+        ├──► searxng-adapter ──────────┤
+        └──► operability-and-audit ────┤
+                                       │
+                                       ▼
+                             security-hardening
+                             (final aggregate gate)
+```
+
+`admin-ui`, `searxng-adapter`, and `operability-and-audit` may run in
+parallel after `admin-bff` lands. `security-hardening` is the last
+subsystem because it removes cdk-nag suppressions that earlier work
+relies on.
+
+### 11.2 Per-subsystem responsibilities, interfaces, and done criteria
+
+#### 11.2.1 `multi-provider-search`
+- **Owns:** Lambda adapters for `exa`, `perplexity`, `you`, plus the
+  `search_unified` orchestrator with its two-stage fan-out (Lambda
+  adapters in parallel; Gateway built-ins via MCP re-invoke for Tavily
+  and Brave). Also: provider registry, RRF (`k=60`) merge, schema
+  validation, structured upstream error mapping.
+- **Depends on:** v1.0 walking skeleton (search-router runtime, Gateway,
+  ConfigTable shape, EMF logger, KMS, quota table).
+- **Interfaces produced:**
+  - MCP tools: `search_exa`, `search_perplexity`, `search_you`,
+    `search_unified`. Tavily/Brave remain Gateway built-ins.
+  - Internal: provider adapter contract under
+    `packages/adapters/src/<provider>/`.
+- **Done when:**
+  1. All five additional MCP tools list and call successfully against a
+     deployed dev stack.
+  2. `search_unified` returns merged results from at least one Lambda
+     adapter and one Gateway built-in in a single call.
+  3. Per-adapter contract tests pass with recorded fixtures.
+  4. RRF merge test covers tie-breaks and missing rankings.
+  5. EMF metrics emit a `provider` dimension for every call.
+
+#### 11.2.2 `admin-bff`
+- **Owns:** The Next.js (App Router) BFF on a single Lambda Function
+  URL: Cognito JWT verification middleware (`aws-jwt-verify`),
+  role-scoped IAM credential vending, route handlers for `GET/PUT
+  /api/providers/:id`, `POST /api/providers/:id/test`,
+  `POST /api/providers/:id/secret`, `POST /api/providers/:id/secret/reveal`,
+  `GET /api/metrics`, plus Zod request validation and structured audit
+  logging into AuditLogTable.
+- **Depends on:** `multi-provider-search` (provider registry shape;
+  routes manage provider configs and secrets).
+- **Interfaces produced:**
+  - HTTP API surface listed above, behind CloudFront + WAF.
+  - Audit log schema in AuditLogTable (actor, action, target, before,
+    after, ts).
+- **Done when:**
+  1. A reviewer can drive the full admin flow end-to-end with curl /
+     Postman using a Cognito JWT — list providers, edit one, store and
+     reveal a secret, run `test`, fetch `metrics`.
+  2. Reveal action lands in AuditLogTable.
+  3. Failed JWT, wrong role, and Zod-invalid payloads each return the
+     correct status with no PII leakage.
+
+#### 11.2.3 `admin-ui`
+- **Owns:** Next.js pages on the same Lambda as `admin-bff`. Provider
+  list + edit, secret PUT / test / reveal, dashboard, audit log viewer.
+  Visual styling follows `/DESIGN.md` (the UI design system) and not the
+  spec file.
+- **Depends on:** `admin-bff` (calls `/api/*` only — no direct AWS SDK
+  use from pages).
+- **Interfaces produced:** `/admin/*` pages served by the Next.js
+  Lambda; no new HTTP API surface.
+- **Done when:**
+  1. The flows that `admin-bff` validates over curl are reachable from
+     a logged-in browser session.
+  2. Pages render against the `/DESIGN.md` tokens (color, typography,
+     spacing) and pass an a11y baseline (Lighthouse a11y ≥ 90).
+  3. Reveal flow shows the secret only after a confirm step and clears
+     it from the DOM on navigation.
+
+#### 11.2.4 `searxng-adapter`
+- **Owns:** Self-hosted SearXNG on Fargate (private subnet), an internal
+  ALB target, and a `searxng` Lambda adapter that calls it. Default
+  **disabled** in ConfigTable; opt-in per stack prop.
+- **Depends on:** `multi-provider-search` (adapter contract,
+  `search_unified` registration). Independent of admin-ui.
+- **Interfaces produced:**
+  - MCP tool: `search_searxng` (when enabled).
+  - Infra: SearXNG Fargate service + ALB + adapter wiring.
+- **Done when:**
+  1. Stack prop `enableSearxng: true` deploys SearXNG and registers the
+     adapter; default deploy is unchanged.
+  2. `search_searxng` returns results in a deployed env.
+  3. `search_unified` includes searxng results when enabled.
+
+#### 11.2.5 `operability-and-audit`
+- **Owns:** Full CloudWatch dashboard (per-provider widgets,
+  `search_unified` panel, admin panel), full alarm set (per-provider
+  error rate, p95 latency, quota saturation, reveal-rate spike), the
+  Reconciler Lambda (Gateway target drift vs ConfigTable), CloudTrail
+  data events on Secrets / KMS / DynamoDB, AuditLogTable S3 export with
+  Object Lock for retention.
+- **Depends on:** `admin-bff` (admin metrics, audit log shape) and
+  `multi-provider-search` (per-provider metrics). Independent of
+  `admin-ui`.
+- **Interfaces produced:**
+  - CloudWatch dashboard JSON.
+  - SNS alarm topic with the documented action set.
+  - S3 bucket with Object Lock for audit exports.
+- **Done when:**
+  1. Dashboard widgets populate from real EMF metrics in a dev stack.
+  2. Each alarm has been forced to ALARM at least once (synthetic
+     fault) and rolled back to OK.
+  3. Reconciler diff log entry appears when ConfigTable and the Gateway
+     are deliberately desynced.
+  4. AuditLogTable export to S3 is visible and immutable.
+
+#### 11.2.6 `security-hardening`
+- **Owns:** Removal of every cdk-nag suppression from `nag-suppressions.ts`
+  with code changes (not just suppression edits) wherever feasible; IAM
+  least-privilege pass on all roles; STRIDE threat model document under
+  `docs/security/`; stack props for `EnableGuardDuty` /
+  `EnableSecurityHub`; final security-review checklist.
+- **Depends on:** Every other subsystem (this is the closing gate).
+- **Interfaces produced:**
+  - `docs/security/stride.md`.
+  - Stack props above.
+  - Empty-or-justified `nag-suppressions.ts`.
+- **Done when:**
+  1. `cdk synth` is cdk-nag-clean with no suppressions, **or** every
+     remaining suppression has a written justification reviewed in this
+     subsystem's PR.
+  2. STRIDE doc covers ingress, identity, secrets, data, audit.
+  3. `EnableGuardDuty` / `EnableSecurityHub` stack props deploy the
+     respective services in a dev stack when set to true.
+  4. Aggregate v1 gate: a fresh `cdk deploy` from a clean account,
+     followed by a scripted run-through of every other subsystem's
+     acceptance criteria, passes end-to-end.
