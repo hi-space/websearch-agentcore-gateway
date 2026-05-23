@@ -110,3 +110,23 @@ describe('search-router handler', () => {
     expect(keyAdapter.search).not.toHaveBeenCalled();
   });
 });
+
+describe('handler search_unified', () => {
+  it('routes to runUnified and returns merged results', async () => {
+    const exa = { name: 'exa', search: vi.fn().mockResolvedValue([{ title: 'A', url: 'u', snippet: '', provider: 'exa', rank: 1 }]) };
+    const handler = createHandler({
+      adapters: { exa: exa as any },
+      quota: { consume: vi.fn().mockResolvedValue(undefined) } as any,
+      limits: { exa: { rpm: 60, daily: 1000 } },
+      unified: {
+        builtinTools: [],
+        callBuiltin: vi.fn()
+      }
+    });
+    const res = await handler({ toolName: 'search_unified', arguments: { query: 'cats', topK: 5 } });
+    expect('results' in res).toBe(true);
+    if ('results' in res) {
+      expect(res.providersUsed).toContain('exa');
+    }
+  });
+});

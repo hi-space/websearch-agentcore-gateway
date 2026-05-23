@@ -9,6 +9,7 @@ import {
   emitMetric
 } from '@search-gateway/shared';
 import type { QuotaService, QuotaLimits } from './quota.js';
+import { runUnified } from './unified.js';
 
 export interface RouterEvent {
   toolName: string;
@@ -27,6 +28,11 @@ export interface HandlerDeps {
   limits: Record<string, QuotaLimits>;
   secrets?: { get(arn: string): Promise<string> };
   secretArns?: Record<string, string>;
+  unified?: {
+    builtinTools: string[];
+    callBuiltin: (tool: string, query: string, topK?: number) => Promise<SearchResult[]>;
+    apiKeys?: Record<string, string>;
+  };
 }
 
 export function createHandler(deps: HandlerDeps) {
@@ -35,6 +41,26 @@ export function createHandler(deps: HandlerDeps) {
   return async function handler(event: RouterEvent): Promise<RouterResult> {
     const start = Date.now();
     const tool = event.toolName;
+
+    // Handle search_unified before provider-specific dispatch
+    if (tool === 'search_unified') {
+      if (!deps.unified) {
+        const err = new SearchError(ErrorCode.INTERNAL, 'unified not configured');
+        return { error: err.toJSON() as { code: string; message: string; provider?: string; retryAfterSec?: number } };
+      }
+      const args = z.object({ query: z.string().min(1).max(2048), topK: z.number().int().positive().max(50).optional() }).parse(event.arguments);
+      const out = await runUnified({
+        query: args.query,
+        topK: args.topK,
+        lambdaAdapters: deps.adapters,
+        builtinTools: deps.unified.builtinTools,
+        callBuiltin: deps.unified.callBuiltin,
+        apiKeys: deps.unified.apiKeys
+      });
+      // runUnified bypasses per-tool quota; fan-out legs are unmetered for v1
+      return { results: out.results, providersUsed: out.providersUsed };
+    }
+
     const provider = tool.replace(/^search_/, '');
     const adapter = deps.adapters[provider];
 
