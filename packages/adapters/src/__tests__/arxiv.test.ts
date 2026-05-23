@@ -49,4 +49,22 @@ describe('arxivAdapter (specifics)', () => {
       code: ErrorCode.UPSTREAM_ERROR
     });
   });
+
+  it('handles entries with missing optional fields without crashing', async () => {
+    const partialXml = `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <id>http://arxiv.org/abs/2401.99999v1</id>
+    <published>2026-03-01T00:00:00Z</published>
+  </entry>
+</feed>`;
+    nock('https://export.arxiv.org')
+      .get('/api/query')
+      .query(true)
+      .reply(200, partialXml, { 'Content-Type': 'application/atom+xml' });
+    const results = await arxivAdapter.search('q');
+    expect(results).toHaveLength(1);
+    expect(results[0]!.title).toBe('');
+    expect(results[0]!.snippet).toBe('');
+  });
 });

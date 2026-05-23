@@ -69,15 +69,17 @@ export const arxivAdapter: Adapter = {
 
     const body = await res.text();
     const parsed = xml.parse(body) as {
-      feed?: { entry?: Array<{ id: string; title: string; summary: string; published?: string }> };
+      feed?: { entry?: Array<{ id?: string; title?: string; summary?: string; published?: string }> };
     };
     const entries = parsed.feed?.entry ?? [];
-    return entries.map((e) => ({
-      url: e.id,
-      title: e.title.trim(),
-      snippet: e.summary.trim(),
-      source: 'arxiv',
-      ...(e.published ? { publishedAt: e.published } : {})
-    }));
+    return entries
+      .filter((e): e is typeof e & { id: string } => typeof e.id === 'string' && e.id.length > 0)
+      .map((e) => ({
+        url: e.id,
+        title: (e.title ?? '').trim(),
+        snippet: (e.summary ?? '').trim(),
+        source: 'arxiv',
+        ...(e.published ? { publishedAt: e.published } : {})
+      }));
   }
 };
