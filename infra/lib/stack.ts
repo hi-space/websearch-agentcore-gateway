@@ -4,18 +4,22 @@ import { NetworkConstruct } from './network/index.js';
 import { KmsConstruct } from './security/kms.js';
 import { ConfigTableConstruct } from './data/config-table.js';
 import { QuotaTableConstruct } from './data/quota-table.js';
+import { SearchRouterFn } from './compute/search-router-fn.js';
 
 export class SearchGatewayStack extends Stack {
-  readonly network: NetworkConstruct;
-  readonly kms: KmsConstruct;
-  readonly configTable: ConfigTableConstruct;
-  readonly quotaTable: QuotaTableConstruct;
+  readonly searchRouter: SearchRouterFn;
 
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-    this.network = new NetworkConstruct(this, 'Network');
-    this.kms = new KmsConstruct(this, 'Kms');
-    this.configTable = new ConfigTableConstruct(this, 'Config', { kmsKey: this.kms.ddbKey });
-    this.quotaTable = new QuotaTableConstruct(this, 'Quota', { kmsKey: this.kms.ddbKey });
+    const network = new NetworkConstruct(this, 'Network');
+    const kms = new KmsConstruct(this, 'Kms');
+    const configTable = new ConfigTableConstruct(this, 'Config', { kmsKey: kms.ddbKey });
+    const quotaTable = new QuotaTableConstruct(this, 'Quota', { kmsKey: kms.ddbKey });
+
+    this.searchRouter = new SearchRouterFn(this, 'SearchRouter', {
+      vpc: network.vpc as any,
+      quotaTable: quotaTable.table as any,
+      quotaLimits: { arxiv: { rpm: 30, daily: 1000 } }
+    });
   }
 }
