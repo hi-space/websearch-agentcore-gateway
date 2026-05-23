@@ -5,6 +5,7 @@ import { ITable } from 'aws-cdk-lib/aws-dynamodb';
 import { NetworkConstruct } from '../network/index.js';
 import { KmsConstruct } from '../security/kms.js';
 import { ConfigTableConstruct } from '../data/config-table.js';
+import { ConfigSeed } from '../data/config-seed.js';
 import { QuotaTableConstruct } from '../data/quota-table.js';
 import { SearchRouterFn } from '../compute/search-router-fn.js';
 import { AgentCoreGateway } from '../gateway/agentcore-gateway.js';
@@ -20,6 +21,19 @@ export class SearchStack extends Stack {
     const kms = new KmsConstruct(this, 'Kms');
     const configTable = new ConfigTableConstruct(this, 'Config', { kmsKey: kms.ddbKey });
     const quotaTable = new QuotaTableConstruct(this, 'Quota', { kmsKey: kms.ddbKey });
+
+    // Seed ConfigTable with provider configurations
+    new ConfigSeed(this, 'ConfigSeed', {
+      table: configTable.table as ITable,
+      providers: [
+        { providerId: 'arxiv', enabled: true },
+        { providerId: 'exa', enabled: false },
+        { providerId: 'perplexity', enabled: false },
+        { providerId: 'you', enabled: false },
+        { providerId: 'tavily', enabled: false, builtin: true },
+        { providerId: 'brave', enabled: false, builtin: true }
+      ]
+    });
 
     this.searchRouter = new SearchRouterFn(this, 'SearchRouter', {
       vpc: network.vpc as IVpc,
