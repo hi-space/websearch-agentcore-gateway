@@ -1,5 +1,5 @@
 import { Construct } from 'constructs';
-import { CustomResource, Duration, Stack } from 'aws-cdk-lib';
+import { Duration, Stack } from 'aws-cdk-lib';
 import {
   AwsCustomResource,
   AwsCustomResourcePolicy,
@@ -8,6 +8,7 @@ import {
 } from 'aws-cdk-lib/custom-resources';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { Effect, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import { GatewayTargets } from './targets.js';
 
 export interface GatewayProps {
   routerFn: IFunction;
@@ -57,41 +58,12 @@ export class AgentCoreGateway extends Construct {
 
     this.gatewayId = create.getResponseField('gatewayId');
 
-    new AwsCustomResource(this, 'CreateTarget', {
-      onCreate: {
-        service: 'bedrock-agentcore-control',
-        action: 'createTarget',
-        parameters: {
-          gatewayIdentifier: this.gatewayId,
-          name: 'search-router',
-          targetConfiguration: {
-            mcp: {
-              lambda: {
-                lambdaArn: props.routerFn.functionArn,
-                toolSchema: { tools: props.toolDefinitions }
-              }
-            }
-          },
-          credentialProviderConfigurations: [{
-            credentialProviderType: 'GATEWAY_IAM_ROLE',
-            credentialProvider: { gatewayIamRole: { roleArn: invokeRole.roleArn } }
-          }]
-        },
-        physicalResourceId: PhysicalResourceId.fromResponse('targetId')
-      },
-      policy: AwsCustomResourcePolicy.fromStatements([
-        new PolicyStatement({
-          effect: Effect.ALLOW,
-          actions: ['bedrock-agentcore:CreateTarget', 'bedrock-agentcore:DeleteTarget'],
-          resources: ['*']
-        }),
-        new PolicyStatement({
-          effect: Effect.ALLOW,
-          actions: ['iam:PassRole'],
-          resources: [invokeRole.roleArn]
-        })
-      ]),
-      timeout: Duration.minutes(5)
-    }).node.addDependency(create);
+    const targets = new GatewayTargets(this, 'Targets', {
+      gatewayId: this.gatewayId,
+      routerFn: props.routerFn,
+      invokeRole,
+      tools: props.toolDefinitions
+    });
+    targets.node.addDependency(create);
   }
 }

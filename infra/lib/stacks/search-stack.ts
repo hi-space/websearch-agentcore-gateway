@@ -2,16 +2,16 @@ import { Stack, StackProps, CfnOutput } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { IVpc } from 'aws-cdk-lib/aws-ec2';
 import { ITable } from 'aws-cdk-lib/aws-dynamodb';
-import { NetworkConstruct } from './network/index.js';
-import { KmsConstruct } from './security/kms.js';
-import { ConfigTableConstruct } from './data/config-table.js';
-import { QuotaTableConstruct } from './data/quota-table.js';
-import { SearchRouterFn } from './compute/search-router-fn.js';
-import { AgentCoreGateway } from './gateway/agentcore-gateway.js';
-import { AlarmsConstruct } from './observability/alarms.js';
-import { applyV1NagSuppressions } from './nag-suppressions.js';
+import { NetworkConstruct } from '../network/index.js';
+import { KmsConstruct } from '../security/kms.js';
+import { ConfigTableConstruct } from '../data/config-table.js';
+import { QuotaTableConstruct } from '../data/quota-table.js';
+import { SearchRouterFn } from '../compute/search-router-fn.js';
+import { AgentCoreGateway } from '../gateway/agentcore-gateway.js';
+import { AlarmsConstruct } from '../observability/alarms.js';
+import { applyV1NagSuppressions } from '../nag-suppressions.js';
 
-export class SearchGatewayStack extends Stack {
+export class SearchStack extends Stack {
   readonly searchRouter: SearchRouterFn;
 
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -45,3 +45,6 @@ export class SearchGatewayStack extends Stack {
     applyV1NagSuppressions(this);
   }
 }
+
+// Re-export for backwards compat
+export { SearchStack as SearchGatewayStack };
