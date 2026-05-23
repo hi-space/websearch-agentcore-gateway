@@ -51,7 +51,8 @@ export class NetworkConstruct extends Construct {
     for (const [name, svc] of ifaceServices) {
       this.vpc.addInterfaceEndpoint(name, {
         service: svc,
-        privateDnsEnabled: true
+        privateDnsEnabled: true,
+        subnets: { subnetType: SubnetType.PRIVATE_WITH_EGRESS }
       });
     }
     this.vpc.addGatewayEndpoint('Dynamo', { service: GatewayVpcEndpointAwsService.DYNAMODB });
