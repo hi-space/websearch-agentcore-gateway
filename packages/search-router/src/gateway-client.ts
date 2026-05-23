@@ -5,7 +5,7 @@ export interface GatewayCall {
   token: string;
   tool: string; // e.g., 'search_tavily'
   query: string;
-  topK?: number;
+  topK?: number | undefined;
 }
 
 type Fetch = typeof fetch;

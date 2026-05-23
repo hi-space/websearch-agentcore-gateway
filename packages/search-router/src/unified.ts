@@ -2,11 +2,11 @@ import { mergeRRF, type Adapter, type SearchResult } from '@search-gateway/share
 
 export interface UnifiedInput {
   query: string;
-  topK?: number;
+  topK?: number | undefined;
   lambdaAdapters: Record<string, Adapter>;
   builtinTools: string[];
-  callBuiltin: (tool: string, query: string, topK?: number) => Promise<SearchResult[]>;
-  apiKeys?: Record<string, string>;
+  callBuiltin: (tool: string, query: string, topK?: number | undefined) => Promise<SearchResult[]>;
+  apiKeys?: Record<string, string> | undefined;
 }
 
 export interface UnifiedOutput {
@@ -18,9 +18,13 @@ export interface UnifiedOutput {
 export async function runUnified(input: UnifiedInput): Promise<UnifiedOutput> {
   const calls: Array<Promise<{ provider: string; results?: SearchResult[]; error?: string }>> = [];
   for (const [name, adapter] of Object.entries(input.lambdaAdapters)) {
+    const adapterOpts = {
+      ...(input.topK !== undefined ? { topK: input.topK } : {}),
+      ...(input.apiKeys?.[name] !== undefined ? { apiKey: input.apiKeys[name] } : {})
+    };
     calls.push(
       adapter
-        .search(input.query, { topK: input.topK, apiKey: input.apiKeys?.[name] })
+        .search(input.query, adapterOpts as Parameters<typeof adapter.search>[1])
         .then((results) => ({ provider: name, results }))
         .catch((e: Error) => ({ provider: name, error: e.message }))
     );
@@ -38,5 +42,8 @@ export async function runUnified(input: UnifiedInput): Promise<UnifiedOutput> {
   const lists = settled.filter((s) => s.results).map((s) => s.results!);
   const used = settled.filter((s) => s.results).map((s) => s.provider);
   const errors = settled.filter((s) => s.error).map((s) => ({ provider: s.provider, message: s.error! }));
-  return { results: mergeRRF(lists, { topK: input.topK }), providersUsed: used, errors };
+  const mergeOpts = {
+    ...(input.topK !== undefined ? { topK: input.topK } : {})
+  };
+  return { results: mergeRRF(lists, mergeOpts as Parameters<typeof mergeRRF>[1]), providersUsed: used, errors };
 }

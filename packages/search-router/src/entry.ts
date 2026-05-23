@@ -1,22 +1,79 @@
-import type { Adapter } from '@search-gateway/shared';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
+import type { Adapter, SearchResult } from '@search-gateway/shared';
 import { createSecretsCache } from '@search-gateway/shared';
 import { listAdapters } from '@search-gateway/adapters';
 import { createHandler } from './handler.js';
 import { createQuotaService, type QuotaLimits } from './quota.js';
+import { loadEnabledProviders } from './config-store.js';
+import { callGatewayBuiltin } from './gateway-client.js';
 
 const TABLE = process.env.QUOTA_TABLE_NAME;
 if (!TABLE) throw new Error('QUOTA_TABLE_NAME env var is required');
 
-const adapters: Record<string, Adapter> = Object.fromEntries(
+const CONFIG_TABLE = process.env.CONFIG_TABLE;
+const GATEWAY_URL = process.env.GATEWAY_URL;
+const GATEWAY_TOKEN_SSM_PARAM = process.env.GATEWAY_TOKEN_SSM_PARAM;
+const UNIFIED_BUILTINS = process.env.UNIFIED_BUILTINS ?? '';
+
+let adapters: Record<string, Adapter> = Object.fromEntries(
   listAdapters().map((a) => [a.name, a])
 );
-const limitsEnv = JSON.parse(process.env.QUOTA_LIMITS_JSON ?? '{}') as Record<string, QuotaLimits>;
-const secretArnsEnv = JSON.parse(process.env.SECRET_ARNS_JSON ?? '{}') as Record<string, string>;
+let limitsEnv: Record<string, QuotaLimits> = JSON.parse(process.env.QUOTA_LIMITS_JSON ?? '{}');
+let secretArnsEnv: Record<string, string> = JSON.parse(process.env.SECRET_ARNS_JSON ?? '{}');
+
+// Cold-start initialization from ConfigTable
+if (CONFIG_TABLE) {
+  const ddb = new DynamoDBClient({});
+  const enabledProviders = await loadEnabledProviders(ddb, CONFIG_TABLE);
+
+  // Build limits and secret ARNs from enabled providers
+  limitsEnv = Object.fromEntries(
+    enabledProviders.map((p) => [p.providerId, p.quota])
+  );
+  secretArnsEnv = Object.fromEntries(
+    enabledProviders
+      .filter((p) => p.secretArn)
+      .map((p) => [p.providerId, p.secretArn!])
+  );
+}
+
+// Build unified configuration if Gateway URL and token param are set
+let unifiedConfig: { builtinTools: string[]; callBuiltin: (tool: string, query: string, topK?: number) => Promise<SearchResult[]> } | undefined;
+
+if (GATEWAY_URL && GATEWAY_TOKEN_SSM_PARAM) {
+  const ssm = new SSMClient({});
+  let cachedToken: string | undefined;
+
+  const callBuiltin = async (tool: string, query: string, topK?: number): Promise<SearchResult[]> => {
+    if (!cachedToken) {
+      const param = await ssm.send(
+        new GetParameterCommand({ Name: GATEWAY_TOKEN_SSM_PARAM, WithDecryption: true })
+      );
+      cachedToken = param.Parameter?.Value;
+      if (!cachedToken) throw new Error('Failed to resolve Gateway token from SSM');
+    }
+    return callGatewayBuiltin({
+      gatewayUrl: GATEWAY_URL,
+      token: cachedToken,
+      tool,
+      query,
+      topK
+    });
+  };
+
+  const builtinTools = UNIFIED_BUILTINS.split(',')
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+  unifiedConfig = { builtinTools, callBuiltin };
+}
 
 export const handler = createHandler({
   adapters,
   quota: createQuotaService({ tableName: TABLE }),
   limits: limitsEnv,
   secrets: createSecretsCache(),
-  secretArns: secretArnsEnv
+  secretArns: secretArnsEnv,
+  unified: unifiedConfig
 });

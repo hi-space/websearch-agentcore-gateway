@@ -26,13 +26,13 @@ export interface HandlerDeps {
   adapters: Record<string, Adapter>;
   quota: QuotaService;
   limits: Record<string, QuotaLimits>;
-  secrets?: { get(arn: string): Promise<string> };
-  secretArns?: Record<string, string>;
+  secrets?: { get(arn: string): Promise<string> } | undefined;
+  secretArns?: Record<string, string> | undefined;
   unified?: {
     builtinTools: string[];
-    callBuiltin: (tool: string, query: string, topK?: number) => Promise<SearchResult[]>;
-    apiKeys?: Record<string, string>;
-  };
+    callBuiltin: (tool: string, query: string, topK?: number | undefined) => Promise<SearchResult[]>;
+    apiKeys?: Record<string, string> | undefined;
+  } | undefined;
 }
 
 export function createHandler(deps: HandlerDeps) {

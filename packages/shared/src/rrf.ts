@@ -1,8 +1,8 @@
 import type { SearchResult } from './types.js';
 
 export interface MergeOpts {
-  k?: number;
-  topK?: number;
+  k?: number | undefined;
+  topK?: number | undefined;
 }
 
 export function mergeRRF(lists: SearchResult[][], opts: MergeOpts = {}): SearchResult[] {
