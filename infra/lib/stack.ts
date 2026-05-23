@@ -1,4 +1,4 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
+import { Stack, StackProps, CfnOutput } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { IVpc } from 'aws-cdk-lib/aws-ec2';
 import { ITable } from 'aws-cdk-lib/aws-dynamodb';
@@ -7,6 +7,7 @@ import { KmsConstruct } from './security/kms.js';
 import { ConfigTableConstruct } from './data/config-table.js';
 import { QuotaTableConstruct } from './data/quota-table.js';
 import { SearchRouterFn } from './compute/search-router-fn.js';
+import { AgentCoreGateway } from './gateway/agentcore-gateway.js';
 
 export class SearchGatewayStack extends Stack {
   readonly searchRouter: SearchRouterFn;
@@ -23,5 +24,19 @@ export class SearchGatewayStack extends Stack {
       quotaTable: quotaTable.table as ITable,
       quotaLimits: { arxiv: { rpm: 30, daily: 1000 } }
     });
+
+    const gateway = new AgentCoreGateway(this, 'Gateway', {
+      routerFn: this.searchRouter.fn,
+      toolDefinitions: [{
+        name: 'search_arxiv',
+        description: 'Search arXiv for academic papers.',
+        inputSchema: {
+          type: 'object',
+          properties: { query: { type: 'string', minLength: 1, maxLength: 2048 } },
+          required: ['query']
+        }
+      }]
+    });
+    new CfnOutput(this, 'GatewayId', { value: gateway.gatewayId });
   }
 }
