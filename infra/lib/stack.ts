@@ -9,6 +9,7 @@ import { QuotaTableConstruct } from './data/quota-table.js';
 import { SearchRouterFn } from './compute/search-router-fn.js';
 import { AgentCoreGateway } from './gateway/agentcore-gateway.js';
 import { AlarmsConstruct } from './observability/alarms.js';
+import { applyV1NagSuppressions } from './nag-suppressions.js';
 
 export class SearchGatewayStack extends Stack {
   readonly searchRouter: SearchRouterFn;
@@ -40,5 +41,7 @@ export class SearchGatewayStack extends Stack {
     });
     new CfnOutput(this, 'GatewayId', { value: gateway.gatewayId });
     new AlarmsConstruct(this, 'Alarms');
+
+    applyV1NagSuppressions(this);
   }
 }
