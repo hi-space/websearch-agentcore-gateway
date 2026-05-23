@@ -1,5 +1,8 @@
 node_modules/
 dist/
+.next/
+next-env.d.ts
+*.tsbuildinfo
 .turbo/
 cdk.out/
 .cdk.staging/
@@ -10,3 +13,4 @@ coverage/
 .DS_Store
 .idea/
 .vscode/settings.json
+.omc/
