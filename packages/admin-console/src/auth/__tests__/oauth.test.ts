@@ -50,6 +50,21 @@ describe('oauth helpers', () => {
     }
   });
 
+  it('readOAuthEnv prefers X-Forwarded-Host when set (CloudFront → Function URL case)', () => {
+    const prev = { ...process.env };
+    process.env.COGNITO_HOSTED_UI_BASE_URL = env.hostedUiBaseUrl;
+    process.env.COGNITO_OAUTH_CLIENT_ID = env.clientId;
+    try {
+      const out = readOAuthEnv('https://abc123.lambda-url.us-east-1.on.aws/api/auth/login', {
+        'x-forwarded-host': 'd8ftutzhex2wz.cloudfront.net',
+        'x-forwarded-proto': 'https'
+      });
+      expect(out.consoleBaseUrl).toBe('https://d8ftutzhex2wz.cloudfront.net');
+    } finally {
+      process.env = prev;
+    }
+  });
+
   it('readOAuthEnv throws when env vars are missing', () => {
     const prev = { ...process.env };
     delete process.env.COGNITO_HOSTED_UI_BASE_URL;

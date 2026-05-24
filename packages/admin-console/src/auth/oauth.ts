@@ -1,26 +1,36 @@
 import { createHash, randomBytes } from 'node:crypto';
 
+export { SESSION_COOKIE, PKCE_COOKIE } from './cookies';
+
 export interface OAuthEnv {
   hostedUiBaseUrl: string;
   clientId: string;
   consoleBaseUrl: string;
 }
 
-export const SESSION_COOKIE = 'id_token';
-export const PKCE_COOKIE = 'oauth_pkce';
-
 // Derives the OAuth env from process env + the incoming request URL. consoleBaseUrl comes from
 // the request rather than env to avoid a Lambda → CloudFront → Lambda dependency cycle at deploy
 // time (distribution.domainName is a runtime token; baking it into Lambda env reverses the
 // natural construct ordering inside AdminConsoleStack).
-export function readOAuthEnv(requestUrl: string | URL): OAuthEnv {
+//
+// CloudFront → Function URL puts the Lambda's own *.lambda-url.aws host on the Host header and
+// the user-facing CloudFront host on X-Forwarded-Host. The OAuth callback must point at the
+// CloudFront host (the URL the user actually reaches), so X-Forwarded-Host wins when present.
+export function readOAuthEnv(
+  requestUrl: string | URL,
+  headers?: { 'x-forwarded-host'?: string | null; 'x-forwarded-proto'?: string | null }
+): OAuthEnv {
   const hostedUiBaseUrl = process.env.COGNITO_HOSTED_UI_BASE_URL;
   const clientId = process.env.COGNITO_OAUTH_CLIENT_ID;
   if (!hostedUiBaseUrl || !clientId) {
     throw new Error('Cognito Hosted UI env vars missing — login flow not configured');
   }
   const u = typeof requestUrl === 'string' ? new URL(requestUrl) : requestUrl;
-  const consoleBaseUrl = `${u.protocol}//${u.host}`;
+  const xfHost = headers?.['x-forwarded-host'];
+  const xfProto = headers?.['x-forwarded-proto'];
+  const host = xfHost || u.host;
+  const protocol = xfProto ? `${xfProto}:` : u.protocol;
+  const consoleBaseUrl = `${protocol}//${host}`;
   return { hostedUiBaseUrl, clientId, consoleBaseUrl };
 }
 

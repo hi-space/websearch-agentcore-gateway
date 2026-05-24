@@ -2,7 +2,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { exchangeCodeForTokens, PKCE_COOKIE, readOAuthEnv, SESSION_COOKIE } from '../../../../src/auth/oauth';
 
 export async function GET(req: NextRequest) {
-  const env = readOAuthEnv(req.url);
+  const env = readOAuthEnv(req.url, {
+    'x-forwarded-host': req.headers.get('x-forwarded-host'),
+    'x-forwarded-proto': req.headers.get('x-forwarded-proto')
+  });
   const url = new URL(req.url);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');

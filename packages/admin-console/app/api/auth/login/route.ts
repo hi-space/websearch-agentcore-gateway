@@ -9,7 +9,10 @@ import {
 } from '../../../../src/auth/oauth';
 
 export async function GET(req: NextRequest) {
-  const env = readOAuthEnv(req.url);
+  const env = readOAuthEnv(req.url, {
+    'x-forwarded-host': req.headers.get('x-forwarded-host'),
+    'x-forwarded-proto': req.headers.get('x-forwarded-proto')
+  });
   const verifier = generateCodeVerifier();
   const state = randomBytes(16).toString('hex');
   const url = buildAuthorizeUrl(env, { state, codeChallenge: codeChallenge(verifier) });

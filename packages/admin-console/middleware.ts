@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { makeVerifier } from '@/src/auth/verify-jwt';
 import { extractToken } from '@/src/auth/middleware-helpers';
-import { SESSION_COOKIE } from '@/src/auth/oauth';
+import { SESSION_COOKIE } from '@/src/auth/cookies';
 
 const verifyAccess = makeVerifier({
   userPoolId: process.env.COGNITO_USER_POOL_ID!,
