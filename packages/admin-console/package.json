@@ -8,6 +8,7 @@
     "build": "next build",
     "build:lambda": "next build && rm -rf dist && mkdir -p dist && cp -R .next/standalone/. dist/ && cp -R .next/static dist/packages/admin-console/.next/static && node scripts/flatten-deps.mjs && esbuild src/lambda-entry.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/packages/admin-console/lambda-entry.mjs --external:next --external:react --external:react-dom",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -26,6 +27,7 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.45.0",
     "@testing-library/jest-dom": "^6.4.0",
     "@testing-library/react": "^15.0.0",
     "@types/aws-lambda": "^8.10.140",
