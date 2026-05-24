@@ -1,6 +1,6 @@
-import { Stack, StackProps, CfnOutput, Duration, Fn, SymlinkFollowMode } from 'aws-cdk-lib';
+import { Stack, StackProps, CfnOutput, Duration, Fn, SymlinkFollowMode, Annotations } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { Function, Runtime, Code, Architecture, Tracing, CfnPermission } from 'aws-cdk-lib/aws-lambda';
+import { Function, Runtime, Code, Architecture, Tracing, CfnPermission, FunctionUrlAuthType } from 'aws-cdk-lib/aws-lambda';
 import { IVpc, SubnetType } from 'aws-cdk-lib/aws-ec2';
 import { ITable } from 'aws-cdk-lib/aws-dynamodb';
 import { IKey } from 'aws-cdk-lib/aws-kms';
@@ -44,7 +44,7 @@ export class AdminConsoleStack extends Stack {
 
     // Check if asset path exists
     if (!existsSync(assetPath)) {
-      this.node.addWarning(
+      Annotations.of(this).addWarning(
         `Admin Console asset directory does not exist at ${assetPath}. ` +
         'Please run: pnpm --filter admin-console build:lambda'
       );
@@ -133,7 +133,7 @@ export class AdminConsoleStack extends Stack {
 
     // Create Function URL
     const fnUrl = fn.addFunctionUrl({
-      authType: 'AWS_IAM'
+      authType: FunctionUrlAuthType.AWS_IAM
     });
 
     // Create WAF WebACL

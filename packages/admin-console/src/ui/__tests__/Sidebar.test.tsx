@@ -14,6 +14,6 @@ describe('Sidebar', () => {
   it('marks the active item with aria-current', () => {
     render(<Sidebar active="dashboard" />);
     const dashboardLink = screen.getAllByRole('link', { name: 'Dashboard' }).find((el) => el.getAttribute('aria-current') === 'page');
-    expect(dashboardLink).toHaveAttribute('aria-current', 'page');
+    expect(dashboardLink!).toHaveAttribute('aria-current', 'page');
   });
 });

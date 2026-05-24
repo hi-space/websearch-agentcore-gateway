@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { adminApi } from '../api.js';
 
 describe('adminApi', () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => { vi.restoreAllMocks(); });
 
   it('listProviders parses the response', async () => {
     vi.stubGlobal(
@@ -15,7 +15,7 @@ describe('adminApi', () => {
       })
     );
     const out = await adminApi.listProviders();
-    expect(out[0].providerId).toBe('exa');
+    expect(out[0]?.providerId).toBe('exa');
   });
 
   it('throws ApiError on 4xx with body', async () => {

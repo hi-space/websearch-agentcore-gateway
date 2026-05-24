@@ -1,6 +1,6 @@
 import { Stack, type StackProps, Duration } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { Dashboard, Alarm, Metric, ComparisonOperator } from 'aws-cdk-lib/aws-cloudwatch';
+import { CfnDashboard, Alarm, Metric, ComparisonOperator } from 'aws-cdk-lib/aws-cloudwatch';
 import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions';
 import { Topic } from 'aws-cdk-lib/aws-sns';
 import { Function, Code, Runtime, Architecture, StartingPosition } from 'aws-cdk-lib/aws-lambda';
@@ -34,7 +34,7 @@ export class ObservabilityStack extends Stack {
   constructor(scope: Construct, id: string, props: ObservabilityStackProps) {
     super(scope, id, props);
 
-    new Dashboard(this, 'Dashboard', {
+    new CfnDashboard(this, 'Dashboard', {
       dashboardName: 'search-gateway',
       dashboardBody: buildDashboardBody({
         providers: props.providers,

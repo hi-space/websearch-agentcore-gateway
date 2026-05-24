@@ -13,7 +13,7 @@ const stubApi = {
 } as const;
 
 describe('ProviderDetail', () => {
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => { vi.clearAllMocks(); });
   it('toggles enabled and calls updateProvider', async () => {
     const update = vi.fn().mockResolvedValue({ ...row, enabled: true });
     render(<ProviderDetail initial={row} api={{ ...stubApi, updateProvider: update }} />);
@@ -26,7 +26,7 @@ describe('ProviderDetail', () => {
     const reveal = vi.fn().mockResolvedValue({ providerId: 'exa', value: 'sk_real' });
     render(<ProviderDetail initial={row} api={{ ...stubApi, revealSecret: reveal }} />);
     const revealButtons = screen.getAllByRole('button', { name: /reveal/i });
-    fireEvent.click(revealButtons[0]);
+    fireEvent.click(revealButtons[0]!);
     await waitFor(() => {
       expect(screen.getByText(/are you sure/i)).toBeInTheDocument();
     });
@@ -36,7 +36,7 @@ describe('ProviderDetail', () => {
     const test = vi.fn().mockResolvedValue({ ok: true, results: 3 });
     render(<ProviderDetail initial={row} api={{ ...stubApi, testProvider: test }} />);
     const buttons = screen.getAllByRole('button', { name: 'Test' });
-    fireEvent.click(buttons[buttons.length - 1]);
+    fireEvent.click(buttons[buttons.length - 1]!);
     await waitFor(() => expect(screen.getByText(/3 results/i)).toBeInTheDocument());
   });
 });

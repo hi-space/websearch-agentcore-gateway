@@ -22,7 +22,9 @@ vi.mock('../../auth/mfa-assertion', () => ({
 }));
 
 describe('revealSecret (MFA-hardened)', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   function baseInput(overrides: any = {}) {
     const sm = { send: vi.fn().mockResolvedValue({ SecretString: 'sk_test_placeholder' }) };

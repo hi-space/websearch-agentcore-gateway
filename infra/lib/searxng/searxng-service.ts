@@ -10,8 +10,9 @@ import {
   ApplicationLoadBalancer,
   ApplicationTargetGroup,
   TargetType,
-  Protocol
+  ApplicationProtocol
 } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import { Protocol } from 'aws-cdk-lib/aws-ecs';
 import { IVpc, SubnetType } from 'aws-cdk-lib/aws-ec2';
 import { LogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { RemovalPolicy, Duration } from 'aws-cdk-lib';
@@ -58,7 +59,7 @@ export class SearxngService extends Construct {
       portMappings: [
         {
           containerPort: 8080,
-          protocol: 'tcp'
+          protocol: Protocol.TCP
         }
       ]
     });
@@ -74,7 +75,7 @@ export class SearxngService extends Construct {
     const targetGroup = new ApplicationTargetGroup(this, 'TG', {
       vpc: props.vpc,
       port: 8080,
-      protocol: Protocol.HTTP,
+      protocol: ApplicationProtocol.HTTP,
       targetType: TargetType.IP,
       healthCheck: {
         path: '/healthz',
@@ -101,7 +102,7 @@ export class SearxngService extends Construct {
     // Add listener
     alb.addListener('Listener', {
       port: 80,
-      protocol: Protocol.HTTP,
+      protocol: ApplicationProtocol.HTTP,
       defaultTargetGroups: [targetGroup]
     });
 
