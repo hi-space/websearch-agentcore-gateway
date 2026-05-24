@@ -23,8 +23,15 @@ const props = process.env.CDK_DEFAULT_ACCOUNT && process.env.CDK_DEFAULT_REGION
   : {};
 
 const enableSearxng = app.node.tryGetContext('enableSearxng') === true || app.node.tryGetContext('enableSearxng') === 'true';
+const enableGuardDuty = app.node.tryGetContext('enableGuardDuty') === true || app.node.tryGetContext('enableGuardDuty') === 'true';
+const enableSecurityHub = app.node.tryGetContext('enableSecurityHub') === true || app.node.tryGetContext('enableSecurityHub') === 'true';
 
-const search = new SearchStack(app, 'SearchGatewayStack-v1-0', { ...props, enableSearxng });
+const search = new SearchStack(app, 'SearchGatewayStack-v1-0', {
+  ...props,
+  enableSearxng,
+  enableGuardDuty,
+  enableSecurityHub
+});
 
 Tags.of(search).add('project', 'search-agentcore-gateway');
 Tags.of(search).add('environment', app.node.tryGetContext('env') ?? 'dev');

@@ -12,10 +12,14 @@ import { SearchRouterFn } from '../compute/search-router-fn.js';
 import { AgentCoreGateway } from '../gateway/agentcore-gateway.js';
 import { AlarmsConstruct } from '../observability/alarms.js';
 import { SearxngService } from '../searxng/searxng-service.js';
+import { enableGuardDuty } from '../security/guardduty.js';
+import { enableSecurityHub } from '../security/securityhub.js';
 import { applyV1NagSuppressions } from '../nag-suppressions.js';
 
 export interface SearchStackProps extends StackProps {
   enableSearxng?: boolean;
+  enableGuardDuty?: boolean;
+  enableSecurityHub?: boolean;
 }
 
 export class SearchStack extends Stack {
@@ -116,6 +120,13 @@ export class SearchStack extends Stack {
 
     const alarms = new AlarmsConstruct(this, 'Alarms');
     this.snsTopicArn = alarms.topic.topicArn;
+
+    if (props?.enableGuardDuty) {
+      enableGuardDuty(this);
+    }
+    if (props?.enableSecurityHub) {
+      enableSecurityHub(this);
+    }
 
     applyV1NagSuppressions(this);
   }
