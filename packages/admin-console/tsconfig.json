@@ -7,6 +7,7 @@
     "noEmit": true,
     "baseUrl": ".",
     "lib": ["ES2022", "dom", "dom.iterable"],
+    "types": ["@testing-library/jest-dom", "node"],
     "paths": {
       "@/*": ["./*"]
     },

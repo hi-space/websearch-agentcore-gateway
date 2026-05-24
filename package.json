@@ -7,9 +7,9 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "lint": "eslint . --ext .ts",
-    "typecheck": "tsc -b",
-    "test": "vitest run",
+    "lint": "eslint . --ext .ts --no-error-on-unmatched-pattern",
+    "typecheck": "tsc -b && pnpm --filter admin-console typecheck",
+    "test": "pnpm -r test",
     "test:watch": "vitest",
     "build": "pnpm -r build",
     "synth": "pnpm --filter infra synth",
