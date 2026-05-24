@@ -6,6 +6,7 @@ import {
   PhysicalResourceId
 } from 'aws-cdk-lib/custom-resources';
 import { ITable } from 'aws-cdk-lib/aws-dynamodb';
+import { IKey } from 'aws-cdk-lib/aws-kms';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 
 export interface SeedRow {
@@ -20,6 +21,7 @@ export interface SeedRow {
 export interface ConfigSeedProps {
   table: ITable;
   providers: SeedRow[];
+  kmsKey: IKey;
 }
 
 export class ConfigSeed extends Construct {
@@ -77,8 +79,14 @@ export class ConfigSeed extends Construct {
           effect: Effect.ALLOW,
           actions: ['dynamodb:BatchWriteItem'],
           resources: [props.table.tableArn]
+        }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['kms:Encrypt', 'kms:Decrypt', 'kms:ReEncrypt*', 'kms:GenerateDataKey*', 'kms:DescribeKey'],
+          resources: [props.kmsKey.keyArn]
         })
       ]),
+      installLatestAwsSdk: false,
       timeout: Duration.minutes(1)
     });
   }

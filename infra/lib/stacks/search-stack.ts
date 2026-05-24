@@ -68,6 +68,7 @@ export class SearchStack extends Stack {
     // Seed ConfigTable with provider configurations
     new ConfigSeed(this, 'ConfigSeed', {
       table: configTableConstruct.table as ITable,
+      kmsKey: kms.ddbKey,
       providers: [
         { providerId: 'arxiv', enabled: true },
         { providerId: 'exa', enabled: false },
