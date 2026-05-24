@@ -33,7 +33,7 @@ export class GatewayWaitForReady extends Construct {
       architecture: Architecture.ARM_64,
       timeout: Duration.minutes(1),
       bundling: {
-        format: OutputFormat.ESM,
+        format: OutputFormat.CJS,
         target: 'node20',
         minify: true,
         // Bundle the bedrock-agentcore-control client (NOT in Lambda's bundled SDK)
