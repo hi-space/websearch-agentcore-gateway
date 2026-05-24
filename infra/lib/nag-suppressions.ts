@@ -4,10 +4,6 @@ import { Stack } from 'aws-cdk-lib';
 export function applyV1NagSuppressions(stack: Stack): void {
   NagSuppressions.addStackSuppressions(stack, [
     {
-      id: 'AwsSolutions-IAM4',
-      reason: 'AWS-managed policies on AwsCustomResource Lambdas are scoped to control-plane API actions only; tightened in v1.6 once a CFN-native AgentCore L1 ships.'
-    },
-    {
       id: 'AwsSolutions-IAM5',
       reason: 'CloudWatch:PutMetricData and bedrock-agentcore:Create*/Delete* require resource:* by API contract; bounded by namespace/action conditions where possible.'
     },
