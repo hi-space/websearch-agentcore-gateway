@@ -32,6 +32,7 @@ export interface HandlerDeps {
   limits: Record<string, QuotaLimits>;
   secrets?: { get(arn: string): Promise<string> } | undefined;
   secretArns?: Record<string, string> | undefined;
+  providerOpts?: Record<string, SearchOpts> | undefined;
   unified?: {
     builtinTools: string[];
     callBuiltin: (tool: string, query: string, topK?: number | undefined) => Promise<SearchResult[]>;
@@ -131,6 +132,13 @@ export function createHandler(deps: HandlerDeps) {
         }
         const secret = await deps.secrets.get(arn);
         opts = { topK: 10, apiKey: secret };
+      }
+
+      // Merge in per-provider opts (baseUrl, etc.)
+      if (deps.providerOpts?.[provider]) {
+        opts = { ...opts, ...deps.providerOpts[provider] };
+      } else if (!opts) {
+        opts = { topK: 10 };
       }
 
       const results = await adapter.search(parsed.query, opts);

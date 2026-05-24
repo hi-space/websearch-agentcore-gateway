@@ -1,6 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
-import type { Adapter, SearchResult } from '@search-gateway/shared';
+import type { Adapter, SearchOpts, SearchResult } from '@search-gateway/shared';
 import { createSecretsCache } from '@search-gateway/shared';
 import { listAdapters } from '@search-gateway/adapters';
 import { createHandler } from './handler.js';
@@ -21,13 +21,14 @@ let adapters: Record<string, Adapter> = Object.fromEntries(
 );
 let limitsEnv: Record<string, QuotaLimits> = JSON.parse(process.env.QUOTA_LIMITS_JSON ?? '{}');
 let secretArnsEnv: Record<string, string> = JSON.parse(process.env.SECRET_ARNS_JSON ?? '{}');
+let providerOptsEnv: Record<string, SearchOpts> = {};
 
 // Cold-start initialization from ConfigTable
 if (CONFIG_TABLE) {
   const ddb = new DynamoDBClient({});
   const enabledProviders = await loadEnabledProviders(ddb, CONFIG_TABLE);
 
-  // Build limits and secret ARNs from enabled providers
+  // Build limits, secret ARNs, and provider opts from enabled providers
   limitsEnv = Object.fromEntries(
     enabledProviders.map((p) => [p.providerId, p.quota])
   );
@@ -35,6 +36,17 @@ if (CONFIG_TABLE) {
     enabledProviders
       .filter((p) => p.secretArn)
       .map((p) => [p.providerId, p.secretArn!])
+  );
+  providerOptsEnv = Object.fromEntries(
+    enabledProviders
+      .map((p) => [
+        p.providerId,
+        {
+          ...(p.baseUrl && { baseUrl: p.baseUrl }),
+          topK: 10
+        } as SearchOpts
+      ])
+      .filter(([, opts]) => Object.keys(opts).length > 1) // Only include if has baseUrl or other options
   );
 }
 
@@ -75,5 +87,6 @@ export const handler = createHandler({
   limits: limitsEnv,
   secrets: createSecretsCache(),
   secretArns: secretArnsEnv,
+  providerOpts: providerOptsEnv,
   unified: unifiedConfig
 });

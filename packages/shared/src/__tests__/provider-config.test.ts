@@ -27,4 +27,15 @@ describe('parseProviderConfig', () => {
       })
     ).toThrow();
   });
+
+  it('accepts an optional baseUrl', () => {
+    const row = {
+      providerId: 'searxng',
+      enabled: true,
+      quota: { rpm: 60, daily: 10000 },
+      timeoutMs: 8000,
+      baseUrl: 'http://localhost:8080'
+    };
+    expect(parseProviderConfig(row)).toEqual(row);
+  });
 });

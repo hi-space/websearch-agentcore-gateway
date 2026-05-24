@@ -5,7 +5,8 @@ export const ProviderConfigSchema = z.object({
   enabled: z.boolean(),
   secretArn: z.string().optional(),
   quota: z.object({ rpm: z.number().int().nonnegative(), daily: z.number().int().nonnegative() }),
-  timeoutMs: z.number().int().positive()
+  timeoutMs: z.number().int().positive(),
+  baseUrl: z.string().url().optional()
 });
 
 export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
