@@ -44,7 +44,8 @@ export class SearchStack extends Stack {
         { providerId: 'perplexity', enabled: false },
         { providerId: 'you', enabled: false },
         { providerId: 'tavily', enabled: false, builtin: true },
-        { providerId: 'brave', enabled: false, builtin: true }
+        { providerId: 'brave', enabled: false, builtin: true },
+        { providerId: 'searxng', enabled: false }
       ]
     });
 
