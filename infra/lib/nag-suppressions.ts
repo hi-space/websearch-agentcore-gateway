@@ -12,10 +12,6 @@ export function applyV1NagSuppressions(stack: Stack): void {
       reason: 'Node 20 is the explicit v1 runtime target (set in NodejsFunction and AwsCustomResource defaults). Bedrock-agentcore-control SDK does not yet support nodejs22; revisit and bump to latest LTS in v1.6.'
     },
     {
-      id: 'AwsSolutions-SNS3',
-      reason: 'SNS topic is internal alarm fan-out only; encryption-in-transit (HTTPS) and topic-policy SSL enforcement land alongside KMS topic encryption in v1.5 when the audit/observability stack hardens.'
-    },
-    {
       id: 'AwsSolutions-DDB3',
       reason: 'QuotaTable holds ephemeral RPM/daily counters with TTL and RemovalPolicy.DESTROY; PITR is unnecessary cost. ConfigTable (durable) already has PITR enabled.'
     },
