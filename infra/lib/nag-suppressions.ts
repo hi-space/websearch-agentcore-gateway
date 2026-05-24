@@ -5,7 +5,7 @@ export function applyV1NagSuppressions(stack: Stack): void {
   NagSuppressions.addStackSuppressions(stack, [
     {
       id: 'AwsSolutions-IAM4',
-      reason: 'AWS-managed AWSLambdaBasicExecutionRole / AWSLambdaVPCAccessExecutionRole are auto-attached by L2 NodejsFunction and AwsCustomResource constructs; explicit roles are used for the search-router and gateway custom resources. Tightening the auto-attached defaults requires bypassing CDK L2s and is deferred to v1.6 once a CFN-native AgentCore L1 ships.'
+      reason: 'AWS-managed AWSLambdaBasicExecutionRole / AWSLambdaVPCAccessExecutionRole are auto-attached by L2 NodejsFunction and AwsCustomResource constructs. AwsCustomResource is used for ConfigSeed, AgentCore Gateway/Target creation; the singleton provider Lambda manages its own role and policies are scoped via AwsCustomResourcePolicy.fromStatements. Tightening the auto-attached defaults requires bypassing CDK L2s and is deferred to v1.6 once a CFN-native AgentCore L1 ships.'
     },
     {
       id: 'AwsSolutions-IAM5',

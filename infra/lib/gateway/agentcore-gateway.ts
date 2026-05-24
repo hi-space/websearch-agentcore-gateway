@@ -2,6 +2,7 @@ import { Construct } from 'constructs';
 import { Duration, Stack } from 'aws-cdk-lib';
 import {
   AwsCustomResource,
+  AwsCustomResourcePolicy,
   PhysicalResourceId,
   PhysicalResourceIdReference
 } from 'aws-cdk-lib/custom-resources';
@@ -30,32 +31,6 @@ export class AgentCoreGateway extends Construct {
       resources: [props.routerFn.functionArn]
     }));
 
-    // Create explicit role for CreateGateway custom resource with least-privilege policy
-    const createGatewayRole = new Role(this, 'CreateGatewayRole', {
-      assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
-      description: 'Role for AgentCore Gateway creation custom resource'
-    });
-
-    createGatewayRole.addToPolicy(new PolicyStatement({
-      effect: Effect.ALLOW,
-      actions: ['bedrock-agentcore:CreateGateway', 'bedrock-agentcore:DeleteGateway'],
-      resources: ['*'],
-      conditions: {}
-    }));
-
-    // Add CloudWatch logs permissions for the Lambda custom resource
-    const region = Stack.of(this).region;
-    const account = Stack.of(this).account;
-    createGatewayRole.addToPolicy(new PolicyStatement({
-      effect: Effect.ALLOW,
-      actions: [
-        'logs:CreateLogGroup',
-        'logs:CreateLogStream',
-        'logs:PutLogEvents'
-      ],
-      resources: [`arn:aws:logs:${region}:${account}:log-group:/aws/lambda/*`]
-    }));
-
     const create = new AwsCustomResource(this, 'CreateGateway', {
       onCreate: {
         service: 'bedrock-agentcore-control',
@@ -71,7 +46,13 @@ export class AgentCoreGateway extends Construct {
         action: 'deleteGateway',
         parameters: { gatewayIdentifier: new PhysicalResourceIdReference() }
       },
-      role: createGatewayRole,
+      policy: AwsCustomResourcePolicy.fromStatements([
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['bedrock-agentcore:CreateGateway', 'bedrock-agentcore:DeleteGateway'],
+          resources: ['*']
+        })
+      ]),
       timeout: Duration.minutes(5)
     });
 
