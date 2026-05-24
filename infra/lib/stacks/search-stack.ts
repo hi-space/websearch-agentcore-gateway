@@ -54,7 +54,6 @@ export class SearchStack extends Stack {
 
     // Create AuditLogTable with DynamoDB Streams for export
     this.auditTable = new Table(this, 'AuditLogTable', {
-      tableName: 'AuditLogTable',
       partitionKey: { name: 'actor', type: AttributeType.STRING },
       sortKey: { name: 'ts', type: AttributeType.STRING },
       billingMode: BillingMode.PAY_PER_REQUEST,
