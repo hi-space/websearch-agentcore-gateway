@@ -1,0 +1,19 @@
+{
+  "name": "audit-export",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "build": "esbuild src/handler.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/handler.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@aws-sdk/util-dynamodb": "^3.600.0",
+    "aws-lambda": "^1.0.7"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.0",
+    "vitest": "^1.6.0"
+  }
+}

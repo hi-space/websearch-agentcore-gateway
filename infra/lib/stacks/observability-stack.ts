@@ -3,10 +3,13 @@ import { Construct } from 'constructs';
 import { Dashboard, Alarm, Metric, ComparisonOperator } from 'aws-cdk-lib/aws-cloudwatch';
 import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions';
 import { Topic } from 'aws-cdk-lib/aws-sns';
-import { Function, Code, Runtime, Architecture } from 'aws-cdk-lib/aws-lambda';
+import { Function, Code, Runtime, Architecture, StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { Rule, Schedule } from 'aws-cdk-lib/aws-events';
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Bucket, BlockPublicAccess, BucketEncryption, ObjectLockRetention, ObjectLockMode } from 'aws-cdk-lib/aws-s3';
+import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -130,6 +133,49 @@ export class ObservabilityStack extends Stack {
       alarmName: 'sg-reconciler-drift'
     }).addAlarmAction(new SnsAction(topic));
 
-    // remaining tasks (6–7) attach more constructs to this stack
+    // Task 6: AuditLogTable → S3 (Object Lock) export
+    // Create a logging bucket for S3 access logs
+    const loggingBucket = new Bucket(this, 'AuditExportLoggingBucket', {
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      encryption: BucketEncryption.S3_MANAGED,
+      versioned: true,
+      enforceSSL: true
+    });
+
+    const bucket = new Bucket(this, 'AuditExportBucket', {
+      objectLockEnabled: true,
+      objectLockDefaultRetention: ObjectLockRetention.compliance(Duration.days(7 * 365)),
+      encryption: BucketEncryption.S3_MANAGED,
+      versioned: true,
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      serverAccessLogsBucket: loggingBucket,
+      serverAccessLogsPrefix: 'audit-export-logs/',
+      enforceSSL: true
+    });
+
+    const auditExportDistPath = resolve(__dirname, '../../packages/audit-export/dist');
+    const auditExportCode = existsSync(auditExportDistPath)
+      ? Code.fromAsset(auditExportDistPath)
+      : Code.fromInline('exports.handler=async()=>{};');
+
+    const auditExport = new Function(this, 'AuditExportFn', {
+      runtime: Runtime.NODEJS_20_X,
+      architecture: Architecture.ARM_64,
+      handler: 'handler.handler',
+      code: auditExportCode,
+      timeout: Duration.seconds(30),
+      environment: { BUCKET: bucket.bucketName }
+    });
+    bucket.grantPut(auditExport);
+
+    const auditTable = Table.fromTableAttributes(this, 'AuditTable', {
+      tableName: props.auditTableName,
+      tableStreamArn: props.auditTableStreamArn
+    });
+    auditExport.addEventSource(
+      new DynamoEventSource(auditTable, { startingPosition: StartingPosition.LATEST, batchSize: 100, retryAttempts: 3 })
+    );
+
+    // remaining tasks (7) attach more constructs to this stack
   }
 }
