@@ -36,7 +36,7 @@ describe('Adapter contract: searxng', () => {
       expect(r.url).toBeTruthy();
       expect(r.title).toBeTruthy();
       expect(typeof r.snippet).toBe('string');
-      expect(r.source).toBe('searxng');
+      expect(r.provider).toBe('searxng');
     }
   });
 
@@ -89,11 +89,13 @@ describe('searxngAdapter (specifics)', () => {
     expect(results[0]!.title).toBe('First');
     expect(results[0]!.url).toBe('http://ex1.com');
     expect(results[0]!.snippet).toBe('Content 1');
-    expect(results[0]!.source).toBe('searxng');
+    expect(results[0]!.provider).toBe('searxng');
+    expect(results[0]!.rank).toBe(1);
     expect(results[0]!.score).toBeUndefined();
 
-    // Verify rank-like ordering (not explicitly in schema, but verify order preservation)
     expect(results[1]!.title).toBe('Second');
+    expect(results[1]!.rank).toBe(2);
     expect(results[2]!.title).toBe('Third');
+    expect(results[2]!.rank).toBe(3);
   });
 });

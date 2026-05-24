@@ -74,11 +74,12 @@ export const searxngAdapter: Adapter = {
     return results
       .slice(0, max)
       .filter((r): r is typeof r & { url: string } => typeof r.url === 'string' && r.url.length > 0)
-      .map((r) => ({
+      .map((r, i) => ({
         url: r.url,
         title: (r.title ?? '').trim(),
         snippet: (r.content ?? '').trim(),
-        source: 'searxng'
+        provider: 'searxng',
+        rank: i + 1
       }));
   }
 };
