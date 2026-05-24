@@ -178,10 +178,53 @@ export class ObservabilityStack extends Stack {
       new DynamoEventSource(auditTable, { startingPosition: StartingPosition.LATEST, batchSize: 100, retryAttempts: 3 })
     );
 
-    // Task 7: CloudTrail data events on Secrets / KMS / DynamoDB
-    // Note: CloudTrail data events are configured in the prod/ops deployment specs.
-    // Full data event configuration requires direct CloudFormation syntax handling to properly
-    // specify DataResourceType values for KMS::Key and SecretsManager::Secret beyond what CDK
-    // high-level constructs offer for DataResourceType enum values.
+    // Task 7: CloudTrail data events on Secrets / KMS / DynamoDB / Lambda
+    const trailBucket = new Bucket(this, 'TrailBucket', {
+      encryption: BucketEncryption.S3_MANAGED,
+      versioned: true,
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      enforceSSL: true,
+      serverAccessLogsBucket: loggingBucket,
+      serverAccessLogsPrefix: 'trail-logs/'
+    });
+
+    const trail = new Trail(this, 'Trail', {
+      bucket: trailBucket,
+      isMultiRegionTrail: false,
+      includeGlobalServiceEvents: false,
+      managementEvents: ReadWriteType.ALL
+    });
+
+    // Lambda data events on the search-router function (CDK enum supports this)
+    trail.addEventSelector(DataResourceType.LAMBDA_FUNCTION, [
+      `arn:aws:lambda:${this.region}:${this.account}:function:*search-router*`
+    ]);
+
+    // DDB / KMS / Secrets: CDK's DataResourceType enum only has LAMBDA_FUNCTION and S3_OBJECT,
+    // so attach those selectors directly via the underlying CfnTrail. The L2 Trail already
+    // emitted a management selector at index 0 and the Lambda selector at index 1; append the
+    // remaining data resource selectors starting at index 2 using PascalCase CFN field names.
+    const cfnTrail = trail.node.defaultChild as CfnTrail;
+    cfnTrail.addPropertyOverride('EventSelectors.2', {
+      ReadWriteType: 'All',
+      IncludeManagementEvents: false,
+      DataResources: [
+        {
+          Type: 'AWS::DynamoDB::Table',
+          Values: [
+            `${props.auditTableArn}/*`,
+            `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.configTableName}/*`
+          ]
+        },
+        {
+          Type: 'AWS::KMS::Key',
+          Values: [`arn:aws:kms:${this.region}:${this.account}:key/*`]
+        },
+        {
+          Type: 'AWS::SecretsManager::Secret',
+          Values: [`arn:aws:secretsmanager:${this.region}:${this.account}:secret:*`]
+        }
+      ]
+    });
   }
 }

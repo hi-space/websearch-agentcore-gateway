@@ -34,4 +34,20 @@ describe('ObservabilityStack', () => {
       MetricName: 'ReconcilerDrift'
     });
   });
+
+  it('creates a CloudTrail with data events for DDB, KMS, Secrets, Lambda', () => {
+    const app = new App();
+    const s = new ObservabilityStack(app, 'T', baseProps as any);
+    const t = Template.fromStack(s);
+    t.resourceCountIs('AWS::CloudTrail::Trail', 1);
+    const trails = t.findResources('AWS::CloudTrail::Trail');
+    const trail = Object.values(trails)[0] as { Properties: { EventSelectors: Array<{ DataResources?: Array<{ Type: string }> }> } };
+    const dataTypes = trail.Properties.EventSelectors.flatMap((sel) =>
+      (sel.DataResources ?? []).map((r) => r.Type)
+    );
+    expect(dataTypes).toContain('AWS::DynamoDB::Table');
+    expect(dataTypes).toContain('AWS::Lambda::Function');
+    expect(dataTypes).toContain('AWS::KMS::Key');
+    expect(dataTypes).toContain('AWS::SecretsManager::Secret');
+  });
 });
