@@ -32,6 +32,9 @@ importers:
 
   infra:
     dependencies:
+      '@aws-sdk/client-bedrock-agentcore-control':
+        specifier: ^3.1053.0
+        version: 3.1053.0
       aws-cdk-lib:
         specifier: ^2.140.0
         version: 2.257.0(constructs@10.6.0)
@@ -306,6 +309,10 @@ packages:
 
   '@aws-crypto/util@5.2.0':
     resolution: {integrity: sha512-4RkU9EsI6ZpBve5fseQlGNUWKMa1RLPQ1dnjnQoe07ldfIzcsGb5hC5W0Dm7u423KWzawlrpbjXBrXCEv9zazQ==}
+
+  '@aws-sdk/client-bedrock-agentcore-control@3.1053.0':
+    resolution: {integrity: sha512-iqh1BW3fhaL9oxaVCWAWIlo7/95puii6DK8W4Al19fzCEYs+yrIJDmhs9G4X5SSdbQLI7uDcE8swh3GELhdkFg==}
+    engines: {node: '>=20.0.0'}
 
   '@aws-sdk/client-cloudwatch@3.1053.0':
     resolution: {integrity: sha512-Zp3oR2z8lurzIouAK0KiLeJyAW//0HwQX9c3a7C+rXoaKUbw8L9hfKSp2z0HQPIV9UBfFOTIba30ViKdMWFcAg==}
@@ -2850,6 +2857,19 @@ snapshots:
     dependencies:
       '@aws-sdk/types': 3.973.9
       '@smithy/util-utf8': 2.3.0
+      tslib: 2.8.1
+
+  '@aws-sdk/client-bedrock-agentcore-control@3.1053.0':
+    dependencies:
+      '@aws-crypto/sha256-browser': 5.2.0
+      '@aws-crypto/sha256-js': 5.2.0
+      '@aws-sdk/core': 3.974.13
+      '@aws-sdk/credential-provider-node': 3.972.44
+      '@aws-sdk/types': 3.973.9
+      '@smithy/core': 3.24.4
+      '@smithy/fetch-http-handler': 5.4.4
+      '@smithy/node-http-handler': 4.7.4
+      '@smithy/types': 4.14.2
       tslib: 2.8.1
 
   '@aws-sdk/client-cloudwatch@3.1053.0':

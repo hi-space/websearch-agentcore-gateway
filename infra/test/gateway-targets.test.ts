@@ -10,18 +10,18 @@ describe('GatewayTargets', () => {
     const t = Template.fromStack(stack);
     const customs = t.findResources('Custom::AWS');
 
-    // Filter for resources that have createTarget action (targets)
+    // Filter for resources that have createGatewayTarget action (targets)
     const targetActions = Object.values(customs).filter((r: any) => {
       const createProp = r.Properties?.Create;
       if (!createProp) return false;
 
       // Create can be either a JSON string or a Fn::Join
       if (typeof createProp === 'string') {
-        return createProp.includes('createTarget');
+        return createProp.includes('createGatewayTarget');
       }
 
       // For Fn::Join, stringify and check
-      return JSON.stringify(createProp).includes('createTarget');
+      return JSON.stringify(createProp).includes('createGatewayTarget');
     });
 
     // At least one target for search_arxiv
@@ -33,10 +33,10 @@ describe('GatewayTargets', () => {
       if (!createProp) return false;
 
       if (typeof createProp === 'string') {
-        return createProp.includes('createTarget');
+        return createProp.includes('createGatewayTarget');
       }
 
-      return JSON.stringify(createProp).includes('createTarget');
+      return JSON.stringify(createProp).includes('createGatewayTarget');
     });
 
     // Extract tool names from resource names (they follow pattern CreateTarget{toolname}...)

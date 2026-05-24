@@ -3,7 +3,8 @@ import { Duration } from 'aws-cdk-lib';
 import {
   AwsCustomResource,
   AwsCustomResourcePolicy,
-  PhysicalResourceId
+  PhysicalResourceId,
+  PhysicalResourceIdReference
 } from 'aws-cdk-lib/custom-resources';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { Effect, PolicyStatement, Role } from 'aws-cdk-lib/aws-iam';
@@ -25,12 +26,11 @@ export class GatewayTargets extends Construct {
   constructor(scope: Construct, id: string, props: GatewayTargetsProps) {
     super(scope, id);
 
-    // Create one target per tool
-    props.tools.forEach((tool, index) => {
+    props.tools.forEach((tool) => {
       new AwsCustomResource(this, `CreateTarget-${tool.name}`, {
         onCreate: {
           service: 'bedrock-agentcore-control',
-          action: 'createTarget',
+          action: 'createGatewayTarget',
           parameters: {
             gatewayIdentifier: props.gatewayId,
             name: `search-router-${tool.name}`,
@@ -38,21 +38,26 @@ export class GatewayTargets extends Construct {
               mcp: {
                 lambda: {
                   lambdaArn: props.routerFn.functionArn,
-                  toolSchema: { tools: [tool] }
+                  toolSchema: { inlinePayload: [tool] }
                 }
               }
             },
-            credentialProviderConfigurations: [{
-              credentialProviderType: 'GATEWAY_IAM_ROLE',
-              credentialProvider: { gatewayIamRole: { roleArn: props.invokeRole.roleArn } }
-            }]
+            credentialProviderConfigurations: [{ credentialProviderType: 'GATEWAY_IAM_ROLE' }]
           },
           physicalResourceId: PhysicalResourceId.fromResponse('targetId')
+        },
+        onDelete: {
+          service: 'bedrock-agentcore-control',
+          action: 'deleteGatewayTarget',
+          parameters: {
+            gatewayIdentifier: props.gatewayId,
+            targetId: new PhysicalResourceIdReference()
+          }
         },
         policy: AwsCustomResourcePolicy.fromStatements([
           new PolicyStatement({
             effect: Effect.ALLOW,
-            actions: ['bedrock-agentcore:CreateTarget', 'bedrock-agentcore:DeleteTarget'],
+            actions: ['bedrock-agentcore:CreateGatewayTarget', 'bedrock-agentcore:DeleteGatewayTarget'],
             resources: ['*']
           }),
           new PolicyStatement({

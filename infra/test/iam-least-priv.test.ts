@@ -72,7 +72,7 @@ describe('IAM least privilege hardening', () => {
           foundBedrockPolicy = true;
           // Verify that the policy has bedrock-agentcore actions
           const actionStr = JSON.stringify(actions);
-          expect(actionStr).toMatch(/bedrock-agentcore:(CreateGateway|DeleteGateway|CreateTarget|DeleteTarget)/);
+          expect(actionStr).toMatch(/bedrock-agentcore:(CreateGateway|DeleteGateway|CreateGatewayTarget|DeleteGatewayTarget)/);
         }
       }
     }
