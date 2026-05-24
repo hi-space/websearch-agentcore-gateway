@@ -6,6 +6,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { SearchStack } from '../lib/stacks/search-stack.js';
 import { AdminConsoleStack } from '../lib/stacks/admin-console-stack.js';
+import { ObservabilityStack } from '../lib/stacks/observability-stack.js';
 import { applyV1NagSuppressions } from '../lib/nag-suppressions.js';
 
 const __dirname = resolve(fileURLToPath(import.meta.url), '..');
@@ -48,3 +49,23 @@ Aspects.of(admin).add(new AwsSolutionsChecks({ verbose: true }));
 
 // Apply v1.0 NAG suppressions to admin stack
 applyV1NagSuppressions(admin);
+
+// Observability Stack
+const observability = new ObservabilityStack(app, 'ObservabilityStack-v1-0', {
+  ...props,
+  providers: ['arxiv', 'exa', 'tavily', 'brave', 'you', 'perplexity', 'searxng'],
+  snsTopicArn: search.snsTopicArn,
+  auditTableName: search.auditTable.tableName,
+  auditTableArn: search.auditTableArn,
+  auditTableStreamArn: search.auditTableStreamArn,
+  configTableName: search.configTableName,
+  gatewayId: search.gatewayId
+});
+
+Tags.of(observability).add('project', 'search-agentcore-gateway');
+Tags.of(observability).add('environment', app.node.tryGetContext('env') ?? 'dev');
+
+Aspects.of(observability).add(new AwsSolutionsChecks({ verbose: true }));
+
+// Apply v1.0 NAG suppressions to observability stack
+applyV1NagSuppressions(observability);

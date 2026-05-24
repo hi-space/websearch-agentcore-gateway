@@ -1,7 +1,7 @@
 import { Stack, StackProps, CfnOutput } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { IVpc } from 'aws-cdk-lib/aws-ec2';
-import { ITable } from 'aws-cdk-lib/aws-dynamodb';
+import { ITable, Table, AttributeType, BillingMode, StreamViewType, TableEncryption } from 'aws-cdk-lib/aws-dynamodb';
 import { IKey } from 'aws-cdk-lib/aws-kms';
 import { NetworkConstruct } from '../network/index.js';
 import { KmsConstruct } from '../security/kms.js';
@@ -22,7 +22,13 @@ export class SearchStack extends Stack {
   readonly searchRouter: SearchRouterFn;
   readonly vpc: IVpc;
   readonly configTable: ITable;
+  readonly configTableName: string;
   readonly kmsSecretsKey: IKey;
+  readonly auditTable: ITable;
+  readonly auditTableArn: string;
+  readonly auditTableStreamArn: string;
+  readonly gatewayId: string;
+  readonly snsTopicArn: string;
 
   constructor(scope: Construct, id: string, props?: SearchStackProps) {
     super(scope, id, props);
@@ -33,7 +39,21 @@ export class SearchStack extends Stack {
 
     this.vpc = network.vpc;
     this.configTable = configTableConstruct.table as ITable;
+    this.configTableName = this.configTable.tableName;
     this.kmsSecretsKey = kms.secretsKey;
+
+    // Create AuditLogTable with DynamoDB Streams for export
+    this.auditTable = new Table(this, 'AuditLogTable', {
+      tableName: 'AuditLogTable',
+      partitionKey: { name: 'actor', type: AttributeType.STRING },
+      sortKey: { name: 'ts', type: AttributeType.STRING },
+      billingMode: BillingMode.PAY_PER_REQUEST,
+      encryption: TableEncryption.CUSTOMER_MANAGED,
+      encryptionKey: kms.ddbKey,
+      stream: StreamViewType.NEW_AND_OLD_IMAGES
+    });
+    this.auditTableArn = this.auditTable.tableArn;
+    this.auditTableStreamArn = this.auditTable.tableStreamArn ?? '';
 
     // Seed ConfigTable with provider configurations
     new ConfigSeed(this, 'ConfigSeed', {
@@ -91,8 +111,11 @@ export class SearchStack extends Stack {
       routerFn: this.searchRouter.fn,
       toolDefinitions
     });
+    this.gatewayId = gateway.gatewayId;
     new CfnOutput(this, 'GatewayId', { value: gateway.gatewayId });
-    new AlarmsConstruct(this, 'Alarms');
+
+    const alarms = new AlarmsConstruct(this, 'Alarms');
+    this.snsTopicArn = alarms.topic.topicArn;
 
     applyV1NagSuppressions(this);
   }
