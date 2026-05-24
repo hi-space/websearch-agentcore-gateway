@@ -1,6 +1,6 @@
 import { InvokeCommand, type LambdaClient } from '@aws-sdk/client-lambda';
 import { type DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { writeAudit } from '../audit/log.js';
+import { writeAudit } from '../audit/log';
 
 export async function testProvider(
   lambda: LambdaClient,

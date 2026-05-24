@@ -1,6 +1,6 @@
-import { Stack, StackProps, CfnOutput, Duration, Fn } from 'aws-cdk-lib';
+import { Stack, StackProps, CfnOutput, Duration, Fn, SymlinkFollowMode } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { Function, Runtime, Code, Architecture, Tracing } from 'aws-cdk-lib/aws-lambda';
+import { Function, Runtime, Code, Architecture, Tracing, CfnPermission } from 'aws-cdk-lib/aws-lambda';
 import { IVpc, SubnetType } from 'aws-cdk-lib/aws-ec2';
 import { ITable } from 'aws-cdk-lib/aws-dynamodb';
 import { IKey } from 'aws-cdk-lib/aws-kms';
@@ -50,8 +50,8 @@ export class AdminConsoleStack extends Stack {
     const fn = new Function(this, 'Function', {
       runtime: Runtime.NODEJS_20_X,
       architecture: Architecture.ARM_64,
-      handler: 'lambda-entry.handler',
-      code: Code.fromAsset(assetPath),
+      handler: 'packages/admin-console/lambda-entry.handler',
+      code: Code.fromAsset(assetPath, { followSymlinks: SymlinkFollowMode.NEVER }),
       memorySize: 1024,
       timeout: Duration.seconds(15),
       vpc: props.vpc,
@@ -124,6 +124,22 @@ export class AdminConsoleStack extends Stack {
 
     // Create CloudFront distribution
     const distribution = buildCloudFront(this, 'AdminDistribution', fnUrlDomain, webAcl.attrArn);
+
+    // Allow only this CloudFront distribution to invoke the Function URL via OAC SigV4.
+    // Per AWS docs, OAC for Lambda requires BOTH InvokeFunctionUrl and InvokeFunction.
+    new CfnPermission(this, 'AdminFnUrlInvokeFromCloudFront', {
+      action: 'lambda:InvokeFunctionUrl',
+      functionName: fn.functionArn,
+      principal: 'cloudfront.amazonaws.com',
+      functionUrlAuthType: 'AWS_IAM',
+      sourceArn: `arn:aws:cloudfront::${this.account}:distribution/${distribution.attrId}`
+    });
+    new CfnPermission(this, 'AdminFnInvokeFromCloudFront', {
+      action: 'lambda:InvokeFunction',
+      functionName: fn.functionArn,
+      principal: 'cloudfront.amazonaws.com',
+      sourceArn: `arn:aws:cloudfront::${this.account}:distribution/${distribution.attrId}`
+    });
 
     // Outputs
     new CfnOutput(this, 'AdminDistDomainName', {
