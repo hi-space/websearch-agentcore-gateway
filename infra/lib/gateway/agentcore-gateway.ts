@@ -70,7 +70,13 @@ export class AgentCoreGateway extends Construct {
       policy: AwsCustomResourcePolicy.fromStatements([
         new PolicyStatement({
           effect: Effect.ALLOW,
-          actions: ['bedrock-agentcore:CreateGateway', 'bedrock-agentcore:DeleteGateway'],
+          actions: [
+            'bedrock-agentcore:CreateGateway',
+            'bedrock-agentcore:DeleteGateway',
+            'bedrock-agentcore:CreateWorkloadIdentity',
+            'bedrock-agentcore:GetWorkloadIdentity',
+            'bedrock-agentcore:DeleteWorkloadIdentity'
+          ],
           resources: ['*']
         }),
         new PolicyStatement({
