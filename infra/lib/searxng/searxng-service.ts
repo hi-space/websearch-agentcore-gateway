@@ -2,6 +2,7 @@ import { Construct } from 'constructs';
 import {
   Cluster,
   ContainerImage,
+  ContainerInsights,
   FargateService,
   FargateTaskDefinition,
   LogDriver
@@ -34,7 +35,7 @@ export class SearxngService extends Construct {
     // Create an ECS cluster
     const cluster = new Cluster(this, 'Cluster', {
       vpc: props.vpc,
-      containerInsights: true
+      containerInsightsV2: ContainerInsights.ENABLED
     });
 
     // Create a Fargate task definition
@@ -93,7 +94,10 @@ export class SearxngService extends Construct {
       desiredCount,
       vpcSubnets: { subnetType: SubnetType.PRIVATE_WITH_EGRESS },
       assignPublicIp: false,
-      serviceName: 'searxng'
+      serviceName: 'searxng',
+      circuitBreaker: { rollback: true },
+      minHealthyPercent: 50,
+      maxHealthyPercent: 200
     });
 
     // Attach to target group

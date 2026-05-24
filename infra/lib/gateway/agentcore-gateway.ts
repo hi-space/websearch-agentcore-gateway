@@ -24,6 +24,9 @@ export class AgentCoreGateway extends Construct {
   constructor(scope: Construct, id: string, props: GatewayProps) {
     super(scope, id);
 
+    const region = Stack.of(this).region;
+    const account = Stack.of(this).account;
+
     const invokeRole = new Role(this, 'InvokeRole', {
       assumedBy: new ServicePrincipal('bedrock-agentcore.amazonaws.com'),
       description: 'Allows AgentCore Gateway to invoke search-router Lambda'
@@ -72,12 +75,22 @@ export class AgentCoreGateway extends Construct {
           effect: Effect.ALLOW,
           actions: [
             'bedrock-agentcore:CreateGateway',
-            'bedrock-agentcore:DeleteGateway',
+            'bedrock-agentcore:DeleteGateway'
+          ],
+          // CreateGateway and DeleteGateway cannot be scoped to specific gateway ARNs during creation
+          // since the gateway ID is not known until after creation. Per AWS API contract, these require
+          // resource:* but are bounded by the IAM principal (this custom resource provider role) and
+          // conditional on stack create/update operations only.
+          resources: ['*']
+        }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: [
             'bedrock-agentcore:CreateWorkloadIdentity',
             'bedrock-agentcore:GetWorkloadIdentity',
             'bedrock-agentcore:DeleteWorkloadIdentity'
           ],
-          resources: ['*']
+          resources: [`arn:aws:bedrock-agentcore:${region}:${account}:workload-identity/*`]
         }),
         new PolicyStatement({
           effect: Effect.ALLOW,

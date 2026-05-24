@@ -62,20 +62,30 @@ describe('IAM least privilege hardening', () => {
 
     const t = Template.fromStack(stack);
     const policies = t.findResources('AWS::IAM::Policy');
-    let foundBedrockPolicy = false;
-    for (const [policyName, policy] of Object.entries(policies)) {
+    const allBedrockActions: string[] = [];
+    const workloadIdentityStatements: any[] = [];
+    for (const [, policy] of Object.entries(policies)) {
       const statements = (policy as any).Properties?.PolicyDocument?.Statement ?? [];
       for (const stmt of statements) {
-        const actions = stmt.Action && (Array.isArray(stmt.Action) ? stmt.Action : [stmt.Action]) || [];
-        const hasBedrockActions = actions.some((a: string) => typeof a === 'string' && a.includes('bedrock-agentcore'));
-        if (hasBedrockActions) {
-          foundBedrockPolicy = true;
-          // Verify that the policy has bedrock-agentcore actions
-          const actionStr = JSON.stringify(actions);
-          expect(actionStr).toMatch(/bedrock-agentcore:(CreateGateway|DeleteGateway|CreateGatewayTarget|DeleteGatewayTarget|GetGateway)/);
+        const actions = (stmt.Action && (Array.isArray(stmt.Action) ? stmt.Action : [stmt.Action])) || [];
+        const bedrockActions = actions.filter((a: string) => typeof a === 'string' && a.includes('bedrock-agentcore'));
+        if (bedrockActions.length > 0) {
+          allBedrockActions.push(...bedrockActions);
+          if (bedrockActions.some((a: string) => a.includes('WorkloadIdentity'))) {
+            workloadIdentityStatements.push(stmt);
+          }
         }
       }
     }
-    expect(foundBedrockPolicy, 'Should have a policy with bedrock-agentcore actions').toBe(true);
+    expect(allBedrockActions.length, 'Should have bedrock-agentcore actions in some policy').toBeGreaterThan(0);
+    const combined = JSON.stringify(allBedrockActions);
+    expect(combined).toMatch(/bedrock-agentcore:(CreateGateway|DeleteGateway|CreateGatewayTarget|DeleteGatewayTarget|GetGateway)/);
+    // WorkloadIdentity actions must be scoped to a workload-identity ARN, not '*'.
+    expect(workloadIdentityStatements.length, 'WorkloadIdentity actions should be in their own scoped statement').toBeGreaterThan(0);
+    for (const stmt of workloadIdentityStatements) {
+      const resources = (stmt.Resource && (Array.isArray(stmt.Resource) ? stmt.Resource : [stmt.Resource])) || [];
+      const resourceStr = JSON.stringify(resources);
+      expect(resourceStr, 'WorkloadIdentity statement must reference workload-identity ARN').toContain('workload-identity');
+    }
   });
 });
