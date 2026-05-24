@@ -61,6 +61,7 @@ export class GatewayTargets extends Construct {
             resources: [props.invokeRole.roleArn]
           })
         ]),
+        installLatestAwsSdk: false,
         timeout: Duration.minutes(5)
       });
     });

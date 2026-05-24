@@ -13,6 +13,8 @@ import { GatewayTargets } from './targets.js';
 export interface GatewayProps {
   routerFn: IFunction;
   toolDefinitions: Array<{ name: string; description: string; inputSchema: unknown }>;
+  cognitoDiscoveryUrl: string;
+  cognitoClientId: string;
 }
 
 export class AgentCoreGateway extends Construct {
@@ -31,13 +33,31 @@ export class AgentCoreGateway extends Construct {
       resources: [props.routerFn.functionArn]
     }));
 
+    const gatewayRole = new Role(this, 'ExecutionRole', {
+      assumedBy: new ServicePrincipal('bedrock-agentcore.amazonaws.com'),
+      description: 'AgentCore Gateway execution role'
+    });
+    gatewayRole.addToPolicy(new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['lambda:InvokeFunction'],
+      resources: [props.routerFn.functionArn]
+    }));
+
     const create = new AwsCustomResource(this, 'CreateGateway', {
       onCreate: {
         service: 'bedrock-agentcore-control',
         action: 'createGateway',
         parameters: {
           name: `${Stack.of(this).stackName}-gw`,
-          protocolType: 'MCP'
+          protocolType: 'MCP',
+          roleArn: gatewayRole.roleArn,
+          authorizerType: 'CUSTOM_JWT',
+          authorizerConfiguration: {
+            customJWTAuthorizer: {
+              discoveryUrl: props.cognitoDiscoveryUrl,
+              allowedClients: [props.cognitoClientId]
+            }
+          }
         },
         physicalResourceId: PhysicalResourceId.fromResponse('gatewayId')
       },
@@ -51,8 +71,14 @@ export class AgentCoreGateway extends Construct {
           effect: Effect.ALLOW,
           actions: ['bedrock-agentcore:CreateGateway', 'bedrock-agentcore:DeleteGateway'],
           resources: ['*']
+        }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['iam:PassRole'],
+          resources: [gatewayRole.roleArn]
         })
       ]),
+      installLatestAwsSdk: false,
       timeout: Duration.minutes(5)
     });
 

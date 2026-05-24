@@ -22,6 +22,8 @@ export interface AdminConsoleStackProps extends StackProps {
   auditTableName?: string;
   secretArnPrefix?: string;
   adminAssetPath?: string;
+  userPoolId: string;
+  userPoolClientId: string;
 }
 
 export class AdminConsoleStack extends Stack {
@@ -59,8 +61,8 @@ export class AdminConsoleStack extends Stack {
         CONFIG_TABLE: props.configTable.tableName,
         AUDIT_TABLE: auditTableName,
         SEARCH_ROUTER_ARN: props.searchRouterFn.functionArn,
-        COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID ?? '',
-        COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID ?? ''
+        COGNITO_USER_POOL_ID: props.userPoolId,
+        COGNITO_CLIENT_ID: props.userPoolClientId
       }
     });
 

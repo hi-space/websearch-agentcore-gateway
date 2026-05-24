@@ -38,6 +38,10 @@ export function applyV1NagSuppressions(stack: Stack): void {
     {
       id: 'AwsSolutions-EC23',
       reason: 'SearXNG ALB security group allows inbound from VPC CIDR only; public 0.0.0.0/0 access is restricted by ALB being internal-only.'
+    },
+    {
+      id: 'AwsSolutions-COG8',
+      reason: 'Cognito Plus tier (advanced threat protection) is a paid feature deferred to v1.6 once cost model is approved; v1 admin pool enforces MFA, 12-char password policy, and rate-limited Lambda authorizer.'
     }
   ]);
 }

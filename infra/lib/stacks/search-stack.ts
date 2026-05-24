@@ -5,6 +5,7 @@ import { ITable, Table, AttributeType, BillingMode, StreamViewType, TableEncrypt
 import { IKey } from 'aws-cdk-lib/aws-kms';
 import { NetworkConstruct } from '../network/index.js';
 import { KmsConstruct } from '../security/kms.js';
+import { CognitoConstruct } from '../security/cognito.js';
 import { ConfigTableConstruct } from '../data/config-table.js';
 import { ConfigSeed } from '../data/config-seed.js';
 import { QuotaTableConstruct } from '../data/quota-table.js';
@@ -33,11 +34,16 @@ export class SearchStack extends Stack {
   readonly auditTableStreamArn: string;
   readonly gatewayId: string;
   readonly snsTopicArn: string;
+  readonly userPoolId: string;
+  readonly userPoolClientId: string;
 
   constructor(scope: Construct, id: string, props?: SearchStackProps) {
     super(scope, id, props);
     const network = new NetworkConstruct(this, 'Network');
     const kms = new KmsConstruct(this, 'Kms');
+    const cognito = new CognitoConstruct(this, 'Cognito');
+    this.userPoolId = cognito.userPool.userPoolId;
+    this.userPoolClientId = cognito.client.userPoolClientId;
     const configTableConstruct = new ConfigTableConstruct(this, 'Config', { kmsKey: kms.ddbKey });
     const quotaTable = new QuotaTableConstruct(this, 'Quota', { kmsKey: kms.ddbKey });
 
@@ -113,10 +119,14 @@ export class SearchStack extends Stack {
 
     const gateway = new AgentCoreGateway(this, 'Gateway', {
       routerFn: this.searchRouter.fn,
-      toolDefinitions
+      toolDefinitions,
+      cognitoDiscoveryUrl: cognito.discoveryUrl,
+      cognitoClientId: cognito.client.userPoolClientId
     });
     this.gatewayId = gateway.gatewayId;
     new CfnOutput(this, 'GatewayId', { value: gateway.gatewayId });
+    new CfnOutput(this, 'UserPoolId', { value: cognito.userPool.userPoolId });
+    new CfnOutput(this, 'UserPoolClientId', { value: cognito.client.userPoolClientId });
 
     const alarms = new AlarmsConstruct(this, 'Alarms');
     this.snsTopicArn = alarms.topic.topicArn;

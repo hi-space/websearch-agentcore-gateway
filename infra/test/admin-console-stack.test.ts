@@ -37,6 +37,8 @@ describe('AdminConsoleStack', () => {
       configTable,
       searchRouterFn: router,
       secretsKmsKey: key,
+      userPoolId: 'us-east-1_TESTPOOL',
+      userPoolClientId: 'testclient',
       adminAssetPath: fixtureAssetPath
     });
 

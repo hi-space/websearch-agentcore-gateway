@@ -46,6 +46,8 @@ const admin = new AdminConsoleStack(app, 'AdminConsoleStack-v1-0', {
   configTable: search.configTable,
   searchRouterFn: search.searchRouter.fn,
   secretsKmsKey: search.kmsSecretsKey,
+  userPoolId: search.userPoolId,
+  userPoolClientId: search.userPoolClientId,
   adminAssetPath: existsSync(adminAssetPath) ? adminAssetPath : resolve(__dirname, '../test/fixtures/admin-asset')
 });
 

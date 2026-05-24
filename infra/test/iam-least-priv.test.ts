@@ -22,7 +22,9 @@ describe('IAM least privilege hardening', () => {
     // Create the gateway
     new AgentCoreGateway(stack, 'Gateway', {
       routerFn: mockFn,
-      toolDefinitions: []
+      toolDefinitions: [],
+      cognitoDiscoveryUrl: 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_TEST/.well-known/openid-configuration',
+      cognitoClientId: 'testclient'
     });
 
     const t = Template.fromStack(stack);
@@ -53,7 +55,9 @@ describe('IAM least privilege hardening', () => {
     // Create the gateway
     new AgentCoreGateway(stack, 'Gateway', {
       routerFn: mockFn,
-      toolDefinitions: []
+      toolDefinitions: [],
+      cognitoDiscoveryUrl: 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_TEST/.well-known/openid-configuration',
+      cognitoClientId: 'testclient'
     });
 
     const t = Template.fromStack(stack);
