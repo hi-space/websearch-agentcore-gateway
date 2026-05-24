@@ -39,12 +39,12 @@ if (CONFIG_TABLE) {
   );
   providerOptsEnv = Object.fromEntries(
     enabledProviders
-      .map((p) => [
+      .map((p): [string, SearchOpts] => [
         p.providerId,
         {
           ...(p.baseUrl && { baseUrl: p.baseUrl }),
           topK: 10
-        } as SearchOpts
+        }
       ])
       .filter(([, opts]) => Object.keys(opts).length > 1) // Only include if has baseUrl or other options
   );

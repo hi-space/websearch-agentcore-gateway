@@ -37,14 +37,21 @@ export const arxivAdapter: Adapter = {
     const timer = setTimeout(() => ac.abort(), TIMEOUT_MS);
     let res: Response;
     try {
-      res = await fetch(url, { signal: ac.signal });
+      res = await fetch(url, {
+        signal: ac.signal,
+        headers: {
+          'User-Agent': 'search-agentcore-gateway/1.0 (+https://github.com/hi-space/search-agentcore-gateway)',
+          Accept: 'application/atom+xml'
+        }
+      });
     } catch (e) {
-      if ((e as Error).name === 'AbortError') {
-        throw new SearchError(ErrorCode.UPSTREAM_TIMEOUT, 'arxiv request timed out', {
+      const err = e as Error & { cause?: unknown };
+      if (err.name === 'AbortError') {
+        throw new SearchError(ErrorCode.UPSTREAM_TIMEOUT, `arxiv request timed out: ${err.message} cause=${JSON.stringify(err.cause)}`, {
           provider: 'arxiv'
         });
       }
-      throw new SearchError(ErrorCode.UPSTREAM_ERROR, 'arxiv fetch failed', {
+      throw new SearchError(ErrorCode.UPSTREAM_ERROR, `arxiv fetch failed: ${err.message}`, {
         provider: 'arxiv', cause: e
       });
     } finally {

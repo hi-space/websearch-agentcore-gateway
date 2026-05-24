@@ -10,7 +10,7 @@ import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Bucket, BlockPublicAccess, BucketEncryption, ObjectLockRetention, ObjectLockMode } from 'aws-cdk-lib/aws-s3';
 import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
-import { Trail, ReadWriteType, DataResourceType } from 'aws-cdk-lib/aws-cloudtrail';
+import { Trail, ReadWriteType } from 'aws-cdk-lib/aws-cloudtrail';
 import { CfnTrail } from 'aws-cdk-lib/aws-cloudtrail';
 import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
@@ -195,36 +195,43 @@ export class ObservabilityStack extends Stack {
       managementEvents: ReadWriteType.ALL
     });
 
-    // Lambda data events on the search-router function (CDK enum supports this)
-    trail.addEventSelector(DataResourceType.LAMBDA_FUNCTION, [
-      `arn:aws:lambda:${this.region}:${this.account}:function:*search-router*`
-    ]);
-
-    // DDB / KMS / Secrets: CDK's DataResourceType enum only has LAMBDA_FUNCTION and S3_OBJECT,
-    // so attach those selectors directly via the underlying CfnTrail. The L2 Trail already
-    // emitted a management selector at index 0 and the Lambda selector at index 1; append the
-    // remaining data resource selectors starting at index 2 using PascalCase CFN field names.
+    // Switch from legacy EventSelectors to AdvancedEventSelectors so we can record
+    // data events on KMS keys and SecretsManager secrets (the legacy EventSelectors API
+    // only supports S3, Lambda, and DynamoDB resource types). AdvancedEventSelectors and
+    // EventSelectors are mutually exclusive on a single trail, so clear the legacy
+    // selectors emitted by the L2 Trail before attaching the modern ones.
     const cfnTrail = trail.node.defaultChild as CfnTrail;
-    cfnTrail.addPropertyOverride('EventSelectors.2', {
-      ReadWriteType: 'All',
-      IncludeManagementEvents: false,
-      DataResources: [
-        {
-          Type: 'AWS::DynamoDB::Table',
-          Values: [
-            `${props.auditTableArn}/*`,
-            `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.configTableName}/*`
-          ]
-        },
-        {
-          Type: 'AWS::KMS::Key',
-          Values: [`arn:aws:kms:${this.region}:${this.account}:key/*`]
-        },
-        {
-          Type: 'AWS::SecretsManager::Secret',
-          Values: [`arn:aws:secretsmanager:${this.region}:${this.account}:secret:*`]
-        }
-      ]
-    });
+    cfnTrail.addPropertyDeletionOverride('EventSelectors');
+    cfnTrail.addPropertyOverride('AdvancedEventSelectors', [
+      {
+        Name: 'Management events',
+        FieldSelectors: [{ Field: 'eventCategory', Equals: ['Management'] }]
+      },
+      {
+        Name: 'Lambda data events on search-router',
+        FieldSelectors: [
+          { Field: 'eventCategory', Equals: ['Data'] },
+          { Field: 'resources.type', Equals: ['AWS::Lambda::Function'] },
+          {
+            Field: 'resources.ARN',
+            StartsWith: [`arn:aws:lambda:${this.region}:${this.account}:function:`]
+          }
+        ]
+      },
+      {
+        Name: 'KMS data events',
+        FieldSelectors: [
+          { Field: 'eventCategory', Equals: ['Data'] },
+          { Field: 'resources.type', Equals: ['AWS::KMS::Key'] }
+        ]
+      },
+      {
+        Name: 'SecretsManager data events',
+        FieldSelectors: [
+          { Field: 'eventCategory', Equals: ['Data'] },
+          { Field: 'resources.type', Equals: ['AWS::SecretsManager::Secret'] }
+        ]
+      }
+    ]);
   }
 }

@@ -12,8 +12,34 @@ import type { QuotaService, QuotaLimits } from './quota.js';
 import { runUnified } from './unified.js';
 
 export interface RouterEvent {
-  toolName: string;
-  arguments: unknown;
+  toolName?: string;
+  arguments?: unknown;
+  [key: string]: unknown;
+}
+
+interface AgentCoreClientContext {
+  custom?: {
+    bedrockAgentCoreToolName?: string;
+    [key: string]: unknown;
+  };
+}
+
+export interface LambdaContext {
+  clientContext?: AgentCoreClientContext;
+}
+
+const AGENT_CORE_TOOL_DELIMITER = '___';
+
+function resolveTool(event: RouterEvent, context?: LambdaContext): { tool: string | undefined; args: unknown } {
+  const fromContext = context?.clientContext?.custom?.bedrockAgentCoreToolName;
+  if (fromContext) {
+    const idx = fromContext.lastIndexOf(AGENT_CORE_TOOL_DELIMITER);
+    const tool = idx >= 0 ? fromContext.slice(idx + AGENT_CORE_TOOL_DELIMITER.length) : fromContext;
+    const { toolName: _ignored, arguments: nestedArgs, ...rest } = event;
+    const args = nestedArgs !== undefined ? nestedArgs : rest;
+    return { tool, args };
+  }
+  return { tool: event.toolName, args: event.arguments };
 }
 
 export type RouterResult =
@@ -43,9 +69,13 @@ export interface HandlerDeps {
 export function createHandler(deps: HandlerDeps) {
   const log = createLogger({ component: 'search-router' });
 
-  return async function handler(event: RouterEvent): Promise<RouterResult> {
+  return async function handler(event: RouterEvent, context?: LambdaContext): Promise<RouterResult> {
     const start = Date.now();
-    const tool = event.toolName;
+    const { tool, args } = resolveTool(event, context);
+    if (!tool) {
+      const err = new SearchError(ErrorCode.INVALID_ARGUMENT, 'missing tool name');
+      return { error: err.toJSON() as { code: string; message: string; provider?: string; retryAfterSec?: number } };
+    }
 
     if (tool === 'search_unified') {
       if (!deps.unified) {
@@ -54,7 +84,7 @@ export function createHandler(deps: HandlerDeps) {
       }
       let unifiedArgs;
       try {
-        unifiedArgs = UnifiedArgsSchema.parse(event.arguments);
+        unifiedArgs = UnifiedArgsSchema.parse(args);
       } catch {
         const err = new SearchError(ErrorCode.INVALID_ARGUMENT, 'invalid arguments');
         return { error: err.toJSON() as { code: string; message: string; provider?: string; retryAfterSec?: number } };
@@ -115,7 +145,7 @@ export function createHandler(deps: HandlerDeps) {
 
     let parsed;
     try {
-      parsed = ArgsSchema.parse(event.arguments);
+      parsed = ArgsSchema.parse(args);
     } catch {
       const err = new SearchError(ErrorCode.INVALID_ARGUMENT, 'invalid arguments', { provider });
       return { error: err.toJSON() as { code: string; message: string; provider?: string; retryAfterSec?: number } };

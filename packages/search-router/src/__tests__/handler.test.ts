@@ -211,3 +211,50 @@ describe('handler search_unified', () => {
     }
   });
 });
+
+describe('handler AgentCore Gateway payload', () => {
+  beforeEach(() => {
+    fakeAdapter.search.mockReset();
+    fakeQuota.consume.mockReset();
+  });
+
+  it('resolves tool name from context.clientContext.custom and reads args from event', async () => {
+    fakeQuota.consume.mockResolvedValue(undefined);
+    fakeAdapter.search.mockResolvedValue([{
+      url: 'http://arxiv.org/abs/1', title: 't', snippet: 's', provider: 'arxiv'
+    }]);
+    const handler = createHandler({
+      adapters: { arxiv: fakeAdapter },
+      quota: fakeQuota,
+      limits: { arxiv: { rpm: 60, daily: 1000 } }
+    });
+    // AgentCore Gateway invokes Lambda with flat event (no toolName/arguments wrapper)
+    // and tool name in context.clientContext.custom.bedrockAgentCoreToolName
+    const res = await handler(
+      { query: 'transformer' },
+      {
+        clientContext: {
+          custom: {
+            bedrockAgentCoreToolName: 'search-router-search-arxiv___search_arxiv'
+          }
+        }
+      }
+    );
+    expect(res).toMatchObject({
+      results: [{ url: 'http://arxiv.org/abs/1' }]
+    });
+    expect(fakeAdapter.search).toHaveBeenCalledWith('transformer', expect.any(Object));
+  });
+
+  it('falls back to event.toolName when no AgentCore context is present', async () => {
+    fakeQuota.consume.mockResolvedValue(undefined);
+    fakeAdapter.search.mockResolvedValue([]);
+    const handler = createHandler({
+      adapters: { arxiv: fakeAdapter },
+      quota: fakeQuota,
+      limits: { arxiv: { rpm: 60, daily: 1000 } }
+    });
+    const res = await handler({ toolName: 'search_arxiv', arguments: { query: 'q' } });
+    expect('results' in res).toBe(true);
+  });
+});
