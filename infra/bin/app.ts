@@ -48,6 +48,11 @@ const admin = new AdminConsoleStack(app, 'AdminConsoleStack-v1-0', {
   secretsKmsKey: search.kmsSecretsKey,
   userPoolId: search.userPoolId,
   userPoolClientId: search.userPoolClientId,
+  auditTableName: search.auditTable.tableName,
+  auditTableArn: search.auditTableArn,
+  mfaReplayTable: search.mfaReplayTable,
+  mfaSigningKeyArn: search.mfaSigningKeyArn,
+  mfaSigningKeyId: search.mfaSigningKeyId,
   adminAssetPath: existsSync(adminAssetPath) ? adminAssetPath : resolve(__dirname, '../test/fixtures/admin-asset')
 });
 

@@ -20,10 +20,14 @@ export interface AdminConsoleStackProps extends StackProps {
   searchRouterFn: IFunction;
   secretsKmsKey: IKey;
   auditTableName?: string;
+  auditTableArn?: string;
   secretArnPrefix?: string;
   adminAssetPath?: string;
   userPoolId: string;
   userPoolClientId: string;
+  mfaReplayTable?: ITable;
+  mfaSigningKeyArn?: string;
+  mfaSigningKeyId?: string;
 }
 
 export class AdminConsoleStack extends Stack {
@@ -62,9 +66,27 @@ export class AdminConsoleStack extends Stack {
         AUDIT_TABLE: auditTableName,
         SEARCH_ROUTER_ARN: props.searchRouterFn.functionArn,
         COGNITO_USER_POOL_ID: props.userPoolId,
-        COGNITO_CLIENT_ID: props.userPoolClientId
+        COGNITO_CLIENT_ID: props.userPoolClientId,
+        ...(props.mfaReplayTable ? { MFA_REPLAY_TABLE: props.mfaReplayTable.tableName } : {}),
+        ...(props.mfaSigningKeyId ? { MFA_KMS_KEY_ID: props.mfaSigningKeyId } : {})
       }
     });
+
+    // MFA replay/cap table — single-use assertion fingerprints + per-actor hourly counters
+    if (props.mfaReplayTable) {
+      props.mfaReplayTable.grantReadWriteData(fn);
+    }
+
+    // KMS Sign/Verify for step-up MFA assertion tokens (RSASSA_PSS_SHA_256, 5-min lifetime)
+    if (props.mfaSigningKeyArn) {
+      fn.addToRolePolicy(
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['kms:Sign', 'kms:Verify', 'kms:GetPublicKey'],
+          resources: [props.mfaSigningKeyArn]
+        })
+      );
+    }
 
     // Grant permissions to ConfigTable
     props.configTable.grantReadData(fn);

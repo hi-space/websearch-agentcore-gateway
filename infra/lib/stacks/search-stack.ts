@@ -9,6 +9,7 @@ import { CognitoConstruct } from '../security/cognito.js';
 import { ConfigTableConstruct } from '../data/config-table.js';
 import { ConfigSeed } from '../data/config-seed.js';
 import { QuotaTableConstruct } from '../data/quota-table.js';
+import { MfaReplayTableConstruct } from '../data/mfa-replay-table.js';
 import { SearchRouterFn } from '../compute/search-router-fn.js';
 import { AgentCoreGateway } from '../gateway/agentcore-gateway.js';
 import { AlarmsConstruct } from '../observability/alarms.js';
@@ -36,6 +37,9 @@ export class SearchStack extends Stack {
   readonly snsTopicArn: string;
   readonly userPoolId: string;
   readonly userPoolClientId: string;
+  readonly mfaReplayTable: ITable;
+  readonly mfaSigningKeyId: string;
+  readonly mfaSigningKeyArn: string;
 
   constructor(scope: Construct, id: string, props?: SearchStackProps) {
     super(scope, id, props);
@@ -46,6 +50,10 @@ export class SearchStack extends Stack {
     this.userPoolClientId = cognito.client.userPoolClientId;
     const configTableConstruct = new ConfigTableConstruct(this, 'Config', { kmsKey: kms.ddbKey });
     const quotaTable = new QuotaTableConstruct(this, 'Quota', { kmsKey: kms.ddbKey });
+    const mfaReplay = new MfaReplayTableConstruct(this, 'MfaReplay', { kmsKey: kms.ddbKey });
+    this.mfaReplayTable = mfaReplay.table as ITable;
+    this.mfaSigningKeyId = kms.mfaSigningKey.keyId;
+    this.mfaSigningKeyArn = kms.mfaSigningKey.keyArn;
 
     this.vpc = network.vpc;
     this.configTable = configTableConstruct.table as ITable;
@@ -95,25 +103,24 @@ export class SearchStack extends Stack {
       this.searchRouter.fn.addEnvironment('SEARXNG_BASE_URL', searxng.endpoint);
     }
 
-    // Build tool definitions
+    // Build tool definitions. Each Lambda adapter gets its own MCP tool;
+    // Tavily/Brave are pre-registered as Gateway built-ins (not Lambda targets)
+    // and merged into search_unified via the MCP gateway-client at runtime.
+    const querySchema = {
+      type: 'object',
+      properties: { query: { type: 'string', minLength: 1, maxLength: 2048 } },
+      required: ['query']
+    };
     const toolDefinitions = [
-      {
-        name: 'search_arxiv',
-        description: 'Search arXiv for academic papers.',
-        inputSchema: {
-          type: 'object',
-          properties: { query: { type: 'string', minLength: 1, maxLength: 2048 } },
-          required: ['query']
-        }
-      },
+      { name: 'search_arxiv', description: 'Search arXiv for academic papers.', inputSchema: querySchema },
+      { name: 'search_exa', description: 'Search Exa for high-quality web results with semantic ranking.', inputSchema: querySchema },
+      { name: 'search_perplexity', description: 'Search Perplexity for cited, summarized web answers.', inputSchema: querySchema },
+      { name: 'search_you', description: 'Search You.com for general web results.', inputSchema: querySchema },
+      { name: 'search_unified', description: 'Fan out across all enabled providers and merge with reciprocal-rank fusion (RRF).', inputSchema: querySchema },
       ...(props?.enableSearxng ? [{
         name: 'search_searxng',
         description: 'Search using self-hosted SearXNG instance.',
-        inputSchema: {
-          type: 'object',
-          properties: { query: { type: 'string', minLength: 1, maxLength: 2048 } },
-          required: ['query']
-        }
+        inputSchema: querySchema
       }] : [])
     ];
 
