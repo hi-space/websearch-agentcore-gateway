@@ -9,6 +9,7 @@ import {
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { Effect, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { GatewayTargets } from './targets.js';
+import { GatewayWaitForReady } from './wait-for-ready.js';
 
 export interface GatewayProps {
   routerFn: IFunction;
@@ -84,12 +85,15 @@ export class AgentCoreGateway extends Construct {
 
     this.gatewayId = create.getResponseField('gatewayId');
 
+    const wait = new GatewayWaitForReady(this, 'WaitReady', { gatewayId: this.gatewayId });
+    wait.node.addDependency(create);
+
     const targets = new GatewayTargets(this, 'Targets', {
       gatewayId: this.gatewayId,
       routerFn: props.routerFn,
       invokeRole,
       tools: props.toolDefinitions
     });
-    targets.node.addDependency(create);
+    targets.node.addDependency(wait);
   }
 }

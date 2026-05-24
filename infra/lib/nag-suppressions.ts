@@ -42,6 +42,14 @@ export function applyV1NagSuppressions(stack: Stack): void {
     {
       id: 'AwsSolutions-COG8',
       reason: 'Cognito Plus tier (advanced threat protection) is a paid feature deferred to v1.6 once cost model is approved; v1 admin pool enforces MFA, 12-char password policy, and rate-limited Lambda authorizer.'
+    },
+    {
+      id: 'AwsSolutions-SF1',
+      reason: 'CDK-managed waiter state machine inside cr.Provider polls AgentCore Gateway READY status; CloudWatch Logs ALL events would log every poll iteration and inflate retention costs. The waiter is short-lived (10 min max) and is observed via the parent custom resource. Will revisit when CFN-native AgentCore L1 obviates the polling provider in v1.6.'
+    },
+    {
+      id: 'AwsSolutions-SF2',
+      reason: 'CDK-managed waiter state machine inside cr.Provider does not need X-Ray tracing in v1; provider is invoked only during stack create/update, not request-path. Will revisit when CFN-native AgentCore L1 obviates the polling provider in v1.6.'
     }
   ]);
 }
