@@ -27,13 +27,14 @@ export class GatewayTargets extends Construct {
     super(scope, id);
 
     props.tools.forEach((tool) => {
+      const safeName = tool.name.replace(/_/g, '-');
       new AwsCustomResource(this, `CreateTarget-${tool.name}`, {
         onCreate: {
           service: 'bedrock-agentcore-control',
           action: 'createGatewayTarget',
           parameters: {
             gatewayIdentifier: props.gatewayId,
-            name: `search-router-${tool.name}`,
+            name: `search-router-${safeName}`,
             targetConfiguration: {
               mcp: {
                 lambda: {
@@ -52,7 +53,8 @@ export class GatewayTargets extends Construct {
           parameters: {
             gatewayIdentifier: props.gatewayId,
             targetId: new PhysicalResourceIdReference()
-          }
+          },
+          ignoreErrorCodesMatching: 'ValidationException|ResourceNotFoundException'
         },
         policy: AwsCustomResourcePolicy.fromStatements([
           new PolicyStatement({
