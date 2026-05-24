@@ -35,19 +35,28 @@ describe('ObservabilityStack', () => {
     });
   });
 
-  it('creates a CloudTrail with data events for DDB, KMS, Secrets, Lambda', () => {
+  it('creates a CloudTrail with management events + Lambda data events', () => {
+    // KMS Decrypt/Encrypt + SecretsManager GetSecretValue are emitted as
+    // management events, so the Management selector covers them. Lambda
+    // data events on search-router are added explicitly.
     const app = new App();
     const s = new ObservabilityStack(app, 'T', baseProps as any);
     const t = Template.fromStack(s);
     t.resourceCountIs('AWS::CloudTrail::Trail', 1);
     const trails = t.findResources('AWS::CloudTrail::Trail');
-    const trail = Object.values(trails)[0] as { Properties: { EventSelectors: Array<{ DataResources?: Array<{ Type: string }> }> } };
-    const dataTypes = trail.Properties.EventSelectors.flatMap((sel) =>
-      (sel.DataResources ?? []).map((r) => r.Type)
+    const trail = Object.values(trails)[0] as {
+      Properties: { AdvancedEventSelectors?: Array<{ Name?: string; FieldSelectors: Array<{ Field: string; Equals?: string[]; StartsWith?: string[] }> }> }
+    };
+    const selectors = trail.Properties.AdvancedEventSelectors ?? [];
+    expect(selectors.length).toBeGreaterThanOrEqual(2);
+    const categories = selectors.flatMap((sel) =>
+      sel.FieldSelectors.filter((f) => f.Field === 'eventCategory').flatMap((f) => f.Equals ?? [])
     );
-    expect(dataTypes).toContain('AWS::DynamoDB::Table');
-    expect(dataTypes).toContain('AWS::Lambda::Function');
-    expect(dataTypes).toContain('AWS::KMS::Key');
-    expect(dataTypes).toContain('AWS::SecretsManager::Secret');
+    expect(categories).toContain('Management');
+    expect(categories).toContain('Data');
+    const resourceTypes = selectors.flatMap((sel) =>
+      sel.FieldSelectors.filter((f) => f.Field === 'resources.type').flatMap((f) => f.Equals ?? [])
+    );
+    expect(resourceTypes).toContain('AWS::Lambda::Function');
   });
 });
