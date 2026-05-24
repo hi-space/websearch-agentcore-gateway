@@ -3,6 +3,7 @@ import { RemovalPolicy, Stack } from 'aws-cdk-lib';
 import {
   UserPool,
   UserPoolClient,
+  UserPoolDomain,
   AccountRecovery,
   Mfa,
   StringAttribute,
@@ -13,6 +14,8 @@ export class CognitoConstruct extends Construct {
   readonly userPool: UserPool;
   readonly client: UserPoolClient;
   readonly discoveryUrl: string;
+  readonly hostedUiDomain: UserPoolDomain;
+  readonly hostedUiBaseUrl: string;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
@@ -58,6 +61,16 @@ export class CognitoConstruct extends Construct {
     });
 
     const region = Stack.of(this).region;
+    const account = Stack.of(this).account;
     this.discoveryUrl = `https://cognito-idp.${region}.amazonaws.com/${this.userPool.userPoolId}/.well-known/openid-configuration`;
+
+    // Hosted UI domain — region-unique prefix, derived from account ID for stability across redeploys.
+    // The admin OAuth client lives in AdminConsoleStack so its callback can reference the CloudFront domain
+    // without creating a cycle between the two stacks.
+    const prefix = `agentcore-admin-${account}`;
+    this.hostedUiDomain = this.userPool.addDomain('AdminHostedUi', {
+      cognitoDomain: { domainPrefix: prefix }
+    });
+    this.hostedUiBaseUrl = `https://${prefix}.auth.${region}.amazoncognito.com`;
   }
 }

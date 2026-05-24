@@ -6,6 +6,7 @@ import { ITable } from 'aws-cdk-lib/aws-dynamodb';
 import { IKey } from 'aws-cdk-lib/aws-kms';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { PolicyStatement, Effect } from 'aws-cdk-lib/aws-iam';
+import { IUserPool, CfnUserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -23,8 +24,10 @@ export interface AdminConsoleStackProps extends StackProps {
   auditTableArn?: string;
   secretArnPrefix?: string;
   adminAssetPath?: string;
+  userPool: IUserPool;
   userPoolId: string;
   userPoolClientId: string;
+  hostedUiBaseUrl: string;
   mfaReplayTable?: ITable;
   mfaSigningKeyArn?: string;
   mfaSigningKeyId?: string;
@@ -163,6 +166,30 @@ export class AdminConsoleStack extends Stack {
       sourceArn: `arn:aws:cloudfront::${this.account}:distribution/${distribution.attrId}`
     });
 
+    // Cognito Hosted UI OAuth client — its callback needs the CloudFront domain, so it must
+    // be created in this stack scope to avoid a SearchStack ↔ AdminConsoleStack cycle.
+    // Using the L1 CfnUserPoolClient (rather than UserPool.addClient) ensures the resource lives
+    // in AdminConsoleStack rather than the imported UserPool's home stack.
+    // Auth-code + PKCE only; refresh tokens not requested.
+    const consoleUrl = `https://${distribution.attrDomainName}`;
+    const oauthClient = new CfnUserPoolClient(this, 'AdminConsoleClient', {
+      userPoolId: props.userPool.userPoolId,
+      clientName: 'admin-console',
+      generateSecret: false,
+      explicitAuthFlows: ['ALLOW_USER_SRP_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH'],
+      preventUserExistenceErrors: 'ENABLED',
+      allowedOAuthFlows: ['code'],
+      allowedOAuthFlowsUserPoolClient: true,
+      allowedOAuthScopes: ['openid', 'email', 'profile'],
+      callbackUrLs: [`${consoleUrl}/api/auth/callback`],
+      logoutUrLs: [consoleUrl],
+      supportedIdentityProviders: ['COGNITO']
+    });
+
+    fn.addEnvironment('COGNITO_HOSTED_UI_BASE_URL', props.hostedUiBaseUrl);
+    fn.addEnvironment('COGNITO_OAUTH_CLIENT_ID', oauthClient.ref);
+    fn.addEnvironment('ADMIN_CONSOLE_BASE_URL', consoleUrl);
+
     // Outputs
     new CfnOutput(this, 'AdminDistDomainName', {
       value: distribution.attrDomainName,
@@ -172,6 +199,11 @@ export class AdminConsoleStack extends Stack {
     new CfnOutput(this, 'AdminFunctionUrl', {
       value: fnUrl.url,
       description: 'Lambda Function URL'
+    });
+
+    new CfnOutput(this, 'AdminConsoleOAuthClientId', {
+      value: oauthClient.ref,
+      description: 'Cognito OAuth client used by the admin Hosted UI flow'
     });
   }
 }

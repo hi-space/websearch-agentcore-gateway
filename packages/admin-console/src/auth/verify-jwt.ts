@@ -3,6 +3,7 @@ import { CognitoJwtVerifier } from 'aws-jwt-verify';
 export interface VerifierConfig {
   userPoolId: string;
   clientId: string;
+  tokenUse?: 'access' | 'id';
 }
 
 export interface AuthCtx {
@@ -14,7 +15,7 @@ export interface AuthCtx {
 type VerifierFactory = (cfg: VerifierConfig) => { verify(token: string): Promise<{ sub: string; email?: string; 'cognito:groups'?: string[] }> };
 
 const defaultFactory: VerifierFactory = (cfg) =>
-  CognitoJwtVerifier.create({ userPoolId: cfg.userPoolId, clientId: cfg.clientId, tokenUse: 'access' });
+  CognitoJwtVerifier.create({ userPoolId: cfg.userPoolId, clientId: cfg.clientId, tokenUse: cfg.tokenUse ?? 'access' });
 
 export function makeVerifier(cfg: VerifierConfig, factory: VerifierFactory = defaultFactory) {
   const v = factory(cfg);

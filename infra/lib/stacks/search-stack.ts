@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import { IVpc } from 'aws-cdk-lib/aws-ec2';
 import { ITable, Table, AttributeType, BillingMode, StreamViewType, TableEncryption } from 'aws-cdk-lib/aws-dynamodb';
 import { IKey } from 'aws-cdk-lib/aws-kms';
+import { IUserPool } from 'aws-cdk-lib/aws-cognito';
 import { NetworkConstruct } from '../network/index.js';
 import { KmsConstruct } from '../security/kms.js';
 import { CognitoConstruct } from '../security/cognito.js';
@@ -36,8 +37,10 @@ export class SearchStack extends Stack {
   readonly auditTableStreamArn: string;
   readonly gatewayId: string;
   readonly snsTopicArn: string;
+  readonly userPool: IUserPool;
   readonly userPoolId: string;
   readonly userPoolClientId: string;
+  readonly hostedUiBaseUrl: string;
   readonly mfaReplayTable: ITable;
   readonly mfaSigningKeyId: string;
   readonly mfaSigningKeyArn: string;
@@ -47,8 +50,10 @@ export class SearchStack extends Stack {
     const network = new NetworkConstruct(this, 'Network');
     const kms = new KmsConstruct(this, 'Kms');
     const cognito = new CognitoConstruct(this, 'Cognito');
+    this.userPool = cognito.userPool;
     this.userPoolId = cognito.userPool.userPoolId;
     this.userPoolClientId = cognito.client.userPoolClientId;
+    this.hostedUiBaseUrl = cognito.hostedUiBaseUrl;
     const configTableConstruct = new ConfigTableConstruct(this, 'Config', { kmsKey: kms.ddbKey });
     const quotaTable = new QuotaTableConstruct(this, 'Quota', { kmsKey: kms.ddbKey });
     const mfaReplay = new MfaReplayTableConstruct(this, 'MfaReplay', { kmsKey: kms.ddbKey });
@@ -141,6 +146,7 @@ export class SearchStack extends Stack {
     new CfnOutput(this, 'GatewayId', { value: gateway.gatewayId });
     new CfnOutput(this, 'UserPoolId', { value: cognito.userPool.userPoolId });
     new CfnOutput(this, 'UserPoolClientId', { value: cognito.client.userPoolClientId });
+    new CfnOutput(this, 'HostedUiBaseUrl', { value: cognito.hostedUiBaseUrl });
 
     const alarms = new AlarmsConstruct(this, 'Alarms');
     this.snsTopicArn = alarms.topic.topicArn;
