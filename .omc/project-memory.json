@@ -47,8 +47,8 @@
     },
     {
       "path": "infra/lib/network/vpc.ts",
-      "accessCount": 21,
-      "lastAccessed": 1779580149118,
+      "accessCount": 22,
+      "lastAccessed": 1779582289211,
       "type": "file"
     },
     {
@@ -221,8 +221,8 @@
     },
     {
       "path": "infra/cdk.json",
-      "accessCount": 4,
-      "lastAccessed": 1779537967248,
+      "accessCount": 5,
+      "lastAccessed": 1779582414001,
       "type": "file"
     },
     {
@@ -241,6 +241,12 @@
       "path": "package.json",
       "accessCount": 4,
       "lastAccessed": 1779541757957,
+      "type": "file"
+    },
+    {
+      "path": "infra/lib/compute/search-router-fn.ts",
+      "accessCount": 4,
+      "lastAccessed": 1779582282458,
       "type": "file"
     },
     {
@@ -301,12 +307,6 @@
       "path": "packages/search-router/src/__tests__/quota.test.ts",
       "accessCount": 3,
       "lastAccessed": 1779539125624,
-      "type": "file"
-    },
-    {
-      "path": "infra/lib/compute/search-router-fn.ts",
-      "accessCount": 3,
-      "lastAccessed": 1779541919471,
       "type": "file"
     },
     {
