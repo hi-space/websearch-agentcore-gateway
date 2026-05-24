@@ -4,8 +4,16 @@ import { Stack } from 'aws-cdk-lib';
 export function applyV1NagSuppressions(stack: Stack): void {
   NagSuppressions.addStackSuppressions(stack, [
     {
+      id: 'AwsSolutions-IAM4',
+      reason: 'AWS-managed AWSLambdaBasicExecutionRole / AWSLambdaVPCAccessExecutionRole are auto-attached by L2 NodejsFunction and AwsCustomResource constructs; explicit roles are used for the search-router and gateway custom resources. Tightening the auto-attached defaults requires bypassing CDK L2s and is deferred to v1.6 once a CFN-native AgentCore L1 ships.'
+    },
+    {
       id: 'AwsSolutions-IAM5',
       reason: 'CloudWatch:PutMetricData and bedrock-agentcore:Create*/Delete* require resource:* by API contract; bounded by namespace/action conditions where possible.'
+    },
+    {
+      id: 'AwsSolutions-DDB3',
+      reason: 'AuditLogTable streams DDB events to S3 Object Lock (COMPLIANCE, 7-year retention) for durable audit-trail retention; PITR on the source table would duplicate that guarantee. QuotaTable separately suppresses DDB3 at the resource level for ephemeral counters.'
     },
     {
       id: 'AwsSolutions-L1',
