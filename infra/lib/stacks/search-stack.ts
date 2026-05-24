@@ -17,6 +17,7 @@ import { SearxngService } from '../searxng/searxng-service.js';
 import { enableGuardDuty } from '../security/guardduty.js';
 import { enableSecurityHub } from '../security/securityhub.js';
 import { applyV1NagSuppressions } from '../nag-suppressions.js';
+import { NagSuppressions } from 'cdk-nag';
 
 export interface SearchStackProps extends StackProps {
   enableSearxng?: boolean;
@@ -69,6 +70,12 @@ export class SearchStack extends Stack {
       encryptionKey: kms.ddbKey,
       stream: StreamViewType.NEW_AND_OLD_IMAGES
     });
+    NagSuppressions.addResourceSuppressions(this.auditTable, [
+      {
+        id: 'AwsSolutions-DDB3',
+        reason: 'AuditLogTable streams every INSERT to an S3 Object-Lock (COMPLIANCE, 7-year) bucket via the audit-export Lambda. PITR on the source table would duplicate that durability guarantee for what is effectively WORM data; restoring from PITR would also break Object-Lock attestation.'
+      }
+    ]);
     this.auditTableArn = this.auditTable.tableArn;
     this.auditTableStreamArn = this.auditTable.tableStreamArn ?? '';
 

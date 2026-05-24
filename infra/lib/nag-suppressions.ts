@@ -11,10 +11,9 @@ export function applyV1NagSuppressions(stack: Stack): void {
       id: 'AwsSolutions-IAM5',
       reason: 'CloudWatch:PutMetricData and bedrock-agentcore:Create*/Delete* require resource:* by API contract; bounded by namespace/action conditions where possible.'
     },
-    {
-      id: 'AwsSolutions-DDB3',
-      reason: 'AuditLogTable streams DDB events to S3 Object Lock (COMPLIANCE, 7-year retention) for durable audit-trail retention; PITR on the source table would duplicate that guarantee. QuotaTable separately suppresses DDB3 at the resource level for ephemeral counters.'
-    },
+    // AwsSolutions-DDB3: scoped per-resource on the three tables that opt out of PITR
+    // (QuotaTable, MfaReplayTable — ephemeral; AuditLogTable — WORM via S3 Object Lock).
+    // Stack-level suppression removed in v1.6 hardening.
     {
       id: 'AwsSolutions-L1',
       reason: 'Node 20 is the explicit v1 runtime target (set in NodejsFunction and AwsCustomResource defaults). Bedrock-agentcore-control SDK does not yet support nodejs22; revisit and bump to latest LTS in v1.6.'
