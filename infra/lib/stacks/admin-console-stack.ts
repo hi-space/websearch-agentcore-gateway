@@ -7,6 +7,7 @@ import { IKey } from 'aws-cdk-lib/aws-kms';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { PolicyStatement, Effect } from 'aws-cdk-lib/aws-iam';
 import { IUserPool, CfnUserPoolClient } from 'aws-cdk-lib/aws-cognito';
+import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -166,11 +167,18 @@ export class AdminConsoleStack extends Stack {
       sourceArn: `arn:aws:cloudfront::${this.account}:distribution/${distribution.attrId}`
     });
 
-    // Cognito Hosted UI OAuth client — its callback needs the CloudFront domain, so it must
-    // be created in this stack scope to avoid a SearchStack ↔ AdminConsoleStack cycle.
-    // Using the L1 CfnUserPoolClient (rather than UserPool.addClient) ensures the resource lives
-    // in AdminConsoleStack rather than the imported UserPool's home stack.
-    // Auth-code + PKCE only; refresh tokens not requested.
+    // Cognito Hosted UI OAuth client — using the L1 CfnUserPoolClient (rather than
+    // UserPool.addClient) keeps the resource in AdminConsoleStack rather than the UserPool's home
+    // stack, avoiding a Search↔Admin cross-stack cycle. Auth-code + PKCE only.
+    //
+    // Cycle-breaking strategy for the in-stack chain
+    // (Lambda → oauthClient → callbackUrLs(distribution) → fnUrl → Lambda):
+    //   - oauthClient is created with a placeholder callback so it has NO dep on `distribution`.
+    //   - A separate AwsCustomResource patches the real callback/logout URLs after both the
+    //     client and the distribution exist. The custom resource depends on `distribution`,
+    //     but the Lambda only depends on `oauthClient` (via the env var), not on `distribution`.
+    //   - Lambda env intentionally omits the console base URL; the Next.js handler derives it
+    //     from the incoming request's Host header at runtime.
     const consoleUrl = `https://${distribution.attrDomainName}`;
     const oauthClient = new CfnUserPoolClient(this, 'AdminConsoleClient', {
       userPoolId: props.userPool.userPoolId,
@@ -181,14 +189,62 @@ export class AdminConsoleStack extends Stack {
       allowedOAuthFlows: ['code'],
       allowedOAuthFlowsUserPoolClient: true,
       allowedOAuthScopes: ['openid', 'email', 'profile'],
-      callbackUrLs: [`${consoleUrl}/api/auth/callback`],
-      logoutUrLs: [consoleUrl],
+      callbackUrLs: ['https://placeholder.invalid/api/auth/callback'],
+      logoutUrLs: ['https://placeholder.invalid'],
       supportedIdentityProviders: ['COGNITO']
     });
 
+    const patchClientUrls = new AwsCustomResource(this, 'AdminConsoleClientCallbackPatch', {
+      installLatestAwsSdk: false,
+      onCreate: {
+        service: 'CognitoIdentityServiceProvider',
+        action: 'updateUserPoolClient',
+        parameters: {
+          UserPoolId: props.userPool.userPoolId,
+          ClientId: oauthClient.ref,
+          CallbackURLs: [`${consoleUrl}/api/auth/callback`],
+          LogoutURLs: [consoleUrl],
+          AllowedOAuthFlows: ['code'],
+          AllowedOAuthFlowsUserPoolClient: true,
+          AllowedOAuthScopes: ['openid', 'email', 'profile'],
+          SupportedIdentityProviders: ['COGNITO'],
+          ExplicitAuthFlows: ['ALLOW_USER_SRP_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH'],
+          PreventUserExistenceErrors: 'ENABLED'
+        },
+        physicalResourceId: PhysicalResourceId.of(`${oauthClient.ref}-callbacks`)
+      },
+      onUpdate: {
+        service: 'CognitoIdentityServiceProvider',
+        action: 'updateUserPoolClient',
+        parameters: {
+          UserPoolId: props.userPool.userPoolId,
+          ClientId: oauthClient.ref,
+          CallbackURLs: [`${consoleUrl}/api/auth/callback`],
+          LogoutURLs: [consoleUrl],
+          AllowedOAuthFlows: ['code'],
+          AllowedOAuthFlowsUserPoolClient: true,
+          AllowedOAuthScopes: ['openid', 'email', 'profile'],
+          SupportedIdentityProviders: ['COGNITO'],
+          ExplicitAuthFlows: ['ALLOW_USER_SRP_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH'],
+          PreventUserExistenceErrors: 'ENABLED'
+        },
+        physicalResourceId: PhysicalResourceId.of(`${oauthClient.ref}-callbacks`)
+      },
+      policy: AwsCustomResourcePolicy.fromStatements([
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['cognito-idp:UpdateUserPoolClient'],
+          resources: [
+            `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/${props.userPool.userPoolId}`
+          ]
+        })
+      ])
+    });
+    patchClientUrls.node.addDependency(oauthClient);
+    patchClientUrls.node.addDependency(distribution);
+
     fn.addEnvironment('COGNITO_HOSTED_UI_BASE_URL', props.hostedUiBaseUrl);
     fn.addEnvironment('COGNITO_OAUTH_CLIENT_ID', oauthClient.ref);
-    fn.addEnvironment('ADMIN_CONSOLE_BASE_URL', consoleUrl);
 
     // Outputs
     new CfnOutput(this, 'AdminDistDomainName', {

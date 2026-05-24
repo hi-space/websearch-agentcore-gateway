@@ -8,8 +8,8 @@ import {
   readOAuthEnv
 } from '../../../../src/auth/oauth';
 
-export async function GET(_req: NextRequest) {
-  const env = readOAuthEnv();
+export async function GET(req: NextRequest) {
+  const env = readOAuthEnv(req.url);
   const verifier = generateCodeVerifier();
   const state = randomBytes(16).toString('hex');
   const url = buildAuthorizeUrl(env, { state, codeChallenge: codeChallenge(verifier) });

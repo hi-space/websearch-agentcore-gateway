@@ -36,13 +36,26 @@ describe('oauth helpers', () => {
     expect(u.searchParams.get('code_challenge')).toBe('ch');
   });
 
+  it('readOAuthEnv derives consoleBaseUrl from request URL', () => {
+    const prev = { ...process.env };
+    process.env.COGNITO_HOSTED_UI_BASE_URL = env.hostedUiBaseUrl;
+    process.env.COGNITO_OAUTH_CLIENT_ID = env.clientId;
+    try {
+      const out = readOAuthEnv('https://admin.example.test/api/auth/login');
+      expect(out.hostedUiBaseUrl).toBe(env.hostedUiBaseUrl);
+      expect(out.clientId).toBe(env.clientId);
+      expect(out.consoleBaseUrl).toBe('https://admin.example.test');
+    } finally {
+      process.env = prev;
+    }
+  });
+
   it('readOAuthEnv throws when env vars are missing', () => {
     const prev = { ...process.env };
     delete process.env.COGNITO_HOSTED_UI_BASE_URL;
     delete process.env.COGNITO_OAUTH_CLIENT_ID;
-    delete process.env.ADMIN_CONSOLE_BASE_URL;
     try {
-      expect(() => readOAuthEnv()).toThrow();
+      expect(() => readOAuthEnv('https://x.test/login')).toThrow();
     } finally {
       process.env = prev;
     }

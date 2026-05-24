@@ -9,13 +9,18 @@ export interface OAuthEnv {
 export const SESSION_COOKIE = 'id_token';
 export const PKCE_COOKIE = 'oauth_pkce';
 
-export function readOAuthEnv(): OAuthEnv {
+// Derives the OAuth env from process env + the incoming request URL. consoleBaseUrl comes from
+// the request rather than env to avoid a Lambda → CloudFront → Lambda dependency cycle at deploy
+// time (distribution.domainName is a runtime token; baking it into Lambda env reverses the
+// natural construct ordering inside AdminConsoleStack).
+export function readOAuthEnv(requestUrl: string | URL): OAuthEnv {
   const hostedUiBaseUrl = process.env.COGNITO_HOSTED_UI_BASE_URL;
   const clientId = process.env.COGNITO_OAUTH_CLIENT_ID;
-  const consoleBaseUrl = process.env.ADMIN_CONSOLE_BASE_URL;
-  if (!hostedUiBaseUrl || !clientId || !consoleBaseUrl) {
+  if (!hostedUiBaseUrl || !clientId) {
     throw new Error('Cognito Hosted UI env vars missing — login flow not configured');
   }
+  const u = typeof requestUrl === 'string' ? new URL(requestUrl) : requestUrl;
+  const consoleBaseUrl = `${u.protocol}//${u.host}`;
   return { hostedUiBaseUrl, clientId, consoleBaseUrl };
 }
 
