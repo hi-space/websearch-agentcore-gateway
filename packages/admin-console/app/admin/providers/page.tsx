@@ -1,5 +1,7 @@
-import { adminApi } from '../../../src/lib/api.js';
-import { ProviderList } from '../../../src/views/ProviderList.js';
+import { adminApi } from '../../../src/lib/api';
+import { ProviderList } from '../../../src/views/ProviderList';
+
+export const dynamic = 'force-dynamic';
 
 export default async function Page() {
   const rows = await adminApi.listProviders();

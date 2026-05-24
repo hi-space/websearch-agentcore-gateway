@@ -1,5 +1,7 @@
-import { adminApi } from '../../../src/lib/api.js';
-import { Dashboard } from '../../../src/views/Dashboard.js';
+import { adminApi } from '../../../src/lib/api';
+import { Dashboard } from '../../../src/views/Dashboard';
+
+export const dynamic = 'force-dynamic';
 
 export default async function Page() {
   const providers = await adminApi.listProviders();

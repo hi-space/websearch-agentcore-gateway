@@ -10,7 +10,7 @@
   },
   "build": {
     "buildCommand": "cd packages/admin-console && rm -rf .next && pnpm build 2>&1 | tail -40",
-    "testCommand": "pnpm test 2>&1 | grep -E \"passed|failed|Test Files\"",
+    "testCommand": "git add packages/admin-console/src/ui/ packages/admin-console/vitest.config.ts packages/admin-console/vitest.setup.ts packages/admin-console/package.json pnpm-lock.yaml && git commit -m \"feat(admin-ui): primitive ui components\n\nCo-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>\"",
     "lintCommand": null,
     "devCommand": null,
     "scripts": {}
@@ -94,6 +94,12 @@
       "type": "file"
     },
     {
+      "path": "packages/admin-console/package.json",
+      "accessCount": 10,
+      "lastAccessed": 1779581061173,
+      "type": "file"
+    },
+    {
       "path": "infra/lib/network/index.ts",
       "accessCount": 9,
       "lastAccessed": 1779539270430,
@@ -151,12 +157,6 @@
       "path": "packages/search-router/src/__tests__/handler.test.ts",
       "accessCount": 7,
       "lastAccessed": 1779579023347,
-      "type": "file"
-    },
-    {
-      "path": "packages/admin-console/package.json",
-      "accessCount": 7,
-      "lastAccessed": 1779580174349,
       "type": "file"
     },
     {

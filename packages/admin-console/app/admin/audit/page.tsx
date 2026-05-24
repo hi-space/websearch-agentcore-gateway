@@ -1,5 +1,7 @@
-import { adminApi } from '../../../src/lib/api.js';
-import { AuditLog } from '../../../src/views/AuditLog.js';
+import { adminApi } from '../../../src/lib/api';
+import { AuditLog } from '../../../src/views/AuditLog';
+
+export const dynamic = 'force-dynamic';
 
 export default async function Page() {
   const { rows } = await adminApi.auditList();

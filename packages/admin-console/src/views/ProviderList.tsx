@@ -1,8 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
-import { Card } from '../ui/Card.js';
-import { Badge } from '../ui/Badge.js';
-import type { ProviderRow } from '../lib/api.js';
+import { Card } from '../ui/Card';
+import { Badge } from '../ui/Badge';
+import type { ProviderRow } from '../lib/api';
 
 export function ProviderList({ rows }: { rows: ProviderRow[] }) {
   return (

@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Card } from '../ui/Card.js';
-import { Button } from '../ui/Button.js';
-import { Input } from '../ui/Input.js';
-import type { ProviderRow } from '../lib/api.js';
+import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import type { ProviderRow } from '../lib/api';
 
 interface Api {
   updateProvider: (id: string, body: { enabled: boolean; quota: { rpm: number; daily: number }; timeoutMs: number }) => Promise<ProviderRow>;
@@ -30,7 +30,7 @@ export function ProviderDetail({ initial, api }: { initial: ProviderRow; api: Ap
       <Card>
         <h2 className="text-xl font-semibold mb-4">{initial.providerId}</h2>
         <label className="flex items-center gap-2 mb-4">
-          <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
+          <input type="checkbox" checked={enabled} onChange={(e) => setEnabled((e.target as HTMLInputElement).checked)} />
           <span>Enabled</span>
         </label>
         <div className="grid grid-cols-3 gap-4">

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { listAudit } from '../../../src/handlers/list-audit.js';
+import { listAudit } from '../../../src/handlers/list-audit';
 
 const ddb = new DynamoDBClient({});
 

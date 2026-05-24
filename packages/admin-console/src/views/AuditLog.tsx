@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card } from '../ui/Card.js';
-import type { AuditRow } from '../lib/api.js';
+import { Card } from '../ui/Card';
+import type { AuditRow } from '../lib/api';
 
 export function AuditLog({ rows }: { rows: AuditRow[] }) {
   return (

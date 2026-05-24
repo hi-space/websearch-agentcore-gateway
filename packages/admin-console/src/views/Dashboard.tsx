@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card } from '../ui/Card.js';
+import { Card } from '../ui/Card';
 
 interface Metric {
   providerId: string;
