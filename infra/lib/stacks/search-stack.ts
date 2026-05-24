@@ -65,9 +65,9 @@ export class SearchStack extends Stack {
       this.searchRouter.fn.addEnvironment('SEARXNG_BASE_URL', searxng.endpoint);
     }
 
-    const gateway = new AgentCoreGateway(this, 'Gateway', {
-      routerFn: this.searchRouter.fn,
-      toolDefinitions: [{
+    // Build tool definitions
+    const toolDefinitions = [
+      {
         name: 'search_arxiv',
         description: 'Search arXiv for academic papers.',
         inputSchema: {
@@ -75,7 +75,21 @@ export class SearchStack extends Stack {
           properties: { query: { type: 'string', minLength: 1, maxLength: 2048 } },
           required: ['query']
         }
-      }]
+      },
+      ...(props?.enableSearxng ? [{
+        name: 'search_searxng',
+        description: 'Search using self-hosted SearXNG instance.',
+        inputSchema: {
+          type: 'object',
+          properties: { query: { type: 'string', minLength: 1, maxLength: 2048 } },
+          required: ['query']
+        }
+      }] : [])
+    ];
+
+    const gateway = new AgentCoreGateway(this, 'Gateway', {
+      routerFn: this.searchRouter.fn,
+      toolDefinitions
     });
     new CfnOutput(this, 'GatewayId', { value: gateway.gatewayId });
     new AlarmsConstruct(this, 'Alarms');
