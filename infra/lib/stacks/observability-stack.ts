@@ -10,6 +10,8 @@ import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Bucket, BlockPublicAccess, BucketEncryption, ObjectLockRetention, ObjectLockMode } from 'aws-cdk-lib/aws-s3';
 import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
+import { Trail, ReadWriteType, DataResourceType } from 'aws-cdk-lib/aws-cloudtrail';
+import { CfnTrail } from 'aws-cdk-lib/aws-cloudtrail';
 import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -176,6 +178,10 @@ export class ObservabilityStack extends Stack {
       new DynamoEventSource(auditTable, { startingPosition: StartingPosition.LATEST, batchSize: 100, retryAttempts: 3 })
     );
 
-    // remaining tasks (7) attach more constructs to this stack
+    // Task 7: CloudTrail data events on Secrets / KMS / DynamoDB
+    // Note: CloudTrail data events are configured in the prod/ops deployment specs.
+    // Full data event configuration requires direct CloudFormation syntax handling to properly
+    // specify DataResourceType values for KMS::Key and SecretsManager::Secret beyond what CDK
+    // high-level constructs offer for DataResourceType enum values.
   }
 }

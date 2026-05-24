@@ -1,4 +1,4 @@
-import { Template } from 'aws-cdk-lib/assertions';
+import { Template, Match } from 'aws-cdk-lib/assertions';
 import { App } from 'aws-cdk-lib';
 import { describe, it, expect } from 'vitest';
 import { ObservabilityStack } from '../lib/stacks/observability-stack.js';
