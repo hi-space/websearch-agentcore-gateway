@@ -195,11 +195,12 @@ export class ObservabilityStack extends Stack {
       managementEvents: ReadWriteType.ALL
     });
 
-    // Switch from legacy EventSelectors to AdvancedEventSelectors so we can record
-    // data events on KMS keys and SecretsManager secrets (the legacy EventSelectors API
-    // only supports S3, Lambda, and DynamoDB resource types). AdvancedEventSelectors and
-    // EventSelectors are mutually exclusive on a single trail, so clear the legacy
-    // selectors emitted by the L2 Trail before attaching the modern ones.
+    // Record management events plus Lambda data events on the search-router
+    // function. KMS Decrypt/Encrypt and SecretsManager GetSecretValue calls
+    // are emitted as management events, so they are already captured by the
+    // Management selector below. AdvancedEventSelectors and EventSelectors
+    // are mutually exclusive, so clear the legacy selectors emitted by the
+    // L2 Trail before attaching the modern ones.
     const cfnTrail = trail.node.defaultChild as CfnTrail;
     cfnTrail.addPropertyDeletionOverride('EventSelectors');
     cfnTrail.addPropertyOverride('AdvancedEventSelectors', [
@@ -216,20 +217,6 @@ export class ObservabilityStack extends Stack {
             Field: 'resources.ARN',
             StartsWith: [`arn:aws:lambda:${this.region}:${this.account}:function:`]
           }
-        ]
-      },
-      {
-        Name: 'KMS data events',
-        FieldSelectors: [
-          { Field: 'eventCategory', Equals: ['Data'] },
-          { Field: 'resources.type', Equals: ['AWS::KMS::Key'] }
-        ]
-      },
-      {
-        Name: 'SecretsManager data events',
-        FieldSelectors: [
-          { Field: 'eventCategory', Equals: ['Data'] },
-          { Field: 'resources.type', Equals: ['AWS::SecretsManager::Secret'] }
         ]
       }
     ]);
