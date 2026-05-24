@@ -3,6 +3,7 @@ import { arxivAdapter } from './arxiv.js';
 import { exaAdapter } from './exa.js';
 import { perplexityAdapter } from './perplexity.js';
 import { youAdapter } from './you.js';
+import { searxngAdapter } from './searxng.js';
 
 const registry = new Map<string, Adapter>();
 
@@ -22,5 +23,6 @@ registerAdapter(arxivAdapter);
 registerAdapter(exaAdapter);
 registerAdapter(perplexityAdapter);
 registerAdapter(youAdapter);
+registerAdapter(searxngAdapter);
 
-export { arxivAdapter, exaAdapter, perplexityAdapter, youAdapter };
+export { arxivAdapter, exaAdapter, perplexityAdapter, youAdapter, searxngAdapter };

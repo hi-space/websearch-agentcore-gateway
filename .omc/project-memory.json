@@ -52,27 +52,27 @@
       "type": "file"
     },
     {
+      "path": "packages/search-router/src/handler.ts",
+      "accessCount": 15,
+      "lastAccessed": 1779582055613,
+      "type": "file"
+    },
+    {
+      "path": "packages/adapters/src/index.ts",
+      "accessCount": 14,
+      "lastAccessed": 1779582128745,
+      "type": "file"
+    },
+    {
       "path": "packages/adapters/package.json",
       "accessCount": 13,
       "lastAccessed": 1779536950756,
       "type": "file"
     },
     {
-      "path": "packages/search-router/src/handler.ts",
-      "accessCount": 13,
-      "lastAccessed": 1779578991969,
-      "type": "file"
-    },
-    {
-      "path": "packages/adapters/src/index.ts",
-      "accessCount": 12,
-      "lastAccessed": 1779537506939,
-      "type": "file"
-    },
-    {
       "path": "infra/bin/app.ts",
-      "accessCount": 12,
-      "lastAccessed": 1779580698241,
+      "accessCount": 13,
+      "lastAccessed": 1779582075378,
       "type": "file"
     },
     {
@@ -112,6 +112,18 @@
       "type": "file"
     },
     {
+      "path": "packages/adapters/src/arxiv.ts",
+      "accessCount": 9,
+      "lastAccessed": 1779581832946,
+      "type": "file"
+    },
+    {
+      "path": "packages/shared/src/types.ts",
+      "accessCount": 9,
+      "lastAccessed": 1779582116566,
+      "type": "file"
+    },
+    {
       "path": "packages/adapters/src/__tests__/contract.test.ts",
       "accessCount": 8,
       "lastAccessed": 1779536950702,
@@ -121,12 +133,6 @@
       "path": "packages/adapters/src/__tests__/arxiv.test.ts",
       "accessCount": 8,
       "lastAccessed": 1779537106398,
-      "type": "file"
-    },
-    {
-      "path": "packages/adapters/src/arxiv.ts",
-      "accessCount": 8,
-      "lastAccessed": 1779541923163,
       "type": "file"
     },
     {
@@ -145,12 +151,6 @@
       "path": "packages/shared/package.json",
       "accessCount": 7,
       "lastAccessed": 1779537200247,
-      "type": "file"
-    },
-    {
-      "path": "packages/shared/src/types.ts",
-      "accessCount": 7,
-      "lastAccessed": 1779537667734,
       "type": "file"
     },
     {
@@ -202,6 +202,12 @@
       "type": "file"
     },
     {
+      "path": "packages/search-router/src/entry.ts",
+      "accessCount": 6,
+      "lastAccessed": 1779582059796,
+      "type": "file"
+    },
+    {
       "path": "packages/adapters/tsconfig.json",
       "accessCount": 5,
       "lastAccessed": 1779537202571,
@@ -235,12 +241,6 @@
       "path": "package.json",
       "accessCount": 4,
       "lastAccessed": 1779541757957,
-      "type": "file"
-    },
-    {
-      "path": "packages/search-router/src/entry.ts",
-      "accessCount": 4,
-      "lastAccessed": 1779541923214,
       "type": "file"
     },
     {

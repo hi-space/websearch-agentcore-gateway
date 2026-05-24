@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"git add packages/admin-console/app/admin/providers/\\\\[id\\\\]/page.tsx packages/admin-console/src/views/ProviderDetail.tsx packages/admin-console/src/views/__tests__/ProviderDetail.test.tsx ...",
-  "error": "Exit code 128\nfatal: pathspec 'packages/admin-console/app/admin/providers/[id]/page.tsx' did not match any files",
-  "timestamp": "2026-05-24T00:09:20.465Z",
-  "retry_count": 1
+  "tool_input_preview": "{\"command\":\"pnpm --filter @search-gateway/adapters test -- searxng 2>&1\"}",
+  "error": "Exit code 1\n\n> @search-gateway/adapters@0.1.0 test /home/ubuntu/workspace/search-agentcore-gateway/.claude/worktrees/design-spec-update/packages/adapters\n> vitest run \"searxng\"\n\n\n\u001b[7m\u001b[1m\u001b[36m RUN \u001b[39m\u001b[22m\u001b[27m \u001b[36mv1.6.1\u001b[39m \u001b[90m/home/ubuntu/workspace/search-agentcore-gateway/.claude/worktrees/design-spec-update/packages/adapters\u001b[39m\n\n \u001b[33m❯\u001b[39m src/__tests__/searxng.test.ts \u001b[2m (\u001b[22m\u001b[2m7 tests\u001b[22m \u001b[2m|\u001b[22m \u001b[31m2 failed\u001b[39m\u001b[2m)\u001b[22m\u001b[90m 28\u001b[2mms\u001b[22m\u001b[39m\n\u001b[31m   \u001b[33m❯\u001b[31m s...",
+  "timestamp": "2026-05-24T00:22:14.006Z",
+  "retry_count": 2
 }
