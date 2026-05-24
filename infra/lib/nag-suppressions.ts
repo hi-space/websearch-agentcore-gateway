@@ -8,10 +8,6 @@ export function applyV1NagSuppressions(stack: Stack): void {
       reason: 'CloudWatch:PutMetricData and bedrock-agentcore:Create*/Delete* require resource:* by API contract; bounded by namespace/action conditions where possible.'
     },
     {
-      id: 'AwsSolutions-VPC7',
-      reason: 'VPC flow logs are enabled to CloudWatch; S3 destination is added with audit bucket in v1.5.'
-    },
-    {
       id: 'AwsSolutions-L1',
       reason: 'Node 20 is the explicit v1 runtime target (set in NodejsFunction and AwsCustomResource defaults). Bedrock-agentcore-control SDK does not yet support nodejs22; revisit and bump to latest LTS in v1.6.'
     },
