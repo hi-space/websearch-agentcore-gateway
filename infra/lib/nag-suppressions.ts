@@ -38,6 +38,14 @@ export function applyV1NagSuppressions(stack: Stack): void {
     {
       id: 'AwsSolutions-CFR4',
       reason: 'CloudFront default viewer certificate enforces TLSv1.2+; custom certificate and explicit MinimumProtocolVersion are deferred to v1.5 when custom domain is configured.'
+    },
+    {
+      id: 'AwsSolutions-ELB2',
+      reason: 'SearXNG internal ALB is for internal VPC communication only; access logs are unnecessary for internal-only services and deferred to v1.5 observability stack.'
+    },
+    {
+      id: 'AwsSolutions-EC23',
+      reason: 'SearXNG ALB security group allows inbound from VPC CIDR only; public 0.0.0.0/0 access is restricted by ALB being internal-only.'
     }
   ]);
 }

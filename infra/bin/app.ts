@@ -21,7 +21,9 @@ const props = process.env.CDK_DEFAULT_ACCOUNT && process.env.CDK_DEFAULT_REGION
     }
   : {};
 
-const search = new SearchStack(app, 'SearchGatewayStack-v1-0', props);
+const enableSearxng = app.node.tryGetContext('enableSearxng') === true || app.node.tryGetContext('enableSearxng') === 'true';
+
+const search = new SearchStack(app, 'SearchGatewayStack-v1-0', { ...props, enableSearxng });
 
 Tags.of(search).add('project', 'search-agentcore-gateway');
 Tags.of(search).add('environment', app.node.tryGetContext('env') ?? 'dev');

@@ -11,7 +11,12 @@ import { QuotaTableConstruct } from '../data/quota-table.js';
 import { SearchRouterFn } from '../compute/search-router-fn.js';
 import { AgentCoreGateway } from '../gateway/agentcore-gateway.js';
 import { AlarmsConstruct } from '../observability/alarms.js';
+import { SearxngService } from '../searxng/searxng-service.js';
 import { applyV1NagSuppressions } from '../nag-suppressions.js';
+
+export interface SearchStackProps extends StackProps {
+  enableSearxng?: boolean;
+}
 
 export class SearchStack extends Stack {
   readonly searchRouter: SearchRouterFn;
@@ -19,7 +24,7 @@ export class SearchStack extends Stack {
   readonly configTable: ITable;
   readonly kmsSecretsKey: IKey;
 
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props?: SearchStackProps) {
     super(scope, id, props);
     const network = new NetworkConstruct(this, 'Network');
     const kms = new KmsConstruct(this, 'Kms');
@@ -48,6 +53,16 @@ export class SearchStack extends Stack {
       quotaTable: quotaTable.table as ITable,
       quotaLimits: { arxiv: { rpm: 30, daily: 1000 } }
     });
+
+    // Conditionally create SearxngService if enabled
+    if (props?.enableSearxng) {
+      const searxng = new SearxngService(this, 'Searxng', {
+        vpc: network.vpc as IVpc
+      });
+
+      // Add SearxngService endpoint to router environment
+      this.searchRouter.fn.addEnvironment('SEARXNG_BASE_URL', searxng.endpoint);
+    }
 
     const gateway = new AgentCoreGateway(this, 'Gateway', {
       routerFn: this.searchRouter.fn,

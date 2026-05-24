@@ -58,6 +58,12 @@
       "type": "file"
     },
     {
+      "path": "infra/bin/app.ts",
+      "accessCount": 15,
+      "lastAccessed": 1779582464358,
+      "type": "file"
+    },
+    {
       "path": "packages/adapters/src/index.ts",
       "accessCount": 14,
       "lastAccessed": 1779582128745,
@@ -67,12 +73,6 @@
       "path": "packages/adapters/package.json",
       "accessCount": 13,
       "lastAccessed": 1779536950756,
-      "type": "file"
-    },
-    {
-      "path": "infra/bin/app.ts",
-      "accessCount": 13,
-      "lastAccessed": 1779582075378,
       "type": "file"
     },
     {
@@ -130,6 +130,12 @@
       "type": "file"
     },
     {
+      "path": "infra/lib/nag-suppressions.ts",
+      "accessCount": 9,
+      "lastAccessed": 1779582556266,
+      "type": "file"
+    },
+    {
       "path": "packages/adapters/src/__tests__/contract.test.ts",
       "accessCount": 8,
       "lastAccessed": 1779536950702,
@@ -163,12 +169,6 @@
       "path": "packages/search-router/src/__tests__/handler.test.ts",
       "accessCount": 7,
       "lastAccessed": 1779579023347,
-      "type": "file"
-    },
-    {
-      "path": "infra/lib/nag-suppressions.ts",
-      "accessCount": 7,
-      "lastAccessed": 1779580673659,
       "type": "file"
     },
     {
