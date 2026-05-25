@@ -79,7 +79,7 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
               <span aria-hidden="true">←</span> Providers
             </Link>
             <div className="mt-2 flex items-center gap-3 flex-wrap">
-              <h2 className="text-card-title text-onBackground leading-tight tracking-tight font-mono">{initial.providerId}</h2>
+              <h2 className="text-card-title text-ink leading-tight tracking-tight font-mono">{initial.providerId}</h2>
               <Badge tone={initial.enabled ? 'success' : 'neutral'}>
                 {initial.enabled ? 'Enabled' : 'Disabled'}
               </Badge>
@@ -113,7 +113,7 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
             >
               {testing ? 'Testing…' : 'Run connectivity test'}
             </Button>
-            <span className="text-caption text-slate">Probes a single search via the router.</span>
+            <span className="text-caption text-body">Probes a single search via the router.</span>
           </div>
         </div>
       </Card>
@@ -143,8 +143,8 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
               checked={enabled}
               onChange={(e) => setEnabled(e.target.checked)}
             />
-            <span className="text-body-md text-onBackground">Enabled</span>
-            <span className="text-caption text-slate">When off, the router rejects requests for this provider.</span>
+            <span className="text-body-md text-ink">Enabled</span>
+            <span className="text-caption text-body">When off, the router rejects requests for this provider.</span>
           </label>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -237,7 +237,7 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
             <Button variant="secondary" onClick={() => setRevealOpen(true)}>
               Reveal current secret
             </Button>
-            <span className="text-caption text-slate">
+            <span className="text-caption text-body">
               Each reveal is captured in audit log with reason and operator identity.
             </span>
           </div>
@@ -315,10 +315,10 @@ function FieldLabel({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1.5 text-body-sm-medium text-onBackground">
+    <label className="flex flex-col gap-1.5 text-body-sm-medium text-ink">
       {label}
       {children}
-      {hint && <span className="text-caption text-slate font-normal">{hint}</span>}
+      {hint && <span className="text-caption text-body font-normal">{hint}</span>}
     </label>
   );
 }
@@ -326,18 +326,18 @@ function FieldLabel({
 function OverviewPanel({ initial, metric }: { initial: ProviderRow; metric?: ProviderMetric | undefined }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <div className="rounded-2xl border border-outline bg-surface p-6 shadow-card lift-on-hover">
-        <div className="text-label-sm uppercase tracking-wider text-stone">p95 latency · last hour</div>
-        <div className="mt-2 text-card-title text-onBackground leading-none tabular-nums">
+      <div className="rounded-lg border border-hairline bg-surface p-6 lift-on-hover">
+        <div className="text-label-sm uppercase tracking-wider text-muted">p95 latency · last hour</div>
+        <div className="mt-2 text-card-title text-ink leading-none tabular-nums">
           {metric?.p95LatencyMs !== undefined ? `${Math.round(metric.p95LatencyMs)} ms` : '—'}
         </div>
         <div className="mt-4 text-primary">
           <Sparkline values={metric?.latencySeries ?? []} width={240} height={36} ariaLabel="latency trend" />
         </div>
       </div>
-      <div className="rounded-2xl border border-outline bg-surface p-6 shadow-card lift-on-hover">
-        <div className="text-label-sm uppercase tracking-wider text-stone">error rate · last hour</div>
-        <div className="mt-2 text-card-title text-onBackground leading-none tabular-nums">
+      <div className="rounded-lg border border-hairline bg-surface p-6 lift-on-hover">
+        <div className="text-label-sm uppercase tracking-wider text-muted">error rate · last hour</div>
+        <div className="mt-2 text-card-title text-ink leading-none tabular-nums">
           {metric?.errorRate !== undefined ? `${(metric.errorRate * 100).toFixed(2)} %` : '—'}
         </div>
         <div className="mt-4 text-primary">
@@ -347,7 +347,7 @@ function OverviewPanel({ initial, metric }: { initial: ProviderRow; metric?: Pro
       <Card variant="panel" className="md:col-span-2">
         <CardHeader title="Provider summary" />
         <dl className="grid grid-cols-2 md:grid-cols-3 gap-y-4 text-body-sm">
-          <Term label="Provider ID" value={<span className="font-mono text-onBackground">{initial.providerId}</span>} />
+          <Term label="Provider ID" value={<span className="font-mono text-ink">{initial.providerId}</span>} />
           <Term label="State" value={initial.enabled ? 'Enabled' : 'Disabled'} />
           <Term label="Secret" value={initial.hasSecret ? 'Stored' : 'Not stored'} />
           <Term label="RPM" value={initial.quota.rpm.toLocaleString()} />
@@ -362,8 +362,8 @@ function OverviewPanel({ initial, metric }: { initial: ProviderRow; metric?: Pro
 function MetaItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-baseline gap-1.5">
-      <dt className="text-label-sm uppercase tracking-wider text-stone">{label}</dt>
-      <dd className="text-body-sm-medium text-onBackground tabular-nums">{value}</dd>
+      <dt className="text-label-sm uppercase tracking-wider text-muted">{label}</dt>
+      <dd className="text-body-sm-medium text-ink tabular-nums">{value}</dd>
     </div>
   );
 }
@@ -372,7 +372,7 @@ function MetricsPanel({ metric }: { metric?: ProviderMetric | undefined }) {
   if (!metric) {
     return (
       <Card variant="panel">
-        <p className="text-body-md text-slate">Metrics are populated by CloudWatch every 5 minutes.</p>
+        <p className="text-body-md text-body">Metrics are populated by CloudWatch every 5 minutes.</p>
       </Card>
     );
   }
@@ -408,7 +408,7 @@ function ActivityPanel({ history }: { history: TestHistoryEntry[] }) {
   if (history.length === 0) {
     return (
       <Card variant="panel">
-        <p className="text-body-md text-slate">
+        <p className="text-body-md text-body">
           Run a connectivity test to populate this panel. Each test emits an audit row.
         </p>
       </Card>
@@ -420,9 +420,9 @@ function ActivityPanel({ history }: { history: TestHistoryEntry[] }) {
       <ul className="divide-y divide-outline">
         {history.map((h, i) => (
           <li key={i} className="py-3 flex items-center justify-between gap-4">
-            <span className="font-mono text-caption text-slate">{h.ts}</span>
+            <span className="font-mono text-caption text-body">{h.ts}</span>
             {h.ok ? (
-              <span className="text-body-sm text-onBackground">OK — {h.results} results</span>
+              <span className="text-body-sm text-ink">OK — {h.results} results</span>
             ) : (
               <span className="text-body-sm text-error">FAIL — {h.error}</span>
             )}
@@ -437,8 +437,8 @@ function ActivityPanel({ history }: { history: TestHistoryEntry[] }) {
 function Term({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <dt className="text-label-sm uppercase tracking-wider text-stone">{label}</dt>
-      <dd className="text-body-sm-medium text-onBackground tabular-nums">{value}</dd>
+      <dt className="text-label-sm uppercase tracking-wider text-muted">{label}</dt>
+      <dd className="text-body-sm-medium text-ink tabular-nums">{value}</dd>
     </div>
   );
 }

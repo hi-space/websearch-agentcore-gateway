@@ -20,7 +20,7 @@ export function Sparkline({
     return (
       <div
         aria-label={ariaLabel ?? 'no data'}
-        className="text-caption text-stone italic"
+        className="text-caption text-muted italic"
         style={{ width, height, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
       >
         no data

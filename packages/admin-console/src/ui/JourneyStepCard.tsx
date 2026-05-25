@@ -12,17 +12,17 @@ export interface JourneyStep {
 
 export function JourneyStepCard({ step }: { step: JourneyStep }) {
   const inner = (
-    <div className="rounded-2xl border border-outline bg-surface p-6 shadow-card lift-on-hover h-full">
-      <div className="flex items-center gap-3 mb-4">
-        <span className="w-12 h-12 rounded-full bg-primary text-onPrimary inline-flex items-center justify-center text-body-md font-black shadow-card">
+    <div className="rounded-lg border border-hairline bg-surface p-6 lift-on-hover h-full">
+      <div className="flex items-center gap-3 mb-5">
+        <span className="w-10 h-10 rounded-md bg-surfaceMuted text-ink inline-flex items-center justify-center text-body-sm font-mono">
           {step.number}
         </span>
-        <span className="text-label-sm uppercase tracking-wider text-primaryStrong">{step.label}</span>
+        <span className="text-caption-uppercase text-muted">{step.label}</span>
       </div>
-      <h3 className="text-card-title text-onBackground leading-tight">{step.title}</h3>
-      <p className="mt-2 text-body-md text-slate leading-relaxed">{step.description}</p>
+      <h3 className="text-display-sm text-ink leading-tight">{step.title}</h3>
+      <p className="mt-3 text-body-md text-body leading-relaxed">{step.description}</p>
       {step.href && (
-        <span className="mt-4 inline-flex items-center gap-1.5 text-body-md-medium text-primary group">
+        <span className="mt-5 inline-flex items-center gap-1.5 text-body-sm-medium text-ink group">
           Open
           <span className="transition-transform group-hover:translate-x-0.5" aria-hidden="true">
             →
@@ -32,7 +32,7 @@ export function JourneyStepCard({ step }: { step: JourneyStep }) {
     </div>
   );
   return step.href ? (
-    <Link href={step.href} className="block focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-2xl">
+    <Link href={step.href} className="block focus:outline-none focus:ring-2 focus:ring-ink/20 rounded-lg">
       {inner}
     </Link>
   ) : (
@@ -43,7 +43,7 @@ export function JourneyStepCard({ step }: { step: JourneyStep }) {
 export function JourneyPath({ count = 4 }: { count?: number }) {
   return (
     <div className="hidden lg:block relative h-12 w-full" aria-hidden="true">
-      <svg className="absolute inset-0 w-full h-full text-primary/40" viewBox="0 0 1000 48" preserveAspectRatio="none">
+      <svg className="absolute inset-0 w-full h-full text-hairlineStrong" viewBox="0 0 1000 48" preserveAspectRatio="none">
         <path
           d={Array.from({ length: count - 1 })
             .map((_, i) => {

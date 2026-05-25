@@ -1,75 +1,92 @@
-// Tokens mirror DESIGN.md (Realsee Galois New User Guide, alpha).
-// Cool-blue instructional UI, modular cards, large radii, soft shadows.
+// Tokens mirror DESIGN.md (Cursor analysis): warm-cream canvas, warm-ink text,
+// scarce Cursor Orange CTAs, hairline-only depth, 5 timeline pastels for
+// in-product AI-action stages.
 
 export const colors = {
-  // Canvas / surfaces
-  background: '#f6f8fb',
-  canvas: '#ffffff',
+  // Canvas / surfaces — warm cream, never pure white at the page level
+  background: '#f7f7f4',
+  canvas: '#f7f7f4',
+  canvasSoft: '#fafaf7',
   surface: '#ffffff',
-  surfaceSoft: '#eaf2ff',
-  surfaceMuted: '#e9f8ef',
-  outline: '#dbe4f0',
+  surfaceCard: '#ffffff',
+  surfaceSoft: '#fafaf7',
+  surfaceMuted: '#efeee8',
+  surfaceStrong: '#e6e5e0',
+  outline: '#e6e5e0',
 
-  // Brand blue (instructional signal)
-  primary: '#2563eb',
-  primaryStrong: '#1d4ed8',
-  primarySoft: '#eaf2ff',
-  primaryDeep: '#1e40af',
+  // Brand voltage — Cursor Orange, used scarcely for CTAs and wordmark
+  primary: '#f54e00',
+  primaryStrong: '#d04200',
+  primaryActive: '#d04200',
+  primarySoft: '#fde7da',
+  primaryDeep: '#a83600',
   onPrimary: '#ffffff',
 
-  // Status
-  success: '#16a34a',
-  successSoft: '#e9f8ef',
-  warning: '#b45309',
+  // Status (semantic — kept distinct from timeline pastels)
+  success: '#1f8a65',
+  successSoft: '#dff1e9',
+  warning: '#a16207',
   warningSoft: '#fef3c7',
-  error: '#b91c1c',
-  errorSoft: '#fee2e2',
+  error: '#cf2d56',
+  errorSoft: '#fbe1e7',
 
-  // Dark surfaces (deliverables / support)
-  darkSurface: '#0f172a',
-  darkPanel: '#111827',
-  darkSurfaceMid: '#172033',
-  darkOnSurface: '#ffffff',
-  darkOnSurfaceMuted: '#cbd5e1',
-  darkOnSurfaceSubtle: '#94a3b8',
-  darkOutline: '#334155',
+  // Dark surfaces — used only when an "ink" inversion is needed (pricing-featured, etc.)
+  darkSurface: '#26251e',
+  darkPanel: '#1a1914',
+  darkSurfaceMid: '#33322a',
+  darkOnSurface: '#f7f7f4',
+  darkOnSurfaceMuted: '#cfcdc4',
+  darkOnSurfaceSubtle: '#a09c92',
+  darkOutline: '#3a3930',
 
-  // Ink scale on light
-  onBackground: '#172033',
-  ink: '#172033',
-  inkDeep: '#0f172a',
-  charcoal: '#1f2937',
-  slate: '#475569',
-  steel: '#64748b',
-  stone: '#94a3b8',
-  muted: '#cbd5e1',
+  // Text — warm near-black, body, muted ladder
+  onBackground: '#26251e',
+  ink: '#26251e',
+  inkDeep: '#1a1914',
+  charcoal: '#33322a',
+  body: '#5a5852',
+  bodyStrong: '#26251e',
+  slate: '#5a5852',
+  steel: '#807d72',
+  stone: '#807d72',
+  mutedSoft: '#a09c92',
+  muted: '#a09c92',
 
-  // Aliases used elsewhere in the app (kept for compatibility, mapped to new tones)
-  hairline: '#dbe4f0',
-  hairlineSoft: '#e6ecf5',
-  hairlineStrong: '#b8c4d6',
-  linkBlue: '#2563eb',
-  linkBluePressed: '#1d4ed8',
-  semanticSuccess: '#16a34a',
-  semanticWarning: '#b45309',
-  semanticError: '#b91c1c',
-  onDark: '#ffffff',
-  onDarkMuted: '#cbd5e1',
-  onDarkSubtle: '#94a3b8',
-  brandNavy: '#0f172a',
-  brandNavyDeep: '#0a0f1d',
-  brandNavyMid: '#172033',
-  brandNavyHairline: '#334155'
+  // Hairlines — the only depth this system has
+  hairline: '#e6e5e0',
+  hairlineSoft: '#efeee8',
+  hairlineStrong: '#cfcdc4',
+
+  // AI timeline pastels — scoped to in-product agent action stages only
+  timelineThinking: '#dfa88f',
+  timelineGrep: '#9fc9a2',
+  timelineRead: '#9fbbe0',
+  timelineEdit: '#c0a8dd',
+  timelineDone: '#c08532',
+
+  // Compatibility aliases retained from earlier palette
+  linkBlue: '#f54e00',
+  linkBluePressed: '#d04200',
+  semanticSuccess: '#1f8a65',
+  semanticWarning: '#a16207',
+  semanticError: '#cf2d56',
+  onDark: '#f7f7f4',
+  onDarkMuted: '#cfcdc4',
+  onDarkSubtle: '#a09c92',
+  brandNavy: '#26251e',
+  brandNavyDeep: '#1a1914',
+  brandNavyMid: '#33322a',
+  brandNavyHairline: '#3a3930'
 } as const;
 
 export const radius = {
-  xs: '6px',
-  sm: '10px',
-  md: '14px',
-  lg: '20px',
-  xl: '24px',
-  '2xl': '28px',
-  '3xl': '32px',
+  xs: '4px',
+  sm: '6px',
+  md: '8px',
+  lg: '12px',
+  xl: '16px',
+  '2xl': '20px',
+  '3xl': '24px',
   full: '9999px'
 } as const;
 
@@ -78,61 +95,83 @@ export const spacing = {
   xs: '8px',
   sm: '12px',
   md: '16px',
-  lg: '20px',
-  xl: '24px',
-  '2xl': '32px',
-  '3xl': '40px',
-  'section-sm': '44px',
-  section: '72px',
+  base: '16px',
+  lg: '24px',
+  xl: '32px',
+  '2xl': '48px',
+  '3xl': '64px',
+  'section-sm': '48px',
+  section: '80px',
   'section-lg': '96px',
   hero: '120px',
   gutter: '24px'
 } as const;
 
+// Hairline-only depth. We keep keys for compatibility but values are very subtle.
 export const shadow = {
-  card: '0 18px 44px rgba(15, 23, 42, 0.08)',
-  hover: '0 22px 52px rgba(15, 23, 42, 0.12)',
-  panelDark: '0 22px 54px rgba(15, 23, 42, 0.24)',
-  support: '0 22px 52px rgba(37, 99, 235, 0.20)',
-  modal: '0 24px 64px rgba(15, 23, 42, 0.20)',
-  mockup: '0 24px 64px rgba(15, 23, 42, 0.18)'
+  card: '0 0 0 1px rgba(38, 37, 30, 0.04)',
+  hover: '0 1px 0 rgba(38, 37, 30, 0.06)',
+  panelDark: '0 1px 0 rgba(0, 0, 0, 0.18)',
+  support: '0 1px 0 rgba(245, 78, 0, 0.20)',
+  modal: '0 12px 36px rgba(38, 37, 30, 0.16)',
+  mockup: '0 1px 0 rgba(38, 37, 30, 0.06)'
 } as const;
 
 type FontEntry = [string, { lineHeight: string; letterSpacing?: string; fontWeight?: string }];
 
+// Cursor's editorial voice — display stays at 400 with negative tracking,
+// body at 400, titles at 600, monospace JetBrains for code.
 export const fontSize: Record<string, FontEntry> = {
-  'hero-title': ['56px', { lineHeight: '1.04', letterSpacing: '-1px', fontWeight: '900' }],
-  'hero-display': ['56px', { lineHeight: '1.04', letterSpacing: '-1px', fontWeight: '900' }],
-  'display-lg': ['48px', { lineHeight: '1.10', letterSpacing: '-0.5px', fontWeight: '900' }],
-  'section-title': ['36px', { lineHeight: '1.15', letterSpacing: '-0.25px', fontWeight: '900' }],
-  'heading-1': ['44px', { lineHeight: '1.10', fontWeight: '900' }],
-  'heading-2': ['36px', { lineHeight: '1.15', fontWeight: '900' }],
-  'heading-3': ['28px', { lineHeight: '1.20', fontWeight: '800' }],
-  'card-title': ['22px', { lineHeight: '1.25', fontWeight: '900' }],
-  'heading-4': ['22px', { lineHeight: '1.25', fontWeight: '800' }],
-  'heading-5': ['18px', { lineHeight: '1.35', fontWeight: '700' }],
-  subtitle: ['18px', { lineHeight: '1.55', fontWeight: '400' }],
-  'body-lg': ['16px', { lineHeight: '1.6', fontWeight: '400' }],
-  'body-md': ['15px', { lineHeight: '1.6', fontWeight: '400' }],
-  'body-md-medium': ['15px', { lineHeight: '1.6', fontWeight: '500' }],
-  'body-sm': ['14px', { lineHeight: '1.55', fontWeight: '400' }],
-  'body-sm-medium': ['14px', { lineHeight: '1.55', fontWeight: '500' }],
-  caption: ['13px', { lineHeight: '1.45', fontWeight: '400' }],
-  'caption-bold': ['13px', { lineHeight: '1.45', fontWeight: '700' }],
-  'label-sm': ['12px', { lineHeight: '1.20', letterSpacing: '0.4px', fontWeight: '800' }],
-  micro: ['12px', { lineHeight: '1.40', fontWeight: '600' }],
-  'micro-uppercase': ['11px', { lineHeight: '1.40', letterSpacing: '1.2px', fontWeight: '800' }],
-  'button-md': ['15px', { lineHeight: '1.30', fontWeight: '700' }]
+  'hero-title': ['72px', { lineHeight: '1.1', letterSpacing: '-2.16px', fontWeight: '400' }],
+  'hero-display': ['72px', { lineHeight: '1.1', letterSpacing: '-2.16px', fontWeight: '400' }],
+  'display-mega': ['72px', { lineHeight: '1.1', letterSpacing: '-2.16px', fontWeight: '400' }],
+  'display-lg': ['36px', { lineHeight: '1.2', letterSpacing: '-0.72px', fontWeight: '400' }],
+  'display-md': ['26px', { lineHeight: '1.25', letterSpacing: '-0.325px', fontWeight: '400' }],
+  'display-sm': ['22px', { lineHeight: '1.3', letterSpacing: '-0.11px', fontWeight: '400' }],
+  'section-title': ['36px', { lineHeight: '1.2', letterSpacing: '-0.72px', fontWeight: '400' }],
+  'heading-1': ['48px', { lineHeight: '1.15', letterSpacing: '-1px', fontWeight: '400' }],
+  'heading-2': ['36px', { lineHeight: '1.2', letterSpacing: '-0.72px', fontWeight: '400' }],
+  'heading-3': ['26px', { lineHeight: '1.25', letterSpacing: '-0.325px', fontWeight: '400' }],
+  'card-title': ['22px', { lineHeight: '1.3', letterSpacing: '-0.11px', fontWeight: '400' }],
+  'heading-4': ['22px', { lineHeight: '1.3', letterSpacing: '-0.11px', fontWeight: '400' }],
+  'heading-5': ['18px', { lineHeight: '1.4', fontWeight: '600' }],
+  'title-md': ['18px', { lineHeight: '1.4', fontWeight: '600' }],
+  'title-sm': ['16px', { lineHeight: '1.4', fontWeight: '600' }],
+  subtitle: ['18px', { lineHeight: '1.5', fontWeight: '400' }],
+  'body-lg': ['16px', { lineHeight: '1.5', fontWeight: '400' }],
+  'body-md': ['16px', { lineHeight: '1.5', fontWeight: '400' }],
+  'body-md-medium': ['16px', { lineHeight: '1.5', fontWeight: '500' }],
+  'body-tracked': ['16px', { lineHeight: '1.5', letterSpacing: '0.08px', fontWeight: '400' }],
+  'body-sm': ['14px', { lineHeight: '1.5', fontWeight: '400' }],
+  'body-sm-medium': ['14px', { lineHeight: '1.5', fontWeight: '500' }],
+  caption: ['13px', { lineHeight: '1.4', fontWeight: '400' }],
+  'caption-bold': ['13px', { lineHeight: '1.4', fontWeight: '600' }],
+  'label-sm': ['11px', { lineHeight: '1.4', letterSpacing: '0.88px', fontWeight: '600' }],
+  micro: ['12px', { lineHeight: '1.4', fontWeight: '500' }],
+  'micro-uppercase': ['11px', { lineHeight: '1.4', letterSpacing: '0.88px', fontWeight: '600' }],
+  'caption-uppercase': ['11px', { lineHeight: '1.4', letterSpacing: '0.88px', fontWeight: '600' }],
+  'button-md': ['14px', { lineHeight: '1.0', fontWeight: '500' }],
+  'nav-link': ['14px', { lineHeight: '1.4', fontWeight: '500' }],
+  code: ['13px', { lineHeight: '1.5', fontWeight: '400' }]
 };
 
 export const fontFamily = {
   sans: [
-    'Roboto',
+    'Inter',
     '-apple-system',
     'system-ui',
-    'Segoe UI',
+    'Helvetica Neue',
     'Helvetica',
     'Arial',
     'sans-serif'
+  ],
+  mono: [
+    'JetBrains Mono',
+    'Fira Code',
+    'ui-monospace',
+    'SFMono-Regular',
+    'Menlo',
+    'Consolas',
+    'monospace'
   ]
 } as const;

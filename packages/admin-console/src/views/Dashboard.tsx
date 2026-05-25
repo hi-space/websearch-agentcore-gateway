@@ -109,12 +109,12 @@ function ProviderMetricTile({ metric }: { metric: DashboardMetric }) {
       className="block focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-lg"
       data-testid="provider-metric-tile"
     >
-      <div className="rounded-2xl border border-outline bg-surface p-5 lift-on-hover hover:border-primary/40 hover:shadow-card">
+      <div className="rounded-lg border border-hairline bg-surface p-5 lift-on-hover hover:border-hairlineStrong">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-label-sm uppercase tracking-wider text-stone">{metric.providerId}</div>
-            <div className="mt-2 text-card-title text-onBackground leading-none tabular-nums">{fmtLatency(metric.p95LatencyMs)}</div>
-            <div className="mt-1.5 text-caption text-slate">p95 latency · last hour</div>
+            <div className="text-label-sm uppercase tracking-wider text-muted">{metric.providerId}</div>
+            <div className="mt-2 text-card-title text-ink leading-none tabular-nums">{fmtLatency(metric.p95LatencyMs)}</div>
+            <div className="mt-1.5 text-caption text-body">p95 latency · last hour</div>
           </div>
           <Badge tone={errorTone}>{fmtErrorRate(metric.errorRate)}</Badge>
         </div>

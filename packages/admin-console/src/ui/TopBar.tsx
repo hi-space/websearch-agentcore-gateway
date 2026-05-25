@@ -11,19 +11,19 @@ interface TopBarProps {
 
 export function TopBar({ title, subtitle, actor, region, actions }: TopBarProps) {
   return (
-    <header className="bg-surface border-b border-outline px-8 py-6 flex items-center justify-between gap-6">
+    <header className="bg-canvas border-b border-hairline px-6 py-5 flex items-center justify-between gap-6">
       <div className="min-w-0">
-        <h1 className="text-card-title text-onBackground leading-tight">{title}</h1>
-        {subtitle && <p className="mt-1 text-body-md text-slate leading-relaxed">{subtitle}</p>}
+        <h1 className="text-display-sm text-ink leading-tight">{title}</h1>
+        {subtitle && <p className="mt-1 text-body-md text-body leading-relaxed">{subtitle}</p>}
       </div>
       <div className="flex items-center gap-3 shrink-0">
-        {region && <Badge tone="purple">{region}</Badge>}
+        {region && <Badge tone="neutral">{region}</Badge>}
         {actor && (
           <div className="flex items-center gap-2.5">
-            <span className="w-9 h-9 rounded-full bg-primarySoft text-primaryStrong inline-flex items-center justify-center text-body-md font-black">
+            <span className="w-8 h-8 rounded-full bg-surfaceMuted text-ink inline-flex items-center justify-center text-body-sm font-medium">
               {actor.slice(0, 1).toUpperCase()}
             </span>
-            <span className="hidden md:inline text-body-md-medium text-onBackground">{actor}</span>
+            <span className="hidden md:inline text-body-sm-medium text-ink">{actor}</span>
           </div>
         )}
         {actions}

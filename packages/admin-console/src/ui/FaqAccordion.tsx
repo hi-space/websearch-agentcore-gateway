@@ -17,8 +17,8 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
           <div
             key={i}
             className={[
-              'rounded-2xl border bg-surface transition-colors',
-              isOpen ? 'border-primary/40' : 'border-outline'
+              'rounded-lg border bg-surface transition-colors',
+              isOpen ? 'border-hairlineStrong' : 'border-hairline'
             ].join(' ')}
           >
             <button
@@ -26,19 +26,19 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
               aria-expanded={isOpen}
               className="w-full flex items-center justify-between gap-4 text-left px-6 py-5"
             >
-              <span className="text-heading-5 text-onBackground leading-snug">{it.q}</span>
+              <span className="text-title-md text-ink leading-snug">{it.q}</span>
               <span
                 aria-hidden="true"
                 className={[
-                  'shrink-0 w-8 h-8 rounded-full inline-flex items-center justify-center text-body-md font-black transition-colors',
-                  isOpen ? 'bg-primary text-onPrimary' : 'bg-primarySoft text-primary'
+                  'shrink-0 w-7 h-7 rounded-full inline-flex items-center justify-center text-body-md font-medium transition-colors',
+                  isOpen ? 'bg-ink text-canvas' : 'bg-surfaceMuted text-ink'
                 ].join(' ')}
               >
                 {isOpen ? '−' : '+'}
               </span>
             </button>
             {isOpen && (
-              <div className="px-6 pb-6 text-body-md text-slate leading-relaxed border-t border-outline pt-4">
+              <div className="px-6 pb-6 text-body-md text-body leading-relaxed border-t border-hairline pt-5">
                 {it.a}
               </div>
             )}

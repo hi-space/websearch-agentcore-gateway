@@ -17,17 +17,17 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           aria-describedby={ariaDescribedBy}
           {...props}
           className={[
-            'h-12 px-4 rounded-xl text-body-md bg-surface text-onBackground placeholder:text-stone',
+            'h-11 px-4 rounded-md text-body-md bg-surface text-ink placeholder:text-muted',
             'border outline-none transition-colors',
             invalid
               ? 'border-error focus:border-error focus:ring-2 focus:ring-error/20'
-              : 'border-outline focus:border-primary focus:ring-2 focus:ring-primary/15',
-            'disabled:bg-background disabled:text-muted',
+              : 'border-hairlineStrong focus:border-ink focus:ring-2 focus:ring-ink/10',
+            'disabled:bg-surfaceMuted disabled:text-muted',
             className
           ].join(' ')}
         />
         {hint && (
-          <span id={ariaDescribedBy} className={`text-caption ${invalid ? 'text-error' : 'text-slate'}`}>
+          <span id={ariaDescribedBy} className={`text-caption ${invalid ? 'text-error' : 'text-body'}`}>
             {hint}
           </span>
         )}

@@ -60,20 +60,20 @@ export function Playground({ api }: { api: PlaygroundDeps }) {
         />
         <form onSubmit={onSubmit} className="space-y-5" data-testid="playground-form">
           <label className="block">
-            <span className="text-body-sm-medium text-onBackground">Query</span>
+            <span className="text-body-sm-medium text-ink">Query</span>
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="e.g. retrieval augmented generation evaluation"
-              className="mt-2 w-full rounded-xl border border-outline bg-surface px-4 h-12 text-body-md text-onBackground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-colors"
+              className="mt-2 w-full rounded-xl border border-hairline bg-surface px-4 h-12 text-body-md text-ink focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-colors"
               maxLength={2048}
               required
               data-testid="playground-query"
             />
           </label>
           <label className="block max-w-xs">
-            <span className="text-body-sm-medium text-onBackground">Top-K per provider</span>
+            <span className="text-body-sm-medium text-ink">Top-K per provider</span>
             <div className="mt-2 flex items-center gap-3">
               <input
                 type="range"
@@ -84,7 +84,7 @@ export function Playground({ api }: { api: PlaygroundDeps }) {
                 className="flex-1 accent-primary"
                 data-testid="playground-topk"
               />
-              <span className="text-body-md font-bold tabular-nums text-onBackground w-10 text-right">{topK}</span>
+              <span className="text-body-md font-bold tabular-nums text-ink w-10 text-right">{topK}</span>
             </div>
           </label>
           <div className="flex items-center gap-3 flex-wrap">
@@ -92,7 +92,7 @@ export function Playground({ api }: { api: PlaygroundDeps }) {
               {loading ? 'Searching…' : 'Run unified search'}
             </Button>
             {response && (
-              <span className="text-caption text-slate" data-testid="playground-latency">
+              <span className="text-caption text-body" data-testid="playground-latency">
                 {response.latencyMs} ms · {response.providersUsed.length} providers · {response.results.length} results
               </span>
             )}
@@ -136,10 +136,10 @@ export function Playground({ api }: { api: PlaygroundDeps }) {
           ) : (
             <ol className="space-y-3" data-testid="playground-results">
               {response.results.map((r, i) => (
-                <li key={`${r.url}-${i}`} className="rounded-2xl border border-outline bg-surface p-5 lift-on-hover hover:border-primary/40 hover:shadow-card">
+                <li key={`${r.url}-${i}`} className="rounded-lg border border-hairline bg-surface p-5 lift-on-hover hover:border-hairlineStrong">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-label-sm uppercase text-stone tracking-wider">#{i + 1}{r.source ? ` · ${r.source}` : ''}</div>
+                      <div className="text-label-sm uppercase text-muted tracking-wider">#{i + 1}{r.source ? ` · ${r.source}` : ''}</div>
                       <a
                         href={r.url}
                         target="_blank"
@@ -148,9 +148,9 @@ export function Playground({ api }: { api: PlaygroundDeps }) {
                       >
                         {r.title || r.url}
                       </a>
-                      <div className="text-caption text-slate truncate">{r.url}</div>
+                      <div className="text-caption text-body truncate">{r.url}</div>
                       {r.snippet && (
-                        <p className="mt-2 text-body-sm text-onBackground line-clamp-3 leading-relaxed">{r.snippet}</p>
+                        <p className="mt-2 text-body-sm text-ink line-clamp-3 leading-relaxed">{r.snippet}</p>
                       )}
                     </div>
                     {r.score !== undefined && (

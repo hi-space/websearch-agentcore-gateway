@@ -17,7 +17,7 @@ export function SegmentedTabs<T extends string>({
   ariaLabel?: string;
 }) {
   return (
-    <div role="tablist" aria-label={ariaLabel} className="flex gap-7 border-b border-outline">
+    <div role="tablist" aria-label={ariaLabel} className="flex gap-7 border-b border-hairline">
       {items.map((it) => {
         const isActive = it.id === active;
         return (
@@ -29,8 +29,8 @@ export function SegmentedTabs<T extends string>({
             className={[
               'pb-3.5 -mb-px text-body-md font-bold transition-colors',
               isActive
-                ? 'text-primaryStrong border-b-2 border-primary'
-                : 'text-slate border-b-2 border-transparent hover:text-onBackground'
+                ? 'text-ink border-b-2 border-primary'
+                : 'text-body border-b-2 border-transparent hover:text-ink'
             ].join(' ')}
           >
             {it.label}

@@ -22,18 +22,18 @@ export function Sidebar({ active }: { active: Section }) {
   return (
     <nav
       aria-label="Admin sections"
-      className="bg-surface border-r border-outline w-64 min-h-screen px-4 py-6 flex flex-col"
+      className="bg-canvas border-r border-hairline w-64 min-h-screen px-4 py-6 flex flex-col"
     >
       <Link href="/admin/dashboard" className="flex items-center gap-3 px-2 mb-10">
-        <span className="w-9 h-9 rounded-xl bg-primary inline-flex items-center justify-center text-onPrimary font-black text-body-md shadow-card">
+        <span className="w-8 h-8 rounded-md bg-ink inline-flex items-center justify-center text-canvas font-medium text-body-md">
           S
         </span>
-        <span className="text-card-title text-onBackground tracking-tight">search-gateway</span>
+        <span className="text-display-sm text-ink tracking-tight">search-gateway</span>
       </Link>
 
-      <div className="text-label-sm uppercase tracking-wider text-stone px-3 pb-3">Workspace</div>
+      <div className="text-caption-uppercase text-muted px-3 pb-3">Workspace</div>
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-0.5">
         {items.map((it) => {
           const isActive = active === it.id;
           return (
@@ -42,13 +42,13 @@ export function Sidebar({ active }: { active: Section }) {
               href={it.href}
               aria-current={isActive ? 'page' : undefined}
               className={[
-                'flex items-center gap-3 px-3 py-2.5 rounded-full text-body-md font-bold transition-colors',
+                'flex items-center gap-3 px-3 py-2 rounded-md text-body-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-primarySoft text-primaryStrong'
-                  : 'text-slate hover:text-onBackground hover:bg-background'
+                  ? 'bg-surfaceMuted text-ink'
+                  : 'text-body hover:text-ink hover:bg-surfaceMuted'
               ].join(' ')}
             >
-              <span className={['w-5 h-5 inline-flex items-center justify-center', isActive ? 'text-primary' : 'text-stone'].join(' ')}>
+              <span className={['w-5 h-5 inline-flex items-center justify-center', isActive ? 'text-primary' : 'text-muted'].join(' ')}>
                 {it.icon}
               </span>
               <span>{it.label}</span>
@@ -57,23 +57,6 @@ export function Sidebar({ active }: { active: Section }) {
         })}
       </div>
 
-      <div className="mt-auto px-1 pt-10">
-        <div className="rounded-2xl p-5 text-onDark shadow-card [background:linear-gradient(135deg,#1e40af_0%,#2563eb_58%,#172033_100%)]">
-          <p className="text-label-sm uppercase tracking-wider text-darkOnSurfaceMuted">On-call</p>
-          <p className="mt-2 text-card-title text-onDark leading-tight">Need help?</p>
-          <p className="mt-2 text-body-sm text-darkOnSurfaceMuted leading-relaxed">
-            Open the ops runbook for incident playbooks and escalation paths.
-          </p>
-          <a
-            className="mt-3 inline-flex items-center gap-1.5 text-body-sm-medium text-onDark hover:gap-2 transition-all"
-            href="https://github.com/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Open runbook <span aria-hidden="true">→</span>
-          </a>
-        </div>
-      </div>
     </nav>
   );
 }

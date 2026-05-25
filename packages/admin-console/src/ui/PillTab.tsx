@@ -28,18 +28,18 @@ export function PillTabs<T extends string>({
             aria-selected={isActive}
             onClick={() => onChange(it.id)}
             className={[
-              'inline-flex items-center gap-2 rounded-full h-9 px-4 text-body-sm-medium transition-colors',
+              'inline-flex items-center gap-2 rounded-md h-9 px-3.5 text-body-sm-medium transition-colors',
               isActive
-                ? 'bg-primary text-onPrimary'
-                : 'bg-surface text-slate border border-outline hover:border-primary hover:text-primary'
+                ? 'bg-ink text-canvas'
+                : 'bg-surface text-body border border-hairline hover:border-hairlineStrong hover:text-ink'
             ].join(' ')}
           >
-            <span className="font-bold">{it.label}</span>
+            <span className="font-medium">{it.label}</span>
             {typeof it.count === 'number' && (
               <span
                 className={[
-                  'tabular-nums text-caption rounded-full px-2 py-0.5 font-bold',
-                  isActive ? 'bg-white/20 text-onPrimary' : 'bg-background text-stone'
+                  'tabular-nums text-caption rounded-full px-2 py-0.5 font-medium',
+                  isActive ? 'bg-white/15 text-canvas' : 'bg-surfaceMuted text-muted'
                 ].join(' ')}
               >
                 {it.count}

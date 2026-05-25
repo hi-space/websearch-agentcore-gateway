@@ -12,27 +12,27 @@ export interface ResourceCardProps {
 
 export function ResourceCard({ category, title, description, href, icon, external }: ResourceCardProps) {
   const content = (
-    <div className="rounded-2xl border border-outline bg-surface p-6 lift-on-hover h-full flex flex-col">
-      <div className="flex items-center gap-3 mb-4">
-        <span className="w-11 h-11 rounded-xl bg-primarySoft text-primary inline-flex items-center justify-center">
+    <div className="rounded-lg border border-hairline bg-surface p-6 lift-on-hover h-full flex flex-col">
+      <div className="flex items-center gap-3 mb-5">
+        <span className="w-10 h-10 rounded-md bg-surfaceMuted text-ink inline-flex items-center justify-center">
           {icon ?? <ResourceGlyph />}
         </span>
-        <span className="text-label-sm uppercase tracking-wider text-stone">{category}</span>
+        <span className="text-caption-uppercase text-muted">{category}</span>
       </div>
-      <h3 className="text-card-title text-onBackground leading-tight">{title}</h3>
-      <p className="mt-2 text-body-md text-slate leading-relaxed flex-1">{description}</p>
-      <span className="mt-4 inline-flex items-center gap-1.5 text-body-md-medium text-primary group">
+      <h3 className="text-display-sm text-ink leading-tight">{title}</h3>
+      <p className="mt-3 text-body-md text-body leading-relaxed flex-1">{description}</p>
+      <span className="mt-5 inline-flex items-center gap-1.5 text-body-sm-medium text-ink group">
         {external ? 'Open' : 'View'}
         <span className="transition-transform group-hover:translate-x-0.5" aria-hidden="true">→</span>
       </span>
     </div>
   );
   return external ? (
-    <a href={href} target="_blank" rel="noreferrer" className="block focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-2xl">
+    <a href={href} target="_blank" rel="noreferrer" className="block focus:outline-none focus:ring-2 focus:ring-ink/20 rounded-lg">
       {content}
     </a>
   ) : (
-    <Link href={href} className="block focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-2xl">
+    <Link href={href} className="block focus:outline-none focus:ring-2 focus:ring-ink/20 rounded-lg">
       {content}
     </Link>
   );

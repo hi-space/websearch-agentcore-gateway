@@ -99,9 +99,9 @@ export function AuditLog({ rows }: { rows: AuditRow[] }) {
           }
         />
       ) : (
-        <div className="rounded-2xl border border-outline overflow-hidden">
+        <div className="rounded-lg border border-hairline overflow-hidden">
           <table className="w-full text-body-sm">
-            <thead className="bg-background text-label-sm uppercase tracking-wider text-stone">
+            <thead className="bg-canvas text-label-sm uppercase tracking-wider text-muted">
               <tr>
                 <th className="text-left px-5 py-3 font-bold w-44">Timestamp</th>
                 <th className="text-left px-5 py-3 font-bold">Actor</th>
@@ -117,13 +117,13 @@ export function AuditLog({ rows }: { rows: AuditRow[] }) {
                 const hasDiff = r.before !== undefined || r.after !== undefined;
                 return (
                   <React.Fragment key={id}>
-                    <tr className={`border-t border-outline ${isOpen ? 'bg-primarySoft/50' : 'hover:bg-primarySoft/30'}`}>
-                      <td className="px-5 py-3 font-mono text-caption text-slate">{r.ts}</td>
-                      <td className="px-5 py-3 text-onBackground">{r.actor}</td>
+                    <tr className={`border-t border-hairline ${isOpen ? 'bg-surfaceMuted/50' : 'hover:bg-surfaceMuted/30'}`}>
+                      <td className="px-5 py-3 font-mono text-caption text-body">{r.ts}</td>
+                      <td className="px-5 py-3 text-ink">{r.actor}</td>
                       <td className="px-5 py-3">
                         <Badge tone={actionTone(r.action)}>{r.action}</Badge>
                       </td>
-                      <td className="px-5 py-3 font-mono text-caption text-onBackground">{r.target}</td>
+                      <td className="px-5 py-3 font-mono text-caption text-ink">{r.target}</td>
                       <td className="px-5 py-3 text-right">
                         {hasDiff && (
                           <button
@@ -136,7 +136,7 @@ export function AuditLog({ rows }: { rows: AuditRow[] }) {
                       </td>
                     </tr>
                     {isOpen && hasDiff && (
-                      <tr className="bg-primarySoft/30">
+                      <tr className="bg-surfaceMuted/30">
                         <td colSpan={5} className="px-5 py-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <DiffPanel label="Before" value={r.before} />
@@ -162,9 +162,9 @@ export function AuditLog({ rows }: { rows: AuditRow[] }) {
 
 function DiffPanel({ label, value }: { label: string; value: unknown }) {
   return (
-    <div className="rounded-xl border border-outline bg-surface p-4">
-      <div className="text-label-sm uppercase tracking-wider text-stone mb-2">{label}</div>
-      <pre className="text-caption text-onBackground whitespace-pre-wrap break-all max-h-64 overflow-auto">
+    <div className="rounded-xl border border-hairline bg-surface p-4">
+      <div className="text-label-sm uppercase tracking-wider text-muted mb-2">{label}</div>
+      <pre className="text-caption text-ink whitespace-pre-wrap break-all max-h-64 overflow-auto">
         {value === undefined || value === null ? '—' : JSON.stringify(value, null, 2)}
       </pre>
     </div>
