@@ -84,6 +84,26 @@ export class SearchStack extends Stack {
     this.auditTableArn = this.auditTable.tableArn;
     this.auditTableStreamArn = this.auditTable.tableStreamArn ?? '';
 
+    this.searchRouter = new SearchRouterFn(this, 'SearchRouter', {
+      vpc: network.vpc as IVpc,
+      quotaTable: quotaTable.table as ITable,
+      quotaLimits: { arxiv: { rpm: 30, daily: 1000 } },
+      configTable: configTableConstruct.table as ITable
+    });
+
+    // Conditionally create SearxngService if enabled. We create it before
+    // ConfigSeed so its endpoint can be persisted into ConfigTable.baseUrl —
+    // that's what the search-router cold-start reads to populate providerOpts.
+    let searxngBaseUrl: string | undefined;
+    if (props?.enableSearxng) {
+      const searxng = new SearxngService(this, 'Searxng', {
+        vpc: network.vpc as IVpc
+      });
+      searxngBaseUrl = searxng.endpoint;
+      // Surface as env for diagnostics; the runtime consumes it via ConfigTable.
+      this.searchRouter.fn.addEnvironment('SEARXNG_BASE_URL', searxng.endpoint);
+    }
+
     // Seed ConfigTable with provider configurations
     new ConfigSeed(this, 'ConfigSeed', {
       table: configTableConstruct.table as ITable,
@@ -95,25 +115,13 @@ export class SearchStack extends Stack {
         { providerId: 'you', enabled: false },
         { providerId: 'tavily', enabled: false, builtin: true },
         { providerId: 'brave', enabled: false, builtin: true },
-        { providerId: 'searxng', enabled: false }
+        {
+          providerId: 'searxng',
+          enabled: props?.enableSearxng ?? false,
+          ...(searxngBaseUrl && { baseUrl: searxngBaseUrl })
+        }
       ]
     });
-
-    this.searchRouter = new SearchRouterFn(this, 'SearchRouter', {
-      vpc: network.vpc as IVpc,
-      quotaTable: quotaTable.table as ITable,
-      quotaLimits: { arxiv: { rpm: 30, daily: 1000 } }
-    });
-
-    // Conditionally create SearxngService if enabled
-    if (props?.enableSearxng) {
-      const searxng = new SearxngService(this, 'Searxng', {
-        vpc: network.vpc as IVpc
-      });
-
-      // Add SearxngService endpoint to router environment
-      this.searchRouter.fn.addEnvironment('SEARXNG_BASE_URL', searxng.endpoint);
-    }
 
     // Build tool definitions. Each Lambda adapter gets its own MCP tool;
     // Tavily/Brave are pre-registered as Gateway built-ins (not Lambda targets)

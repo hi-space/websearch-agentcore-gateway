@@ -15,6 +15,7 @@ export interface SearchRouterFnProps {
   vpc: IVpc;
   quotaTable: ITable;
   quotaLimits: Record<string, { rpm: number; daily: number }>;
+  configTable?: ITable;
 }
 
 export class SearchRouterFn extends Construct {
@@ -94,10 +95,14 @@ export class SearchRouterFn extends Construct {
         QUOTA_TABLE_NAME: props.quotaTable.tableName,
         QUOTA_LIMITS_JSON: JSON.stringify(props.quotaLimits),
         SECRET_ARNS_JSON: '{}',
-        NODE_OPTIONS: '--enable-source-maps'
+        NODE_OPTIONS: '--enable-source-maps',
+        ...(props.configTable && { CONFIG_TABLE: props.configTable.tableName })
       }
     });
 
     props.quotaTable.grantReadWriteData(this.fn);
+    if (props.configTable) {
+      props.configTable.grantReadData(this.fn);
+    }
   }
 }

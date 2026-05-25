@@ -16,6 +16,7 @@ export interface SeedRow {
   secretArn?: string;
   quota?: { rpm: number; daily: number };
   timeoutMs?: number;
+  baseUrl?: string;
 }
 
 export interface ConfigSeedProps {
@@ -39,9 +40,13 @@ export class ConfigSeed extends Construct {
         Item: {
           pk: { S: 'provider' },
           sk: { S: row.providerId },
+          // providerId duplicated as a top-level attribute so loadEnabledProviders' ScanCommand +
+          // unmarshall + parseProviderConfig pipeline can read it (Zod schema requires it).
+          providerId: { S: row.providerId },
           enabled: { BOOL: row.enabled },
           ...(row.builtin && { builtin: { BOOL: row.builtin } }),
           ...(row.secretArn && { secretArn: { S: row.secretArn } }),
+          ...(row.baseUrl && { baseUrl: { S: row.baseUrl } }),
           quota: {
             M: {
               rpm: { N: (row.quota?.rpm ?? defaultQuota.rpm).toString() },
