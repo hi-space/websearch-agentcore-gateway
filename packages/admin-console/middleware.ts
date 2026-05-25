@@ -3,14 +3,18 @@ import { makeVerifier } from '@/src/auth/verify-jwt';
 import { extractToken } from '@/src/auth/middleware-helpers';
 import { SESSION_COOKIE } from '@/src/auth/cookies';
 
-const verifyAccess = makeVerifier({
-  userPoolId: process.env.COGNITO_USER_POOL_ID!,
-  clientId: process.env.COGNITO_CLIENT_ID!,
-  tokenUse: 'access'
-});
+const AUTH_BYPASS = process.env.AUTH_BYPASS === '1' && process.env.NODE_ENV !== 'production';
+
+const verifyAccess = AUTH_BYPASS
+  ? null
+  : makeVerifier({
+      userPoolId: process.env.COGNITO_USER_POOL_ID!,
+      clientId: process.env.COGNITO_CLIENT_ID!,
+      tokenUse: 'access'
+    });
 
 const oauthClientId = process.env.COGNITO_OAUTH_CLIENT_ID;
-const verifyId = oauthClientId
+const verifyId = !AUTH_BYPASS && oauthClientId
   ? makeVerifier({
       userPoolId: process.env.COGNITO_USER_POOL_ID!,
       clientId: oauthClientId,
@@ -27,6 +31,14 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  if (AUTH_BYPASS) {
+    const res = NextResponse.next();
+    res.headers.set('x-auth-sub', 'local-dev');
+    res.headers.set('x-auth-role', 'admin');
+    res.headers.set('x-auth-email', 'local-dev@example.com');
+    return res;
+  }
+
   const bearer = extractToken(req.headers.get('authorization'));
   const cookieToken = req.cookies.get(SESSION_COOKIE)?.value ?? null;
   const isHtml = req.headers.get('accept')?.includes('text/html');
@@ -40,7 +52,7 @@ export async function middleware(req: NextRequest) {
 
   try {
     let ctx;
-    if (bearer) {
+    if (bearer && verifyAccess) {
       ctx = await verifyAccess(bearer);
     } else if (cookieToken && verifyId) {
       ctx = await verifyId(cookieToken);
