@@ -54,23 +54,23 @@ export default function SettingsPage() {
           title="Deployment metadata"
           subtitle="These values are injected by CDK at deploy time. Edit infra/lib/stack.ts to change them."
         />
-        <div className="rounded-lg border border-hairline overflow-hidden">
+        <div className="rounded-none border border-hairline overflow-hidden">
           <table className="w-full text-body-sm">
-            <thead className="bg-canvas text-label-sm uppercase tracking-wider text-muted">
+            <thead className="bg-surfaceSoft text-caption-sm uppercase tracking-wide text-muted">
               <tr>
-                <th className="text-left px-5 py-3 font-bold w-64">Setting</th>
-                <th className="text-left px-5 py-3 font-bold">Value</th>
-                <th className="text-left px-5 py-3 font-bold w-40">Status</th>
+                <th className="text-left px-5 py-3 font-medium w-64">Setting</th>
+                <th className="text-left px-5 py-3 font-medium">Value</th>
+                <th className="text-left px-5 py-3 font-medium w-40">Status</th>
               </tr>
             </thead>
             <tbody>
               {items.map((it) => (
                 <tr key={it.label} className="border-t border-hairline">
                   <td className="px-5 py-3 text-ink">
-                    <div className="text-body-sm-medium">{it.label}</div>
-                    {it.hint && <div className="text-caption text-body">{it.hint}</div>}
+                    <div className="text-body-strong">{it.label}</div>
+                    {it.hint && <div className="text-caption-sm text-charcoal">{it.hint}</div>}
                   </td>
-                  <td className="px-5 py-3 font-mono text-caption text-ink break-all">{it.value}</td>
+                  <td className="px-5 py-3 font-mono text-caption-sm text-ink break-all">{it.value}</td>
                   <td className="px-5 py-3">
                     {it.value === '(not set)' ? (
                       <Badge tone="warning">missing</Badge>
@@ -87,7 +87,7 @@ export default function SettingsPage() {
 
       <Card variant="panel">
         <CardHeader title="Operator account" subtitle="Account changes are managed through Cognito Hosted UI." />
-        <p className="text-body-md text-body leading-relaxed">
+        <p className="text-body-md text-charcoal leading-relaxed">
           Password resets, MFA enrollment, and identity attributes are managed in your Cognito user pool. Provider
           enablement, quotas, and credential rotation live under{' '}
           <span className="font-mono text-ink">/admin/providers</span>.

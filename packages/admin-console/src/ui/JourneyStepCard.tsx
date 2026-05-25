@@ -1,6 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
 
+// Nike journey step card — flat soft-cloud number tile, hairline border, ink heading.
+
 export interface JourneyStep {
   number: string;
   label: string;
@@ -12,17 +14,17 @@ export interface JourneyStep {
 
 export function JourneyStepCard({ step }: { step: JourneyStep }) {
   const inner = (
-    <div className="rounded-lg border border-hairline bg-surface p-6 lift-on-hover h-full">
-      <div className="flex items-center gap-3 mb-5">
-        <span className="w-10 h-10 rounded-md bg-surfaceMuted text-ink inline-flex items-center justify-center text-body-sm font-mono">
+    <div className="rounded-none border border-hairline bg-canvas p-8 lift-on-hover h-full">
+      <div className="flex items-center gap-3 mb-6">
+        <span className="w-12 h-12 rounded-none bg-surfaceSoft text-ink inline-flex items-center justify-center text-button-md font-medium">
           {step.number}
         </span>
-        <span className="text-caption-uppercase text-muted">{step.label}</span>
+        <span className="text-caption-sm uppercase tracking-wide text-muted">{step.label}</span>
       </div>
-      <h3 className="text-display-sm text-ink leading-tight">{step.title}</h3>
-      <p className="mt-3 text-body-md text-body leading-relaxed">{step.description}</p>
+      <h3 className="text-heading-lg text-ink leading-tight">{step.title}</h3>
+      <p className="mt-3 text-body-md text-charcoal leading-relaxed">{step.description}</p>
       {step.href && (
-        <span className="mt-5 inline-flex items-center gap-1.5 text-body-sm-medium text-ink group">
+        <span className="mt-6 inline-flex items-center gap-1.5 text-body-strong text-ink group">
           Open
           <span className="transition-transform group-hover:translate-x-0.5" aria-hidden="true">
             →
@@ -32,7 +34,7 @@ export function JourneyStepCard({ step }: { step: JourneyStep }) {
     </div>
   );
   return step.href ? (
-    <Link href={step.href} className="block focus:outline-none focus:ring-2 focus:ring-ink/20 rounded-lg">
+    <Link href={step.href} className="block focus:outline-none focus:ring-2 focus:ring-ink/20">
       {inner}
     </Link>
   ) : (

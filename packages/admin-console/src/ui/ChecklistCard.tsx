@@ -1,5 +1,7 @@
 import React from 'react';
 
+// Nike-style checklist — flat soft-cloud surface, ink check dots, body-strong list.
+
 export interface ChecklistCardProps {
   title: string;
   items: string[];
@@ -7,20 +9,18 @@ export interface ChecklistCardProps {
 }
 
 export function ChecklistCard({ title, items, tone = 'success' }: ChecklistCardProps) {
-  const toneStyles = tone === 'success'
-    ? { dot: 'bg-success text-onPrimary', label: 'text-muted' }
-    : { dot: 'bg-warning text-onPrimary', label: 'text-muted' };
+  const dotBg = tone === 'success' ? 'bg-success' : 'bg-sale';
 
   return (
-    <div className="rounded-lg border border-hairline bg-surface p-6">
+    <div className="rounded-none border border-hairline bg-canvas p-8">
       <div className="flex items-center gap-2 mb-3">
-        <span className={`text-caption-uppercase ${toneStyles.label}`}>Checklist</span>
+        <span className="text-caption-sm uppercase tracking-wide text-muted">Checklist</span>
       </div>
-      <h3 className="text-display-sm text-ink leading-tight mb-5">{title}</h3>
-      <ul className="space-y-3">
+      <h3 className="text-heading-lg text-ink leading-tight mb-6">{title}</h3>
+      <ul className="space-y-4">
         {items.map((it, i) => (
           <li key={i} className="flex items-start gap-3 text-body-md text-ink leading-relaxed">
-            <span className={`mt-1 w-5 h-5 rounded-full ${toneStyles.dot} inline-flex items-center justify-center shrink-0`}>
+            <span className={`mt-1 w-5 h-5 rounded-full ${dotBg} text-onPrimary inline-flex items-center justify-center shrink-0`}>
               <CheckIcon />
             </span>
             <span>{it}</span>

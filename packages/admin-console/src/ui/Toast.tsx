@@ -2,6 +2,9 @@
 
 import React, { createContext, useCallback, useContext, useState } from 'react';
 
+// Nike toast — flat canvas card, rounded-none, ink-on-canvas with sale-red
+// border for error tone.
+
 type Tone = 'success' | 'error' | 'info';
 
 interface ToastEntry {
@@ -31,10 +34,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={it.id}
             className={[
-              'rounded-lg border px-5 py-3.5 bg-surface text-body-sm-medium',
-              it.tone === 'success' && 'border-success/40 text-ink',
-              it.tone === 'error' && 'border-error/40 text-error',
-              it.tone === 'info' && 'border-hairline text-ink'
+              'rounded-none border px-5 py-4 bg-canvas text-body-strong',
+              it.tone === 'success' && 'border-success text-ink',
+              it.tone === 'error' && 'border-sale text-sale',
+              it.tone === 'info' && 'border-ink text-ink'
             ]
               .filter(Boolean)
               .join(' ')}

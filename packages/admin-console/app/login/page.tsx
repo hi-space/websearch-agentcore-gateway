@@ -25,8 +25,8 @@ export default function LoginPage() {
       <header className="border-b border-hairline bg-canvas">
         <div className="max-w-[1180px] mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="w-8 h-8 rounded-md bg-ink text-canvas inline-flex items-center justify-center font-medium">S</span>
-            <span className="text-display-sm text-ink">search-gateway</span>
+            <span className="w-8 h-8 rounded-none bg-ink text-canvas inline-flex items-center justify-center font-medium">S</span>
+            <span className="font-display text-heading-lg uppercase tracking-tight text-ink">search-gateway</span>
           </div>
           <Link href="/api/auth/login">
             <Button variant="primary">Sign in</Button>
@@ -36,15 +36,15 @@ export default function LoginPage() {
 
       {/* HERO */}
       <section className="max-w-[1180px] mx-auto px-6 pt-20 pb-12">
-        <div className="rounded-lg border border-hairline bg-surface p-8 md:p-12 grid md:grid-cols-2 gap-10 items-center min-h-[468px]">
+        <div className="rounded-none border border-hairline bg-canvas p-8 md:p-12 grid md:grid-cols-2 gap-10 items-center min-h-[468px]">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-surfaceStrong px-3 py-1 text-caption-uppercase text-ink">
+            <span className="inline-flex items-center gap-2 rounded-none border border-hairline bg-canvas px-3 py-1 text-caption-sm uppercase tracking-wide text-ink">
               Operator console
             </span>
-            <h1 className="mt-6 text-display-mega text-ink">
+            <h1 className="mt-6 font-display text-display-mega text-ink uppercase leading-[0.9]">
               Run your search gateway with operational confidence.
             </h1>
-            <p className="mt-6 text-body-md text-body max-w-xl leading-relaxed">
+            <p className="mt-6 text-body-md text-charcoal max-w-xl leading-relaxed">
               Provision providers, rotate API credentials, and review a hash-chained audit trail. Every privileged
               action is MFA-gated and recorded.
             </p>
@@ -56,22 +56,22 @@ export default function LoginPage() {
                 <Button variant="link">Learn about MFA →</Button>
               </a>
             </div>
-            <p className="mt-6 text-caption text-muted">
+            <p className="mt-6 text-caption-sm text-muted">
               By signing in you agree that all actions are recorded for compliance review.
             </p>
           </div>
           <div className="relative">
-            <div className="rounded-lg bg-ink text-onDark p-6 relative overflow-hidden">
-              <div className="grid-pattern absolute inset-0 opacity-40 pointer-events-none" aria-hidden="true" />
+            <div className="rounded-none bg-ink text-onDark p-6 relative overflow-hidden">
+              <div className="grid-pattern absolute inset-0 opacity-30 pointer-events-none" aria-hidden="true" />
               <div className="relative">
-                <div className="text-caption-uppercase text-darkOnSurfaceMuted">Live console preview</div>
-                <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="text-caption-sm uppercase tracking-wide text-darkOnSurfaceMuted">Live console preview</div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
                   <PreviewStat label="Providers" value="6 / 8" hint="enabled" />
                   <PreviewStat label="p95 latency" value="142 ms" hint="last hour" />
                   <PreviewStat label="Error rate" value="0.42 %" hint="last hour" />
                   <PreviewStat label="Reveals" value="2 / 5" hint="this hour" />
                 </div>
-                <div className="mt-4 rounded-md bg-white/[0.04] border border-darkOutline/40 px-4 py-3 text-body-sm text-darkOnSurfaceMuted font-mono">
+                <div className="mt-4 rounded-none bg-white/[0.03] border border-darkOutline px-4 py-3 text-body-sm text-darkOnSurfaceMuted font-mono">
                   connectivity_test · <span className="text-success">ok</span> · 18 results · provider <span className="text-onDark">exa</span>
                 </div>
               </div>
@@ -83,19 +83,19 @@ export default function LoginPage() {
       {/* JOURNEY */}
       <section className="max-w-[1180px] mx-auto px-6 pt-20 pb-20">
         <div className="text-center max-w-2xl mx-auto">
-          <span className="text-caption-uppercase text-muted">Onboarding journey</span>
-          <h2 className="mt-3 text-display-lg text-ink">From provision to production in seven steps.</h2>
-          <p className="mt-4 text-body-md text-body">
+          <span className="text-caption-sm uppercase tracking-wide text-muted">Onboarding journey</span>
+          <h2 className="mt-3 font-display text-display-lg text-ink uppercase leading-[0.9]">From provision to production in seven steps.</h2>
+          <p className="mt-4 text-body-md text-charcoal">
             Each step has an inline runbook link, expected duration, and an audit row when applied through the console.
           </p>
         </div>
-        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid gap-2 md:grid-cols-2 lg:grid-cols-4">
           {journey.slice(0, 4).map((s) => (
             <JourneyStepCard key={s.number} step={s} />
           ))}
         </div>
         <JourneyPath count={4} />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:max-w-[882px] lg:mx-auto">
+        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3 lg:max-w-[882px] lg:mx-auto">
           {journey.slice(4).map((s) => (
             <JourneyStepCard key={s.number} step={s} />
           ))}
@@ -105,10 +105,10 @@ export default function LoginPage() {
       {/* CHECKLIST */}
       <section className="max-w-[1180px] mx-auto px-6 py-20">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="text-caption-uppercase text-muted">Operational standards</span>
-          <h2 className="mt-3 text-display-lg text-ink">Field rules every operator follows.</h2>
+          <span className="text-caption-sm uppercase tracking-wide text-muted">Operational standards</span>
+          <h2 className="mt-3 font-display text-display-lg text-ink uppercase leading-[0.9]">Field rules every operator follows.</h2>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-2 md:grid-cols-3">
           <ChecklistCard
             title="Secret hygiene"
             items={[
@@ -140,11 +140,11 @@ export default function LoginPage() {
       <section className="max-w-[1180px] mx-auto px-6 py-20">
         <div className="flex items-end justify-between flex-wrap gap-4 mb-10">
           <div>
-            <span className="text-caption-uppercase text-muted">Quick access</span>
-            <h2 className="mt-3 text-display-lg text-ink">Resources operators reach for.</h2>
+            <span className="text-caption-sm uppercase tracking-wide text-muted">Quick access</span>
+            <h2 className="mt-3 font-display text-display-lg text-ink uppercase leading-[0.9]">Resources operators reach for.</h2>
           </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
           <ResourceCard category="Capture" title="Sign in" description="Cognito Hosted UI with step-up MFA." href="/api/auth/login" />
           <ResourceCard category="Console" title="Provider catalog" description="Toggle, throttle, and configure upstream providers." href="/admin/providers" />
           <ResourceCard category="Console" title="Audit log" description="Filter by actor, action, and time. Export to S3 in v1.1." href="/admin/audit" />
@@ -169,8 +169,8 @@ export default function LoginPage() {
       {/* FAQ */}
       <section className="max-w-3xl mx-auto px-6 py-20">
         <div className="text-center mb-10">
-          <span className="text-caption-uppercase text-muted">Troubleshooting</span>
-          <h2 className="mt-3 text-display-lg text-ink">Frequently asked.</h2>
+          <span className="text-caption-sm uppercase tracking-wide text-muted">Troubleshooting</span>
+          <h2 className="mt-3 font-display text-display-lg text-ink uppercase leading-[0.9]">Frequently asked.</h2>
         </div>
         <FaqAccordion
           items={[
@@ -193,7 +193,7 @@ export default function LoginPage() {
       </section>
 
       <footer className="border-t border-hairline bg-canvas">
-        <div className="max-w-[1180px] mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-3 text-body-sm text-body">
+        <div className="max-w-[1180px] mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-3 text-body-sm text-charcoal">
           <span>© search-gateway · operator console</span>
           <span>v1.0 walking-skeleton</span>
         </div>
@@ -204,10 +204,10 @@ export default function LoginPage() {
 
 function PreviewStat({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <div className="rounded-md bg-white/[0.04] border border-darkOutline/40 px-4 py-3">
-      <div className="text-caption-uppercase text-darkOnSurfaceSubtle">{label}</div>
-      <div className="mt-1 text-display-sm text-onDark tabular-nums">{value}</div>
-      <div className="text-caption text-darkOnSurfaceMuted">{hint}</div>
+    <div className="rounded-none bg-white/[0.03] border border-darkOutline px-4 py-3">
+      <div className="text-caption-sm uppercase tracking-wide text-darkOnSurfaceSubtle">{label}</div>
+      <div className="mt-1 text-heading-lg text-onDark tabular-nums">{value}</div>
+      <div className="text-caption-sm text-darkOnSurfaceMuted">{hint}</div>
     </div>
   );
 }

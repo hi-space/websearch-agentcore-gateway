@@ -1,6 +1,9 @@
 import React from 'react';
 import Link from 'next/link';
 
+// Nike filter-sidebar — flat canvas rail, body-strong section labels, hairline
+// dividers, active row gets an ink underline rather than a fill.
+
 export type Section = 'providers' | 'dashboard' | 'playground' | 'audit' | 'settings';
 
 interface NavItem {
@@ -22,18 +25,18 @@ export function Sidebar({ active }: { active: Section }) {
   return (
     <nav
       aria-label="Admin sections"
-      className="bg-canvas border-r border-hairline w-64 min-h-screen px-4 py-6 flex flex-col"
+      className="bg-canvas border-r border-hairline w-60 min-h-screen px-6 py-8 flex flex-col"
     >
-      <Link href="/admin/dashboard" className="flex items-center gap-3 px-2 mb-10">
-        <span className="w-8 h-8 rounded-md bg-ink inline-flex items-center justify-center text-canvas font-medium text-body-md">
+      <Link href="/admin/dashboard" className="flex items-center gap-3 mb-12">
+        <span className="w-8 h-8 rounded-none bg-ink inline-flex items-center justify-center text-onPrimary font-medium text-button-md">
           S
         </span>
-        <span className="text-display-sm text-ink tracking-tight">search-gateway</span>
+        <span className="font-display text-display-sm text-ink">SEARCH</span>
       </Link>
 
-      <div className="text-caption-uppercase text-muted px-3 pb-3">Workspace</div>
+      <div className="text-caption-sm text-mutedd uppercase tracking-wide mb-3">Workspace</div>
 
-      <div className="flex flex-col gap-0.5">
+      <div className="flex flex-col">
         {items.map((it) => {
           const isActive = active === it.id;
           return (
@@ -42,21 +45,18 @@ export function Sidebar({ active }: { active: Section }) {
               href={it.href}
               aria-current={isActive ? 'page' : undefined}
               className={[
-                'flex items-center gap-3 px-3 py-2 rounded-md text-body-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-surfaceMuted text-ink'
-                  : 'text-body hover:text-ink hover:bg-surfaceMuted'
+                'flex items-center gap-3 py-3 text-body-strong transition-colors border-b border-hairline last:border-b-0',
+                isActive ? 'text-ink' : 'text-charcoal hover:text-ink'
               ].join(' ')}
             >
-              <span className={['w-5 h-5 inline-flex items-center justify-center', isActive ? 'text-primary' : 'text-muted'].join(' ')}>
+              <span className={['w-5 h-5 inline-flex items-center justify-center', isActive ? 'text-ink' : 'text-muted'].join(' ')}>
                 {it.icon}
               </span>
-              <span>{it.label}</span>
+              <span className={isActive ? 'underline underline-offset-[6px] decoration-2' : ''}>{it.label}</span>
             </Link>
           );
         })}
       </div>
-
     </nav>
   );
 }
@@ -64,10 +64,10 @@ export function Sidebar({ active }: { active: Section }) {
 function DashboardIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-      <rect x="2" y="2" width="5" height="6" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <rect x="9" y="2" width="5" height="3" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <rect x="2" y="10" width="5" height="4" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <rect x="9" y="7" width="5" height="7" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <rect x="2" y="2" width="5" height="6" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <rect x="9" y="2" width="5" height="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <rect x="2" y="10" width="5" height="4" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <rect x="9" y="7" width="5" height="7" fill="none" stroke="currentColor" strokeWidth="1.6" />
     </svg>
   );
 }

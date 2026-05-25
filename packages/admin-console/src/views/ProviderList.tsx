@@ -104,23 +104,23 @@ export function ProviderList({ rows }: { rows: ProviderRow[] }) {
           }
         />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-hairline">
+        <div className="overflow-hidden rounded-none border border-hairline">
           <table className="w-full text-body-sm">
-            <thead className="bg-canvas text-label-sm uppercase tracking-wider text-muted">
+            <thead className="bg-surfaceSoft text-caption-sm uppercase tracking-wide text-muted">
               <tr>
-                <th className="text-left px-5 py-3 font-bold">Provider</th>
-                <th className="text-left px-5 py-3 font-bold">Status</th>
-                <th className="text-left px-5 py-3 font-bold">Secret</th>
-                <th className="text-right px-5 py-3 font-bold">RPM</th>
-                <th className="text-right px-5 py-3 font-bold">Daily</th>
-                <th className="text-right px-5 py-3 font-bold">Timeout</th>
+                <th className="text-left px-5 py-3 font-medium">Provider</th>
+                <th className="text-left px-5 py-3 font-medium">Status</th>
+                <th className="text-left px-5 py-3 font-medium">Secret</th>
+                <th className="text-right px-5 py-3 font-medium">RPM</th>
+                <th className="text-right px-5 py-3 font-medium">Daily</th>
+                <th className="text-right px-5 py-3 font-medium">Timeout</th>
                 <th />
               </tr>
             </thead>
             <tbody>
               {slice.map((r) => (
-                <tr key={r.providerId} className="border-t border-hairline hover:bg-surfaceMuted/50">
-                  <td className="px-5 py-3 font-bold text-ink">
+                <tr key={r.providerId} className="border-t border-hairline hover:bg-surfaceSoft">
+                  <td className="px-5 py-3 font-medium text-ink">
                     <span className="inline-flex items-center gap-2">
                       <ProviderDot id={r.providerId} />
                       {r.providerId}
@@ -142,7 +142,7 @@ export function ProviderList({ rows }: { rows: ProviderRow[] }) {
                   <td className="px-5 py-3 text-right text-ink tabular-nums">{r.quota.daily}</td>
                   <td className="px-5 py-3 text-right text-ink tabular-nums">{r.timeoutMs} ms</td>
                   <td className="px-5 py-3 text-right">
-                    <Link href={`/admin/providers/${r.providerId}`} className="text-primary text-body-sm-medium hover:underline inline-flex items-center gap-1">
+                    <Link href={`/admin/providers/${r.providerId}`} className="text-ink text-body-strong hover:underline inline-flex items-center gap-1">
                       Manage <span aria-hidden="true">→</span>
                     </Link>
                   </td>

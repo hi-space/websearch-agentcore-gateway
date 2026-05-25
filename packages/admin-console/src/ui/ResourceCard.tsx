@@ -1,6 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
 
+// Nike resource card — flat hairline-bordered tile, soft-cloud icon, ink heading.
+
 export interface ResourceCardProps {
   category: string;
   title: string;
@@ -12,27 +14,27 @@ export interface ResourceCardProps {
 
 export function ResourceCard({ category, title, description, href, icon, external }: ResourceCardProps) {
   const content = (
-    <div className="rounded-lg border border-hairline bg-surface p-6 lift-on-hover h-full flex flex-col">
-      <div className="flex items-center gap-3 mb-5">
-        <span className="w-10 h-10 rounded-md bg-surfaceMuted text-ink inline-flex items-center justify-center">
+    <div className="rounded-none border border-hairline bg-canvas p-8 lift-on-hover h-full flex flex-col">
+      <div className="flex items-center gap-3 mb-6">
+        <span className="w-12 h-12 rounded-none bg-surfaceSoft text-ink inline-flex items-center justify-center">
           {icon ?? <ResourceGlyph />}
         </span>
-        <span className="text-caption-uppercase text-muted">{category}</span>
+        <span className="text-caption-sm uppercase tracking-wide text-muted">{category}</span>
       </div>
-      <h3 className="text-display-sm text-ink leading-tight">{title}</h3>
-      <p className="mt-3 text-body-md text-body leading-relaxed flex-1">{description}</p>
-      <span className="mt-5 inline-flex items-center gap-1.5 text-body-sm-medium text-ink group">
+      <h3 className="text-heading-lg text-ink leading-tight">{title}</h3>
+      <p className="mt-3 text-body-md text-charcoal leading-relaxed flex-1">{description}</p>
+      <span className="mt-6 inline-flex items-center gap-1.5 text-body-strong text-ink group">
         {external ? 'Open' : 'View'}
         <span className="transition-transform group-hover:translate-x-0.5" aria-hidden="true">→</span>
       </span>
     </div>
   );
   return external ? (
-    <a href={href} target="_blank" rel="noreferrer" className="block focus:outline-none focus:ring-2 focus:ring-ink/20 rounded-lg">
+    <a href={href} target="_blank" rel="noreferrer" className="block focus:outline-none focus:ring-2 focus:ring-ink/20">
       {content}
     </a>
   ) : (
-    <Link href={href} className="block focus:outline-none focus:ring-2 focus:ring-ink/20 rounded-lg">
+    <Link href={href} className="block focus:outline-none focus:ring-2 focus:ring-ink/20">
       {content}
     </Link>
   );

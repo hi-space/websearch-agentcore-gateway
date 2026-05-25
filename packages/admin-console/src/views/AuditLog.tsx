@@ -99,14 +99,14 @@ export function AuditLog({ rows }: { rows: AuditRow[] }) {
           }
         />
       ) : (
-        <div className="rounded-lg border border-hairline overflow-hidden">
+        <div className="rounded-none border border-hairline overflow-hidden">
           <table className="w-full text-body-sm">
-            <thead className="bg-canvas text-label-sm uppercase tracking-wider text-muted">
+            <thead className="bg-surfaceSoft text-caption-sm uppercase tracking-wide text-muted">
               <tr>
-                <th className="text-left px-5 py-3 font-bold w-44">Timestamp</th>
-                <th className="text-left px-5 py-3 font-bold">Actor</th>
-                <th className="text-left px-5 py-3 font-bold">Action</th>
-                <th className="text-left px-5 py-3 font-bold">Target</th>
+                <th className="text-left px-5 py-3 font-medium w-44">Timestamp</th>
+                <th className="text-left px-5 py-3 font-medium">Actor</th>
+                <th className="text-left px-5 py-3 font-medium">Action</th>
+                <th className="text-left px-5 py-3 font-medium">Target</th>
                 <th />
               </tr>
             </thead>
@@ -117,18 +117,18 @@ export function AuditLog({ rows }: { rows: AuditRow[] }) {
                 const hasDiff = r.before !== undefined || r.after !== undefined;
                 return (
                   <React.Fragment key={id}>
-                    <tr className={`border-t border-hairline ${isOpen ? 'bg-surfaceMuted/50' : 'hover:bg-surfaceMuted/30'}`}>
-                      <td className="px-5 py-3 font-mono text-caption text-body">{r.ts}</td>
+                    <tr className={`border-t border-hairline ${isOpen ? 'bg-surfaceSoft' : 'hover:bg-surfaceSoft'}`}>
+                      <td className="px-5 py-3 font-mono text-caption-sm text-charcoal">{r.ts}</td>
                       <td className="px-5 py-3 text-ink">{r.actor}</td>
                       <td className="px-5 py-3">
                         <Badge tone={actionTone(r.action)}>{r.action}</Badge>
                       </td>
-                      <td className="px-5 py-3 font-mono text-caption text-ink">{r.target}</td>
+                      <td className="px-5 py-3 font-mono text-caption-sm text-ink">{r.target}</td>
                       <td className="px-5 py-3 text-right">
                         {hasDiff && (
                           <button
                             onClick={() => setExpanded(isOpen ? null : id)}
-                            className="text-primary text-body-sm-medium hover:underline"
+                            className="text-ink text-body-strong hover:underline"
                           >
                             {isOpen ? 'Hide' : 'Inspect'}
                           </button>
@@ -136,9 +136,9 @@ export function AuditLog({ rows }: { rows: AuditRow[] }) {
                       </td>
                     </tr>
                     {isOpen && hasDiff && (
-                      <tr className="bg-surfaceMuted/30">
+                      <tr className="bg-surfaceSoft">
                         <td colSpan={5} className="px-5 py-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             <DiffPanel label="Before" value={r.before} />
                             <DiffPanel label="After" value={r.after} />
                           </div>
@@ -162,9 +162,9 @@ export function AuditLog({ rows }: { rows: AuditRow[] }) {
 
 function DiffPanel({ label, value }: { label: string; value: unknown }) {
   return (
-    <div className="rounded-xl border border-hairline bg-surface p-4">
-      <div className="text-label-sm uppercase tracking-wider text-muted mb-2">{label}</div>
-      <pre className="text-caption text-ink whitespace-pre-wrap break-all max-h-64 overflow-auto">
+    <div className="rounded-none border border-hairline bg-canvas p-4">
+      <div className="text-caption-sm uppercase tracking-wide text-muted mb-2">{label}</div>
+      <pre className="font-mono text-caption-sm text-ink whitespace-pre-wrap break-all max-h-64 overflow-auto">
         {value === undefined || value === null ? '—' : JSON.stringify(value, null, 2)}
       </pre>
     </div>

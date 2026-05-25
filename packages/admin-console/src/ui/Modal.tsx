@@ -2,6 +2,8 @@
 
 import React, { useEffect } from 'react';
 
+// Nike modal — flat canvas card, rounded-none, hairline divider on footer.
+
 export function Modal({
   open,
   onClose,
@@ -30,27 +32,27 @@ export function Modal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-inkDeep/40" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-ink/60" onClick={onClose} aria-hidden="true" />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : undefined}
-        className="relative z-10 w-full max-w-lg bg-surface rounded-lg shadow-modal border border-hairline overflow-hidden"
+        className="relative z-10 w-full max-w-lg bg-canvas rounded-none shadow-modal border border-hairline overflow-hidden"
       >
-        <div className="flex items-start justify-between px-7 pt-7 pb-2">
-          <h2 className="text-card-title text-ink">{title}</h2>
+        <div className="flex items-start justify-between px-8 pt-8 pb-2">
+          <h2 className="text-heading-lg text-ink">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="text-muted hover:text-ink rounded-full p-1.5 -m-1.5 hover:bg-canvas"
+            className="text-ink hover:bg-surfaceSoft rounded-full w-10 h-10 inline-flex items-center justify-center -mr-2"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
               <path d="m4 4 8 8M12 4l-8 8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </button>
         </div>
-        <div className="px-7 pb-7 pt-2 text-body-md text-body leading-relaxed">{children}</div>
-        {footer && <div className="px-7 py-4 bg-canvas border-t border-hairline flex justify-end gap-2">{footer}</div>}
+        <div className="px-8 pb-8 pt-2 text-body-md text-charcoal leading-relaxed">{children}</div>
+        {footer && <div className="px-8 py-5 border-t border-hairline flex justify-end gap-3">{footer}</div>}
       </div>
     </div>
   );

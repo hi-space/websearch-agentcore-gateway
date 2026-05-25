@@ -1,29 +1,33 @@
 import React, { type ButtonHTMLAttributes } from 'react';
 
-// Cursor geometry — compact 8px-radius CTAs, 40px height, weight 500.
+// Nike geometry — pill-shaped CTAs at 30px radius, 48px height, weight 500.
+// `primary` is the universal black ink pill; `secondary` is the soft-cloud pill;
+// `on-dark` / `on-image` are the white pill on dark or photographic surfaces.
 type Variant =
   | 'primary'
   | 'dark'
   | 'secondary'
   | 'on-dark'
+  | 'on-image'
   | 'secondary-on-dark'
   | 'ghost'
   | 'link'
   | 'danger';
 
-const base = 'rounded-md h-10 px-[18px] text-button-md font-medium';
-const compact = 'rounded-md h-9 px-4 text-button-md font-medium';
-const tall = 'rounded-md h-11 px-5 text-button-md font-medium';
+const pill = 'rounded-full h-12 px-8 text-button-md font-medium press-collapse';
+const compact = 'rounded-full h-10 px-6 text-button-md font-medium press-collapse';
+const tall = 'rounded-full h-12 px-8 text-button-md font-medium press-collapse';
 
 const styles: Record<Variant, string> = {
-  primary: `${base} bg-primary text-onPrimary hover:bg-primaryStrong active:bg-primaryDeep`,
-  dark: `${tall} bg-ink text-canvas hover:bg-inkDeep`,
-  secondary: `${base} bg-surface text-ink border border-hairlineStrong hover:border-ink`,
-  'on-dark': `${base} bg-canvas text-ink hover:bg-surfaceMuted`,
-  'secondary-on-dark': `${base} bg-transparent text-onDark border border-darkOnSurfaceMuted/40 hover:bg-white/10`,
-  ghost: `${compact} bg-transparent text-ink hover:bg-surfaceMuted`,
-  link: 'bg-transparent text-ink hover:text-primary underline-offset-2 hover:underline px-0 py-0 font-medium',
-  danger: `${base} bg-error text-onPrimary hover:opacity-90`
+  primary: `${pill} bg-ink text-onPrimary hover:bg-inkDeep`,
+  dark: `${tall} bg-ink text-onPrimary hover:bg-inkDeep`,
+  secondary: `${pill} bg-surfaceSoft text-ink hover:bg-surfaceStrong`,
+  'on-dark': `${pill} bg-canvas text-ink hover:bg-surfaceSoft`,
+  'on-image': `${compact} bg-canvas text-ink hover:bg-surfaceSoft`,
+  'secondary-on-dark': `${pill} bg-transparent text-onDark border border-darkOnSurfaceMuted/50 hover:bg-white/10`,
+  ghost: `${compact} bg-transparent text-ink hover:bg-surfaceSoft`,
+  link: 'bg-transparent text-ink hover:opacity-70 underline underline-offset-4 px-0 py-0 font-medium',
+  danger: `${pill} bg-error text-onPrimary hover:bg-saleDeep`
 };
 
 export function Button({

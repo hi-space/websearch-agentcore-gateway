@@ -1,5 +1,8 @@
 import React from 'react';
 
+// Nike filter-chip — rounded-full 30px, hairline border, fully inverts to ink
+// when active. No middle state.
+
 export interface PillTabItem<T extends string> {
   id: T;
   label: string;
@@ -28,18 +31,18 @@ export function PillTabs<T extends string>({
             aria-selected={isActive}
             onClick={() => onChange(it.id)}
             className={[
-              'inline-flex items-center gap-2 rounded-md h-9 px-3.5 text-body-sm-medium transition-colors',
+              'inline-flex items-center gap-2 rounded-full h-10 px-4 text-button-md font-medium transition-colors',
               isActive
-                ? 'bg-ink text-canvas'
-                : 'bg-surface text-body border border-hairline hover:border-hairlineStrong hover:text-ink'
+                ? 'bg-ink text-onPrimary'
+                : 'bg-canvas text-ink border border-hairlineStrong hover:border-ink'
             ].join(' ')}
           >
-            <span className="font-medium">{it.label}</span>
+            <span>{it.label}</span>
             {typeof it.count === 'number' && (
               <span
                 className={[
-                  'tabular-nums text-caption rounded-full px-2 py-0.5 font-medium',
-                  isActive ? 'bg-white/15 text-canvas' : 'bg-surfaceMuted text-muted'
+                  'tabular-nums text-caption-sm rounded-full px-2 py-0.5 font-medium',
+                  isActive ? 'bg-white/15 text-onPrimary' : 'bg-surfaceSoft text-muted'
                 ].join(' ')}
               >
                 {it.count}

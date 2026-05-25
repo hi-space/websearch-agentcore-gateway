@@ -1,5 +1,8 @@
 import React, { type HTMLAttributes } from 'react';
 
+// Nike cards are flat — no radius, no shadow, no fill (canvas-on-canvas) with
+// optional 1px hairline divider. Variants only swap surface/text inversion.
+
 export type CardVariant =
   | 'base'
   | 'feature'
@@ -18,24 +21,26 @@ export type CardVariant =
   | 'yellow-bold'
   | 'cream';
 
+const surface = 'bg-canvas border border-hairline rounded-none p-6';
+const cloud = 'bg-surfaceSoft border border-hairline rounded-none p-6';
+const ink = 'rounded-none p-6 text-onDark bg-ink';
+
 const variantStyle: Record<CardVariant, string> = {
-  base: 'bg-surface border border-hairline rounded-lg p-6',
-  feature: 'bg-surface border border-hairline rounded-lg p-6',
-  panel: 'bg-surface border border-hairline rounded-lg p-6',
-  'panel-dark':
-    'rounded-lg p-6 text-onDark bg-ink',
-  'panel-support':
-    'rounded-lg p-6 text-onDark bg-ink',
-  'soft-blue': 'bg-surfaceMuted border border-hairline rounded-lg p-6',
-  'soft-mint': 'bg-surfaceMuted border border-hairline rounded-lg p-6',
-  lavender: 'bg-surfaceMuted border border-hairline rounded-lg p-6',
-  mint: 'bg-surfaceMuted border border-hairline rounded-lg p-6',
-  peach: 'bg-surface border border-hairline rounded-lg p-6',
-  rose: 'bg-surface border border-hairline rounded-lg p-6',
-  sky: 'bg-surfaceMuted border border-hairline rounded-lg p-6',
-  yellow: 'bg-surface border border-hairline rounded-lg p-6',
-  'yellow-bold': 'bg-surface border border-hairline rounded-lg p-6',
-  cream: 'bg-canvasSoft border border-hairline rounded-lg p-6'
+  base: surface,
+  feature: surface,
+  panel: surface,
+  'panel-dark': ink,
+  'panel-support': ink,
+  'soft-blue': cloud,
+  'soft-mint': cloud,
+  lavender: cloud,
+  mint: cloud,
+  peach: cloud,
+  rose: cloud,
+  sky: cloud,
+  yellow: cloud,
+  'yellow-bold': cloud,
+  cream: cloud
 };
 
 export function Card({
@@ -61,7 +66,7 @@ export function CardHeader({
     <div className={`flex items-start justify-between mb-5 gap-4 ${className}`}>
       <div className="min-w-0">
         <h2 className="text-card-title text-ink leading-tight">{title}</h2>
-        {subtitle && <p className="mt-1.5 text-body-md text-body leading-relaxed">{subtitle}</p>}
+        {subtitle && <p className="mt-2 text-body-md text-muted leading-relaxed">{subtitle}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>

@@ -4,10 +4,10 @@ import { render, screen } from '@testing-library/react';
 import { Button } from '../Button.js';
 
 describe('Button', () => {
-  it('primary variant uses brand background and pill shape (DESIGN.md rule)', () => {
+  it('primary variant uses ink fill and pill shape (DESIGN.md Nike rule)', () => {
     render(<Button>Save</Button>);
     const b = screen.getByRole('button', { name: 'Save' });
-    expect(b.className).toContain('bg-primary');
+    expect(b.className).toContain('bg-ink');
     expect(b.className).toContain('rounded-full');
   });
 
@@ -18,6 +18,6 @@ describe('Button', () => {
 
   it('renders dark variant', () => {
     render(<Button variant="dark">Run</Button>);
-    expect(screen.getByRole('button', { name: 'Run' }).className).toContain('bg-darkSurface');
+    expect(screen.getByRole('button', { name: 'Run' }).className).toContain('bg-ink');
   });
 });

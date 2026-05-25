@@ -1,5 +1,7 @@
 import React from 'react';
 
+// Nike sub-nav tabs — body-strong text on canvas, active gets a 2px ink underline.
+
 export interface SegmentedTabItem<T extends string> {
   id: T;
   label: string;
@@ -17,7 +19,7 @@ export function SegmentedTabs<T extends string>({
   ariaLabel?: string;
 }) {
   return (
-    <div role="tablist" aria-label={ariaLabel} className="flex gap-7 border-b border-hairline">
+    <div role="tablist" aria-label={ariaLabel} className="flex gap-8 border-b border-hairline">
       {items.map((it) => {
         const isActive = it.id === active;
         return (
@@ -27,10 +29,10 @@ export function SegmentedTabs<T extends string>({
             aria-selected={isActive}
             onClick={() => onChange(it.id)}
             className={[
-              'pb-3.5 -mb-px text-body-md font-bold transition-colors',
+              'pb-4 -mb-px text-body-strong transition-colors',
               isActive
-                ? 'text-ink border-b-2 border-primary'
-                : 'text-body border-b-2 border-transparent hover:text-ink'
+                ? 'text-ink border-b-2 border-ink'
+                : 'text-charcoal border-b-2 border-transparent hover:text-ink'
             ].join(' ')}
           >
             {it.label}

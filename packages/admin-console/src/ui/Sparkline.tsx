@@ -1,6 +1,6 @@
 import React from 'react';
 
-// Inline sparkline; renders nothing when there's not enough data.
+// Nike sparkline — ink stroke, no fill. Renders nothing when there's not enough data.
 export function Sparkline({
   values,
   width = 120,
@@ -35,7 +35,7 @@ export function Sparkline({
     .map((v, i) => `${(i * stepX).toFixed(2)},${(height - ((v - min) / range) * height).toFixed(2)}`)
     .join(' ');
   return (
-    <svg width={width} height={height} role="img" aria-label={ariaLabel} className="text-primary">
+    <svg width={width} height={height} role="img" aria-label={ariaLabel} className="text-ink">
       <polyline points={points} fill={fill} stroke={stroke} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   );

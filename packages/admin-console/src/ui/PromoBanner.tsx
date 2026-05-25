@@ -1,5 +1,8 @@
 import React, { type HTMLAttributes } from 'react';
 
+// Nike utility-bar — soft-cloud surface, caption-sm text, 36px height,
+// always-on top utility strip.
+
 export function PromoBanner({
   className = '',
   children,
@@ -8,9 +11,9 @@ export function PromoBanner({
   return (
     <div
       {...props}
-      className={`bg-surfaceMuted text-ink text-body-sm-medium px-6 py-3 border-b border-hairline ${className}`}
+      className={`bg-surfaceSoft text-ink text-caption-sm h-9 flex items-center justify-end px-6 ${className}`}
     >
-      <div className="max-w-[1280px] mx-auto flex items-center justify-center gap-2 text-center">
+      <div className="max-w-[1440px] w-full mx-auto flex items-center justify-end gap-4">
         {children}
       </div>
     </div>

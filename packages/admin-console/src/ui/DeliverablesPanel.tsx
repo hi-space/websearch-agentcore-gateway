@@ -1,5 +1,8 @@
 import React from 'react';
 
+// Nike inverse panel — full-bleed ink with display-lg headline; chip values
+// stack as flat tiles with darkOutline hairlines.
+
 export interface DeliverableChip {
   id: string;
   label: string;
@@ -19,25 +22,25 @@ export function DeliverablesPanel({
   chips: DeliverableChip[];
 }) {
   return (
-    <div className="rounded-lg text-onDark p-8 md:p-10 bg-ink relative overflow-hidden">
-      <div className="grid-pattern absolute inset-0 opacity-50 pointer-events-none" aria-hidden="true" />
+    <div className="rounded-none text-onDark p-10 md:p-12 bg-ink relative overflow-hidden">
+      <div className="grid-pattern absolute inset-0 opacity-30 pointer-events-none" aria-hidden="true" />
       <div className="relative">
         {eyebrow && (
-          <span className="text-caption-uppercase text-darkOnSurfaceMuted">{eyebrow}</span>
+          <span className="text-caption-sm uppercase tracking-wide text-darkOnSurfaceMuted">{eyebrow}</span>
         )}
-        <h3 className="mt-3 text-display-lg text-onDark leading-tight">{title}</h3>
+        <h3 className="mt-4 font-display text-display-lg text-onDark leading-[0.9]">{title}</h3>
         {description && (
-          <p className="mt-4 text-body-md text-darkOnSurfaceMuted max-w-2xl leading-relaxed">{description}</p>
+          <p className="mt-5 text-body-md text-darkOnSurfaceMuted max-w-2xl leading-relaxed">{description}</p>
         )}
 
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-2">
           {chips.map((c) => (
             <div
               key={c.id}
-              className="rounded-lg border border-darkOutline/60 bg-white/[0.03] px-4 py-4"
+              className="rounded-none border border-darkOutline bg-white/[0.03] px-5 py-5"
             >
-              <div className="text-caption-uppercase text-darkOnSurfaceSubtle">{c.label}</div>
-              <div className="mt-2 text-display-sm text-onDark tabular-nums">{c.value}</div>
+              <div className="text-caption-sm uppercase tracking-wide text-darkOnSurfaceSubtle">{c.label}</div>
+              <div className="mt-2 text-heading-lg text-onDark tabular-nums">{c.value}</div>
               {c.hint && <div className="mt-1 text-body-sm text-darkOnSurfaceMuted">{c.hint}</div>}
             </div>
           ))}

@@ -37,7 +37,7 @@ export function AdminShell({ children, region, actor }: AdminShellProps) {
       <Sidebar active={section} />
       <div className="flex-1 flex flex-col">
         <TopBar title={meta.title} subtitle={meta.subtitle} region={region} actor={actor} />
-        <main className="flex-1 p-8 max-w-[1280px] w-full mx-auto">{children}</main>
+        <main className="flex-1 px-8 py-12 max-w-[1440px] w-full mx-auto">{children}</main>
       </div>
     </div>
   );

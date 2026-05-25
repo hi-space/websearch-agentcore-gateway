@@ -71,7 +71,7 @@ export function Dashboard({
           title="Per-provider performance"
           subtitle="p95 latency and error rate over the last hour, sourced from CloudWatch."
           action={
-            <Link href="/admin/providers" className="text-primary text-body-md-medium hover:underline inline-flex items-center gap-1">
+            <Link href="/admin/providers" className="text-ink text-body-strong hover:underline inline-flex items-center gap-1">
               Manage providers <span aria-hidden="true">→</span>
             </Link>
           }
@@ -83,7 +83,7 @@ export function Dashboard({
             description="Enable a provider to start receiving metrics here."
           />
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
             {metrics.map((m) => (
               <ProviderMetricTile key={m.providerId} metric={m} />
             ))}
@@ -106,19 +106,19 @@ function ProviderMetricTile({ metric }: { metric: DashboardMetric }) {
   return (
     <Link
       href={`/admin/providers/${metric.providerId}`}
-      className="block focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-lg"
+      className="block focus:outline-none focus:ring-2 focus:ring-ink/20 rounded-none"
       data-testid="provider-metric-tile"
     >
-      <div className="rounded-lg border border-hairline bg-surface p-5 lift-on-hover hover:border-hairlineStrong">
+      <div className="rounded-none border border-hairline bg-canvas p-6 press-collapse hover:border-hairlineStrong">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-label-sm uppercase tracking-wider text-muted">{metric.providerId}</div>
-            <div className="mt-2 text-card-title text-ink leading-none tabular-nums">{fmtLatency(metric.p95LatencyMs)}</div>
-            <div className="mt-1.5 text-caption text-body">p95 latency · last hour</div>
+            <div className="text-caption-sm uppercase tracking-wide text-muted">{metric.providerId}</div>
+            <div className="mt-3 text-heading-lg text-ink leading-none tabular-nums">{fmtLatency(metric.p95LatencyMs)}</div>
+            <div className="mt-1.5 text-caption-sm text-charcoal">p95 latency · last hour</div>
           </div>
           <Badge tone={errorTone}>{fmtErrorRate(metric.errorRate)}</Badge>
         </div>
-        <div className="mt-4 text-primary">
+        <div className="mt-4 text-ink">
           <Sparkline values={metric.latencySeries ?? []} ariaLabel={`${metric.providerId} latency trend`} />
         </div>
       </div>
