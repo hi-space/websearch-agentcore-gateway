@@ -11,7 +11,8 @@ import {
   FlowLogDestination
 } from 'aws-cdk-lib/aws-ec2';
 import { LogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs';
-import { RemovalPolicy } from 'aws-cdk-lib';
+import { RemovalPolicy, Stack } from 'aws-cdk-lib';
+import { Bucket, BlockPublicAccess } from 'aws-cdk-lib/aws-s3';
 
 export class NetworkConstruct extends Construct {
   readonly vpc: Vpc;
@@ -35,9 +36,32 @@ export class NetworkConstruct extends Construct {
       retention: RetentionDays.ONE_MONTH,
       removalPolicy: RemovalPolicy.RETAIN
     });
-    new FlowLog(this, 'VpcFlowLog', {
+    new FlowLog(this, 'VpcFlowLogCloudWatch', {
       resourceType: FlowLogResourceType.fromVpc(this.vpc as IVpc),
       destination: FlowLogDestination.toCloudWatchLogs(flowLogGroup)
+    });
+
+    // Add S3 flow log destination for durability and long-term audit trail.
+    // Using a dedicated flow-logs bucket to avoid cross-stack references and
+    // potential retention conflicts with the shared audit bucket.
+    const flowLogAccessLogsBucket = new Bucket(this, 'FlowLogsAccessLogsBucket', {
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: RemovalPolicy.RETAIN,
+      enforceSSL: true
+    });
+
+    const flowLogsBucket = new Bucket(this, 'FlowLogsBucket', {
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      versioned: true,
+      removalPolicy: RemovalPolicy.RETAIN,
+      enforceSSL: true,
+      serverAccessLogsBucket: flowLogAccessLogsBucket,
+      serverAccessLogsPrefix: 'vpc-flow-logs-access/'
+    });
+
+    new FlowLog(this, 'VpcFlowLogS3', {
+      resourceType: FlowLogResourceType.fromVpc(this.vpc as IVpc),
+      destination: FlowLogDestination.toS3(flowLogsBucket)
     });
 
     const ifaceServices: Array<[string, InterfaceVpcEndpointAwsService]> = [

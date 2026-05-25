@@ -1,0 +1,213 @@
+import Link from 'next/link';
+import { Button } from '../../src/ui/Button';
+import { JourneyStepCard, JourneyPath, type JourneyStep } from '../../src/ui/JourneyStepCard';
+import { ResourceCard } from '../../src/ui/ResourceCard';
+import { ChecklistCard } from '../../src/ui/ChecklistCard';
+import { DeliverablesPanel } from '../../src/ui/DeliverablesPanel';
+import { FaqAccordion } from '../../src/ui/FaqAccordion';
+import { SupportPanel } from '../../src/ui/SupportPanel';
+
+export const dynamic = 'force-dynamic';
+
+const journey: JourneyStep[] = [
+  { number: '01', label: 'Setup', title: 'Provision the gateway', description: 'Run cdk deploy to create Cognito, DynamoDB, KMS, and the AgentCore Gateway in your account.' },
+  { number: '02', label: 'Identity', title: 'Sign in with Cognito', description: 'Authenticate with the Cognito Hosted UI. Step-up MFA is required for privileged operations.' },
+  { number: '03', label: 'Providers', title: 'Configure providers', description: 'Toggle providers on/off, set RPM and daily quotas, configure timeouts inline.' },
+  { number: '04', label: 'Secrets', title: 'Store API credentials', description: 'New secret values are written to AWS Secrets Manager. Old versions remain for safe rollback.' },
+  { number: '05', label: 'Verify', title: 'Run a connectivity test', description: 'Probe upstream search via the router. Each test emits an audit row attributed to your identity.' },
+  { number: '06', label: 'Audit', title: 'Review the audit trail', description: 'Every change is captured with actor, before/after diff, and a hash-chained timestamp.' },
+  { number: '07', label: 'Operate', title: 'Watch metrics & rotate', description: 'CloudWatch p95 latency and error rate inform when to rotate keys or shift provider weight.' }
+];
+
+export default function LoginPage() {
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-outline bg-surface">
+        <div className="max-w-[1180px] mx-auto px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="w-9 h-9 rounded-xl bg-primary text-onPrimary inline-flex items-center justify-center font-black shadow-card">S</span>
+            <span className="text-card-title text-onBackground">search-gateway</span>
+          </div>
+          <Link href="/api/auth/login">
+            <Button variant="primary">Sign in</Button>
+          </Link>
+        </div>
+      </header>
+
+      {/* HERO */}
+      <section className="max-w-[1180px] mx-auto px-6 pt-16 pb-12">
+        <div className="rounded-2xl border border-outline bg-surface p-8 md:p-12 shadow-card grid md:grid-cols-2 gap-10 items-center min-h-[468px]">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-primarySoft border border-primary/15 px-3 py-1.5 text-label-sm uppercase tracking-wider text-primaryStrong">
+              Operator console
+            </span>
+            <h1 className="mt-5 text-hero-title text-onBackground">
+              Run your search gateway with operational confidence.
+            </h1>
+            <p className="mt-5 text-body-lg text-slate max-w-xl leading-relaxed">
+              Provision providers, rotate API credentials, and review a hash-chained audit trail. Every privileged
+              action is MFA-gated and recorded.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link href="/api/auth/login">
+                <Button variant="primary">Sign in with Cognito</Button>
+              </Link>
+              <a href="https://docs.aws.amazon.com/cognito/" target="_blank" rel="noreferrer">
+                <Button variant="secondary">Learn about MFA</Button>
+              </a>
+            </div>
+            <p className="mt-5 text-caption text-stone">
+              By signing in you agree that all actions are recorded for compliance review.
+            </p>
+          </div>
+          <div className="relative">
+            <div className="rounded-2xl bg-darkSurface text-onDark p-6 shadow-[0_22px_54px_rgba(15,23,42,0.24)] [background:linear-gradient(145deg,#172033_0%,#0f172a_58%,#111827_100%)] relative overflow-hidden">
+              <div className="grid-pattern absolute inset-0 opacity-50 pointer-events-none" aria-hidden="true" />
+              <div className="relative">
+                <div className="text-label-sm uppercase tracking-wider text-darkOnSurfaceMuted">Live console preview</div>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <PreviewStat label="Providers" value="6 / 8" hint="enabled" />
+                  <PreviewStat label="p95 latency" value="142 ms" hint="last hour" />
+                  <PreviewStat label="Error rate" value="0.42 %" hint="last hour" />
+                  <PreviewStat label="Reveals" value="2 / 5" hint="this hour" />
+                </div>
+                <div className="mt-4 rounded-xl bg-white/5 border border-darkOutline/40 px-4 py-3 text-body-sm text-darkOnSurfaceMuted">
+                  Connectivity test · <span className="text-success">OK</span> · 18 results · provider <span className="text-onDark font-bold">exa</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* JOURNEY */}
+      <section className="max-w-[1180px] mx-auto px-6 pt-12 pb-16">
+        <div className="text-center max-w-2xl mx-auto">
+          <span className="text-label-sm uppercase tracking-wider text-primaryStrong">Onboarding journey</span>
+          <h2 className="mt-2 text-section-title text-onBackground">From provision to production in seven steps.</h2>
+          <p className="mt-3 text-body-lg text-slate">
+            Each step has an inline runbook link, expected duration, and an audit row when applied through the console.
+          </p>
+        </div>
+        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {journey.slice(0, 4).map((s) => (
+            <JourneyStepCard key={s.number} step={s} />
+          ))}
+        </div>
+        <JourneyPath count={4} />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:max-w-[882px] lg:mx-auto">
+          {journey.slice(4).map((s) => (
+            <JourneyStepCard key={s.number} step={s} />
+          ))}
+        </div>
+      </section>
+
+      {/* CHECKLIST */}
+      <section className="max-w-[1180px] mx-auto px-6 py-12">
+        <div className="text-center max-w-2xl mx-auto mb-8">
+          <span className="text-label-sm uppercase tracking-wider text-success">Operational standards</span>
+          <h2 className="mt-2 text-section-title text-onBackground">Field rules every operator follows.</h2>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <ChecklistCard
+            title="Secret hygiene"
+            items={[
+              'Rotate provider keys at least every 90 days',
+              'Reveal only with a logged business reason',
+              'Stage replacements before disabling old version'
+            ]}
+          />
+          <ChecklistCard
+            title="Quota discipline"
+            items={[
+              'Set RPM below upstream burst ceiling',
+              'Tune daily quota to last through UTC midnight',
+              'Watch error rate when nudging timeout downward'
+            ]}
+          />
+          <ChecklistCard
+            title="Change control"
+            items={[
+              'Configuration saves emit an audit row',
+              'Reveals consume one-time MFA assertions',
+              'Disable providers via toggle, not by deleting secrets'
+            ]}
+          />
+        </div>
+      </section>
+
+      {/* RESOURCES */}
+      <section className="max-w-[1180px] mx-auto px-6 py-12">
+        <div className="flex items-end justify-between flex-wrap gap-4 mb-8">
+          <div>
+            <span className="text-label-sm uppercase tracking-wider text-primaryStrong">Quick access</span>
+            <h2 className="mt-2 text-section-title text-onBackground">Resources operators reach for.</h2>
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <ResourceCard category="Capture" title="Sign in" description="Cognito Hosted UI with step-up MFA." href="/api/auth/login" />
+          <ResourceCard category="Console" title="Provider catalog" description="Toggle, throttle, and configure upstream providers." href="/admin/providers" />
+          <ResourceCard category="Console" title="Audit log" description="Filter by actor, action, and time. Export to S3 in v1.1." href="/admin/audit" />
+          <ResourceCard category="Reference" title="Architecture" description="See the v1.0 walking-skeleton plan." href="https://github.com/" external />
+        </div>
+      </section>
+
+      {/* DELIVERABLES */}
+      <section className="max-w-[1180px] mx-auto px-6 py-12">
+        <DeliverablesPanel
+          eyebrow="What you ship"
+          title="Operationally honest, auditable search."
+          description="The console produces a paper trail other teams can verify without asking you."
+          chips={[
+            { id: 'audit', label: 'Audit log', value: 'Hash-chained', hint: '90-day DDB retention' },
+            { id: 'mfa', label: 'Reveals', value: 'KMS-signed', hint: 'rate-limited 5/hr' },
+            { id: 'metrics', label: 'Metrics', value: 'CloudWatch', hint: 'p95 + error rate' }
+          ]}
+        />
+      </section>
+
+      {/* FAQ */}
+      <section className="max-w-3xl mx-auto px-6 py-12">
+        <div className="text-center mb-8">
+          <span className="text-label-sm uppercase tracking-wider text-primaryStrong">Troubleshooting</span>
+          <h2 className="mt-2 text-section-title text-onBackground">Frequently asked.</h2>
+        </div>
+        <FaqAccordion
+          items={[
+            { q: 'Why does revealing a secret require MFA every time?', a: 'Reveals consume a one-time KMS-signed assertion and are rate-limited to 5/hr per actor. The intent is that key material exposure leaves a trail no operator can quietly bypass.' },
+            { q: 'How do I add a new upstream search provider?', a: 'Add an adapter under packages/adapters and register it via the connector framework. CDK seeds the provider config row on next deploy. v1.x will surface a console form.' },
+            { q: 'How long does the audit log retain rows?', a: 'Rows live for 90 days in DynamoDB. Daily export to S3 is in v1.1.' },
+            { q: 'Can I deploy this to a region other than us-east-1?', a: 'Yes. Set AWS_REGION in CDK context and re-deploy. Cognito and Bedrock-adjacent services need to be available in your target region.' }
+          ]}
+        />
+      </section>
+
+      {/* SUPPORT */}
+      <section className="max-w-[1180px] mx-auto px-6 pt-4 pb-20">
+        <SupportPanel
+          title="Need a hand getting onboarded?"
+          description="Open the runbook, file an issue, or reach the platform team. We answer within one business day."
+          primary={{ label: 'Open runbook', href: 'https://github.com/' }}
+          secondary={{ label: 'File an issue', href: 'https://github.com/' }}
+        />
+      </section>
+
+      <footer className="border-t border-outline bg-surface">
+        <div className="max-w-[1180px] mx-auto px-6 py-6 flex flex-wrap items-center justify-between gap-3 text-caption text-stone">
+          <span>© search-gateway · operator console</span>
+          <span>v1.0 walking-skeleton</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function PreviewStat({ label, value, hint }: { label: string; value: string; hint: string }) {
+  return (
+    <div className="rounded-xl bg-white/5 border border-darkOutline/40 px-4 py-3">
+      <div className="text-label-sm uppercase tracking-wider text-darkOnSurfaceSubtle">{label}</div>
+      <div className="mt-1 text-card-title text-onDark tabular-nums">{value}</div>
+      <div className="text-caption text-darkOnSurfaceMuted">{hint}</div>
+    </div>
+  );
+}

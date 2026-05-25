@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --font-sans: 'Roboto', -apple-system, system-ui, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+html, body {
+  background: theme(colors.background);
+  color: theme(colors.onBackground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Soft instructional grid backdrop for hero/dark surfaces. */
+.grid-pattern {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.grid-pattern-light {
+  background-image:
+    linear-gradient(to right, rgba(37, 99, 235, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(37, 99, 235, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Animated dashed journey path. */
+@keyframes journey-flow {
+  to { stroke-dashoffset: -240; }
+}
+.journey-path {
+  stroke-dasharray: 6 8;
+  animation: journey-flow 18s linear infinite;
+}
+
+/* Soft hover lift used by interactive cards. */
+.lift-on-hover {
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+.lift-on-hover:hover {
+  transform: translateY(-2px);
+}

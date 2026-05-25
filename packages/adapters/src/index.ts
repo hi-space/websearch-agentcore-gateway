@@ -1,5 +1,9 @@
 import type { Adapter } from '@search-gateway/shared';
 import { arxivAdapter } from './arxiv.js';
+import { exaAdapter } from './exa.js';
+import { perplexityAdapter } from './perplexity.js';
+import { youAdapter } from './you.js';
+import { searxngAdapter } from './searxng.js';
 
 const registry = new Map<string, Adapter>();
 
@@ -16,5 +20,9 @@ export function listAdapters(): Adapter[] {
 }
 
 registerAdapter(arxivAdapter);
+registerAdapter(exaAdapter);
+registerAdapter(perplexityAdapter);
+registerAdapter(youAdapter);
+registerAdapter(searxngAdapter);
 
-export { arxivAdapter };
+export { arxivAdapter, exaAdapter, perplexityAdapter, youAdapter, searxngAdapter };

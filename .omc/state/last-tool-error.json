@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"pnpm --filter infra test -- searxng-service 2>&1\"}",
+  "error": "Exit code 1\n\n> infra@0.1.0 test /home/ubuntu/workspace/search-agentcore-gateway/.claude/worktrees/design-spec-update/infra\n> vitest run \"searxng-service\"\n\n\n\u001b[7m\u001b[1m\u001b[36m RUN \u001b[39m\u001b[22m\u001b[27m \u001b[36mv1.6.1\u001b[39m \u001b[90m/home/ubuntu/workspace/search-agentcore-gateway/.claude/worktrees/design-spec-update/infra\u001b[39m\n\n\u001b[90mstderr\u001b[2m | test/searxng-service.test.ts\u001b[2m > \u001b[22m\u001b[2mSearxngService\u001b[2m > \u001b[22m\u001b[2mcreates an ECS cluster, Fargate task definition, and service\u001b[22m\u001b[39m\n[WARNING] aws-cdk-lib.aws_ec...",
+  "timestamp": "2026-05-24T00:25:11.744Z",
+  "retry_count": 1
+}

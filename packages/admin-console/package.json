@@ -1,0 +1,44 @@
+{
+  "name": "admin-console",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "build:lambda": "next build && rm -rf dist && mkdir -p dist && cp -R .next/standalone/. dist/ && cp -R .next/static dist/packages/admin-console/.next/static && node scripts/flatten-deps.mjs && esbuild src/lambda-entry.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/packages/admin-console/lambda-entry.mjs --external:next --external:react --external:react-dom",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@search-gateway/shared": "workspace:*",
+    "aws-jwt-verify": "^4.0.1",
+    "@aws-sdk/client-dynamodb": "^3.600.0",
+    "@aws-sdk/client-secrets-manager": "^3.600.0",
+    "@aws-sdk/client-cloudwatch": "^3.600.0",
+    "@aws-sdk/client-kms": "^3.600.0",
+    "@aws-sdk/client-lambda": "^3.600.0",
+    "@aws-sdk/client-sts": "^3.600.0",
+    "@aws-sdk/util-dynamodb": "^3.600.0",
+    "next": "14.2.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "@testing-library/jest-dom": "^6.4.0",
+    "@testing-library/react": "^15.0.0",
+    "@types/aws-lambda": "^8.10.140",
+    "@types/react": "18.3.0",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "^10.4.0",
+    "esbuild": "^0.21.0",
+    "jsdom": "^24.0.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}

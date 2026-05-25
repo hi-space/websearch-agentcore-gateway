@@ -4,6 +4,7 @@ import {
 } from 'aws-cdk-lib/aws-dynamodb';
 import { RemovalPolicy } from 'aws-cdk-lib';
 import { IKey } from 'aws-cdk-lib/aws-kms';
+import { NagSuppressions } from 'cdk-nag';
 
 export interface QuotaTableProps { kmsKey: IKey }
 
@@ -20,5 +21,16 @@ export class QuotaTableConstruct extends Construct {
       encryptionKey: props.kmsKey,
       removalPolicy: RemovalPolicy.DESTROY
     });
+
+    // QuotaTable is ephemeral (RPM/daily quotas with TTL ≤ 24h).
+    // Point-in-time recovery is unnecessary: table loss is recoverable in <60s
+    // by re-creation; PITR adds cost without operational value. Durable tables
+    // (ConfigTable, AuditLogTable) have PITR enabled.
+    NagSuppressions.addResourceSuppressions(this.table, [
+      {
+        id: 'AwsSolutions-DDB3',
+        reason: 'QuotaTable rows are ephemeral RPM/daily counters with TTL ≤ 24h. Loss of the table is recoverable in <60s by recreation; PITR provides no operational value and adds cost. ConfigTable and AuditLogTable (durable) have PITR enabled.'
+      }
+    ]);
   }
 }

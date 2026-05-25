@@ -1,0 +1,154 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1779541553069,
+  "projectRoot": "/home/ubuntu/workspace/search-agentcore-gateway/infra",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "esbuild",
+        "version": "0.28.0",
+        "category": "build"
+      },
+      {
+        "name": "vitest",
+        "version": "1.4.0",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {
+      "build": "tsc",
+      "synth": "cdk synth",
+      "deploy": "cdk deploy",
+      "diff": "cdk diff",
+      "test": "vitest run"
+    }
+  },
+  "conventions": {
+    "namingStyle": "camelCase",
+    "importStyle": "ES modules",
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "bin",
+      "lib"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "bin": {
+      "path": "bin",
+      "purpose": "Executable scripts",
+      "fileCount": 1,
+      "lastAccessed": 1779541553061,
+      "keyFiles": [
+        "app.ts"
+      ]
+    },
+    "cdk.out": {
+      "path": "cdk.out",
+      "purpose": null,
+      "fileCount": 7,
+      "lastAccessed": 1779541553061,
+      "keyFiles": [
+        "AwsSolutions--SearchGatewayStack-v1-0-NagReport.csv",
+        "SearchGatewayStack-v1-0.assets.json",
+        "SearchGatewayStack-v1-0.metadata.json",
+        "SearchGatewayStack-v1-0.template.json",
+        "cdk.out"
+      ]
+    },
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 1,
+      "lastAccessed": 1779541553065,
+      "keyFiles": [
+        "tsconfig.tsbuildinfo"
+      ]
+    },
+    "lib": {
+      "path": "lib",
+      "purpose": "Library code",
+      "fileCount": 2,
+      "lastAccessed": 1779541553067,
+      "keyFiles": [
+        "nag-suppressions.ts",
+        "stack.ts"
+      ]
+    },
+    "dist/bin": {
+      "path": "dist/bin",
+      "purpose": "Executable scripts",
+      "fileCount": 2,
+      "lastAccessed": 1779541553067,
+      "keyFiles": [
+        "app.d.ts",
+        "app.js"
+      ]
+    },
+    "dist/lib": {
+      "path": "dist/lib",
+      "purpose": "Library code",
+      "fileCount": 4,
+      "lastAccessed": 1779541553067,
+      "keyFiles": [
+        "nag-suppressions.d.ts",
+        "nag-suppressions.js",
+        "stack.d.ts"
+      ]
+    },
+    "lib/data": {
+      "path": "lib/data",
+      "purpose": "Data files",
+      "fileCount": 2,
+      "lastAccessed": 1779541553068,
+      "keyFiles": [
+        "config-table.ts",
+        "quota-table.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "lib/nag-suppressions.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779541561827,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

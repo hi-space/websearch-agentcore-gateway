@@ -3,17 +3,22 @@
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/entry.js",
-  "scripts": { "build": "tsc", "test": "vitest run" },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
   "dependencies": {
-    "@search-gateway/shared": "workspace:*",
-    "@search-gateway/adapters": "workspace:*",
     "@aws-sdk/client-dynamodb": "^3.540.0",
+    "@aws-sdk/client-ssm": "^3.540.0",
     "@aws-sdk/lib-dynamodb": "^3.540.0",
+    "@aws-sdk/util-dynamodb": "^3.540.0",
+    "@search-gateway/adapters": "workspace:*",
+    "@search-gateway/shared": "workspace:*",
     "zod": "^3.22.0"
   },
   "devDependencies": {
+    "aws-sdk-client-mock": "^4.0.0",
     "typescript": "^5.4.0",
-    "vitest": "^1.4.0",
-    "aws-sdk-client-mock": "^4.0.0"
+    "vitest": "^1.4.0"
   }
 }

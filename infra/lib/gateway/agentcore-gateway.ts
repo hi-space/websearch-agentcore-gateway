@@ -1,5 +1,5 @@
 import { Construct } from 'constructs';
-import { CustomResource, Duration, Stack } from 'aws-cdk-lib';
+import { Duration, Stack } from 'aws-cdk-lib';
 import {
   AwsCustomResource,
   AwsCustomResourcePolicy,
@@ -8,10 +8,14 @@ import {
 } from 'aws-cdk-lib/custom-resources';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { Effect, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import { GatewayTargets } from './targets.js';
+import { GatewayWaitForReady } from './wait-for-ready.js';
 
 export interface GatewayProps {
   routerFn: IFunction;
   toolDefinitions: Array<{ name: string; description: string; inputSchema: unknown }>;
+  cognitoDiscoveryUrl: string;
+  cognitoClientId: string;
 }
 
 export class AgentCoreGateway extends Construct {
@@ -19,6 +23,9 @@ export class AgentCoreGateway extends Construct {
 
   constructor(scope: Construct, id: string, props: GatewayProps) {
     super(scope, id);
+
+    const region = Stack.of(this).region;
+    const account = Stack.of(this).account;
 
     const invokeRole = new Role(this, 'InvokeRole', {
       assumedBy: new ServicePrincipal('bedrock-agentcore.amazonaws.com'),
@@ -30,13 +37,31 @@ export class AgentCoreGateway extends Construct {
       resources: [props.routerFn.functionArn]
     }));
 
+    const gatewayRole = new Role(this, 'ExecutionRole', {
+      assumedBy: new ServicePrincipal('bedrock-agentcore.amazonaws.com'),
+      description: 'AgentCore Gateway execution role'
+    });
+    gatewayRole.addToPolicy(new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['lambda:InvokeFunction'],
+      resources: [props.routerFn.functionArn]
+    }));
+
     const create = new AwsCustomResource(this, 'CreateGateway', {
       onCreate: {
         service: 'bedrock-agentcore-control',
         action: 'createGateway',
         parameters: {
           name: `${Stack.of(this).stackName}-gw`,
-          protocolType: 'MCP'
+          protocolType: 'MCP',
+          roleArn: gatewayRole.roleArn,
+          authorizerType: 'CUSTOM_JWT',
+          authorizerConfiguration: {
+            customJWTAuthorizer: {
+              discoveryUrl: props.cognitoDiscoveryUrl,
+              allowedClients: [props.cognitoClientId]
+            }
+          }
         },
         physicalResourceId: PhysicalResourceId.fromResponse('gatewayId')
       },
@@ -48,50 +73,46 @@ export class AgentCoreGateway extends Construct {
       policy: AwsCustomResourcePolicy.fromStatements([
         new PolicyStatement({
           effect: Effect.ALLOW,
-          actions: ['bedrock-agentcore:CreateGateway', 'bedrock-agentcore:DeleteGateway'],
+          actions: [
+            'bedrock-agentcore:CreateGateway',
+            'bedrock-agentcore:DeleteGateway'
+          ],
+          // CreateGateway and DeleteGateway cannot be scoped to specific gateway ARNs during creation
+          // since the gateway ID is not known until after creation. Per AWS API contract, these require
+          // resource:* but are bounded by the IAM principal (this custom resource provider role) and
+          // conditional on stack create/update operations only.
           resources: ['*']
+        }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: [
+            'bedrock-agentcore:CreateWorkloadIdentity',
+            'bedrock-agentcore:GetWorkloadIdentity',
+            'bedrock-agentcore:DeleteWorkloadIdentity'
+          ],
+          resources: [`arn:aws:bedrock-agentcore:${region}:${account}:workload-identity/*`]
+        }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['iam:PassRole'],
+          resources: [gatewayRole.roleArn]
         })
       ]),
+      installLatestAwsSdk: false,
       timeout: Duration.minutes(5)
     });
 
     this.gatewayId = create.getResponseField('gatewayId');
 
-    new AwsCustomResource(this, 'CreateTarget', {
-      onCreate: {
-        service: 'bedrock-agentcore-control',
-        action: 'createTarget',
-        parameters: {
-          gatewayIdentifier: this.gatewayId,
-          name: 'search-router',
-          targetConfiguration: {
-            mcp: {
-              lambda: {
-                lambdaArn: props.routerFn.functionArn,
-                toolSchema: { tools: props.toolDefinitions }
-              }
-            }
-          },
-          credentialProviderConfigurations: [{
-            credentialProviderType: 'GATEWAY_IAM_ROLE',
-            credentialProvider: { gatewayIamRole: { roleArn: invokeRole.roleArn } }
-          }]
-        },
-        physicalResourceId: PhysicalResourceId.fromResponse('targetId')
-      },
-      policy: AwsCustomResourcePolicy.fromStatements([
-        new PolicyStatement({
-          effect: Effect.ALLOW,
-          actions: ['bedrock-agentcore:CreateTarget', 'bedrock-agentcore:DeleteTarget'],
-          resources: ['*']
-        }),
-        new PolicyStatement({
-          effect: Effect.ALLOW,
-          actions: ['iam:PassRole'],
-          resources: [invokeRole.roleArn]
-        })
-      ]),
-      timeout: Duration.minutes(5)
-    }).node.addDependency(create);
+    const wait = new GatewayWaitForReady(this, 'WaitReady', { gatewayId: this.gatewayId });
+    wait.node.addDependency(create);
+
+    const targets = new GatewayTargets(this, 'Targets', {
+      gatewayId: this.gatewayId,
+      routerFn: props.routerFn,
+      invokeRole,
+      tools: props.toolDefinitions
+    });
+    targets.node.addDependency(wait);
   }
 }

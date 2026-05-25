@@ -1,0 +1,338 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1779529311604,
+  "projectRoot": "/home/ubuntu/workspace/search-agentcore-gateway",
+  "techStack": {
+    "languages": [],
+    "frameworks": [],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "cd packages/admin-console && rm -rf .next && pnpm build 2>&1 | tail -40",
+    "testCommand": "git add packages/admin-console/src/ui/ packages/admin-console/vitest.config.ts packages/admin-console/vitest.setup.ts packages/admin-console/package.json pnpm-lock.yaml && git commit -m \"feat(admin-ui): primitive ui components\n\nCo-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>\"",
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {},
+  "hotPaths": [
+    {
+      "path": "docs/superpowers/plans/2026-05-23-v1.0-walking-skeleton.md",
+      "accessCount": 48,
+      "lastAccessed": 1779542189871,
+      "type": "file"
+    },
+    {
+      "path": "infra/lib/stack.ts",
+      "accessCount": 37,
+      "lastAccessed": 1779541884746,
+      "type": "file"
+    },
+    {
+      "path": "infra/lib/network/vpc.ts",
+      "accessCount": 22,
+      "lastAccessed": 1779582289211,
+      "type": "file"
+    },
+    {
+      "path": "packages/search-router/src/handler.ts",
+      "accessCount": 20,
+      "lastAccessed": 1779582250279,
+      "type": "file"
+    },
+    {
+      "path": "infra/bin/app.ts",
+      "accessCount": 15,
+      "lastAccessed": 1779582464358,
+      "type": "file"
+    },
+    {
+      "path": "packages/adapters/src/index.ts",
+      "accessCount": 14,
+      "lastAccessed": 1779582128745,
+      "type": "file"
+    },
+    {
+      "path": "packages/adapters/package.json",
+      "accessCount": 13,
+      "lastAccessed": 1779536950756,
+      "type": "file"
+    },
+    {
+      "path": "packages/shared/src/index.ts",
+      "accessCount": 11,
+      "lastAccessed": 1779535996715,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-05-23-search-agentcore-gateway-design.md",
+      "accessCount": 11,
+      "lastAccessed": 1779543230956,
+      "type": "file"
+    },
+    {
+      "path": "vitest.config.ts",
+      "accessCount": 10,
+      "lastAccessed": 1779536962542,
+      "type": "file"
+    },
+    {
+      "path": "packages/admin-console/package.json",
+      "accessCount": 10,
+      "lastAccessed": 1779581061173,
+      "type": "file"
+    },
+    {
+      "path": "infra/lib/network/index.ts",
+      "accessCount": 9,
+      "lastAccessed": 1779539270430,
+      "type": "file"
+    },
+    {
+      "path": "packages/shared/src/errors.ts",
+      "accessCount": 9,
+      "lastAccessed": 1779541084192,
+      "type": "file"
+    },
+    {
+      "path": "packages/adapters/src/arxiv.ts",
+      "accessCount": 9,
+      "lastAccessed": 1779581832946,
+      "type": "file"
+    },
+    {
+      "path": "packages/shared/src/types.ts",
+      "accessCount": 9,
+      "lastAccessed": 1779582116566,
+      "type": "file"
+    },
+    {
+      "path": "packages/search-router/src/entry.ts",
+      "accessCount": 9,
+      "lastAccessed": 1779582254520,
+      "type": "file"
+    },
+    {
+      "path": "infra/lib/nag-suppressions.ts",
+      "accessCount": 9,
+      "lastAccessed": 1779582556266,
+      "type": "file"
+    },
+    {
+      "path": "packages/adapters/src/__tests__/contract.test.ts",
+      "accessCount": 8,
+      "lastAccessed": 1779536950702,
+      "type": "file"
+    },
+    {
+      "path": "packages/adapters/src/__tests__/arxiv.test.ts",
+      "accessCount": 8,
+      "lastAccessed": 1779537106398,
+      "type": "file"
+    },
+    {
+      "path": "tsconfig.base.json",
+      "accessCount": 8,
+      "lastAccessed": 1779579255989,
+      "type": "file"
+    },
+    {
+      "path": "infra/lib/security/kms.ts",
+      "accessCount": 8,
+      "lastAccessed": 1779580134683,
+      "type": "file"
+    },
+    {
+      "path": "packages/shared/package.json",
+      "accessCount": 7,
+      "lastAccessed": 1779537200247,
+      "type": "file"
+    },
+    {
+      "path": "packages/search-router/src/__tests__/handler.test.ts",
+      "accessCount": 7,
+      "lastAccessed": 1779579023347,
+      "type": "file"
+    },
+    {
+      "path": "packages/shared/src/metrics.ts",
+      "accessCount": 6,
+      "lastAccessed": 1779541065242,
+      "type": "file"
+    },
+    {
+      "path": "infra/package.json",
+      "accessCount": 6,
+      "lastAccessed": 1779541758008,
+      "type": "file"
+    },
+    {
+      "path": "packages/shared/src/secrets.ts",
+      "accessCount": 6,
+      "lastAccessed": 1779541884592,
+      "type": "file"
+    },
+    {
+      "path": "infra/lib/data/quota-table.ts",
+      "accessCount": 6,
+      "lastAccessed": 1779541919522,
+      "type": "file"
+    },
+    {
+      "path": "packages/search-router/src/quota.ts",
+      "accessCount": 6,
+      "lastAccessed": 1779541934138,
+      "type": "file"
+    },
+    {
+      "path": "pnpm-workspace.yaml",
+      "accessCount": 6,
+      "lastAccessed": 1779579227436,
+      "type": "file"
+    },
+    {
+      "path": "packages/adapters/tsconfig.json",
+      "accessCount": 5,
+      "lastAccessed": 1779537202571,
+      "type": "file"
+    },
+    {
+      "path": "docs/deployment.md",
+      "accessCount": 5,
+      "lastAccessed": 1779541930720,
+      "type": "file"
+    },
+    {
+      "path": "infra/cdk.json",
+      "accessCount": 5,
+      "lastAccessed": 1779582414001,
+      "type": "file"
+    },
+    {
+      "path": "infra/lib/data/config-table.ts",
+      "accessCount": 4,
+      "lastAccessed": 1779539093662,
+      "type": "file"
+    },
+    {
+      "path": "infra/lib/observability/alarms.ts",
+      "accessCount": 4,
+      "lastAccessed": 1779541066423,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 4,
+      "lastAccessed": 1779541757957,
+      "type": "file"
+    },
+    {
+      "path": "infra/lib/compute/search-router-fn.ts",
+      "accessCount": 4,
+      "lastAccessed": 1779582282458,
+      "type": "file"
+    },
+    {
+      "path": ".nvmrc",
+      "accessCount": 3,
+      "lastAccessed": 1779534970602,
+      "type": "file"
+    },
+    {
+      "path": "packages/shared/src/logger.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779535288585,
+      "type": "file"
+    },
+    {
+      "path": "packages/shared/src/__tests__/errors.test.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779535288689,
+      "type": "file"
+    },
+    {
+      "path": "packages/shared/src/__tests__/metrics.test.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779535514105,
+      "type": "file"
+    },
+    {
+      "path": "packages/shared/tsconfig.json",
+      "accessCount": 3,
+      "lastAccessed": 1779535517224,
+      "type": "file"
+    },
+    {
+      "path": "packages/shared/src/__tests__/secrets.test.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779536043456,
+      "type": "file"
+    },
+    {
+      "path": "packages/adapters/src/__tests__/__fixtures__/arxiv-success.xml",
+      "accessCount": 3,
+      "lastAccessed": 1779536953807,
+      "type": "file"
+    },
+    {
+      "path": "infra/lib/security/index.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779538852625,
+      "type": "file"
+    },
+    {
+      "path": "infra/tsconfig.json",
+      "accessCount": 3,
+      "lastAccessed": 1779538861514,
+      "type": "file"
+    },
+    {
+      "path": "packages/search-router/src/__tests__/quota.test.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779539125624,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-05-23-admin-bff.md",
+      "accessCount": 3,
+      "lastAccessed": 1779579217985,
+      "type": "file"
+    },
+    {
+      "path": "packages/search-router/package.json",
+      "accessCount": 3,
+      "lastAccessed": 1779579227454,
+      "type": "file"
+    },
+    {
+      "path": "infra/lib/gateway/agentcore-gateway.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779582607264,
+      "type": "file"
+    },
+    {
+      "path": "packages/search-router/tsconfig.json",
+      "accessCount": 2,
+      "lastAccessed": 1779579227468,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
