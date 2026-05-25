@@ -4,11 +4,11 @@ import { render, screen } from '@testing-library/react';
 import { Button } from '../Button.js';
 
 describe('Button', () => {
-  it('primary variant uses brand purple background and rounded-md (DESIGN.md rule)', () => {
+  it('primary variant uses brand background and pill shape (DESIGN.md rule)', () => {
     render(<Button>Save</Button>);
     const b = screen.getByRole('button', { name: 'Save' });
     expect(b.className).toContain('bg-primary');
-    expect(b.className).toContain('rounded-md');
+    expect(b.className).toContain('rounded-full');
   });
 
   it('disabled state has correct attrs', () => {
@@ -18,6 +18,6 @@ describe('Button', () => {
 
   it('renders dark variant', () => {
     render(<Button variant="dark">Run</Button>);
-    expect(screen.getByRole('button', { name: 'Run' }).className).toContain('bg-inkDeep');
+    expect(screen.getByRole('button', { name: 'Run' }).className).toContain('bg-darkSurface');
   });
 });

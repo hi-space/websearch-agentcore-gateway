@@ -44,6 +44,17 @@ export const adminApi = {
     call<{ providerId: string; value: string }>(`/api/providers/${id}/secret/reveal`, { method: 'POST' }),
   testProvider: (id: string) =>
     call<{ ok: boolean; results?: number; error?: string }>(`/api/providers/${id}/test`, { method: 'POST' }),
+  playgroundSearch: (query: string, topK?: number) =>
+    call<{
+      query: string;
+      results: Array<{ title: string; url: string; snippet?: string; score?: number; source?: string }>;
+      providersUsed: string[];
+      errors: Array<{ provider: string; message: string }>;
+      latencyMs: number;
+    }>('/api/playground', {
+      method: 'POST',
+      body: JSON.stringify(topK !== undefined ? { query, topK } : { query })
+    }),
   metrics: (ids: string[]) =>
     call<{
       metrics: Array<{

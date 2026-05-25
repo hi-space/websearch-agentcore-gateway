@@ -4,9 +4,9 @@ import { render, screen } from '@testing-library/react';
 import { Sidebar } from '../Sidebar.js';
 
 describe('Sidebar', () => {
-  it('renders the four primary nav items', () => {
+  it('renders the primary nav items', () => {
     render(<Sidebar active="providers" />);
-    for (const label of ['Providers', 'Dashboard', 'Audit log', 'Settings']) {
+    for (const label of ['Providers', 'Dashboard', 'Playground', 'Audit log', 'Settings']) {
       expect(screen.getByRole('link', { name: label })).toBeInTheDocument();
     }
   });
