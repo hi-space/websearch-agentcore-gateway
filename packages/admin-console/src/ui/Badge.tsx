@@ -4,20 +4,20 @@ type Tone = 'success' | 'warning' | 'error' | 'neutral' | 'purple' | 'pink' | 'o
 type TagTone = 'tag-purple' | 'tag-orange' | 'tag-green';
 export type BadgeTone = Tone | TagTone | 'popular';
 
-const base = 'rounded-sm px-2 py-0.5 text-caption-bold border leading-none';
+const base = 'rounded-full px-2.5 py-0.5 text-label-sm uppercase tracking-wider leading-none';
 
 const styles: Record<BadgeTone, string> = {
-  success: `${base} bg-cardTintMint/60 text-semanticSuccess border-cardTintMint`,
-  warning: `${base} bg-cardTintYellow/60 text-semanticWarning border-cardTintYellowBold/60`,
-  error: `${base} bg-cardTintRose/60 text-semanticError border-cardTintRose`,
-  neutral: `${base} bg-surface text-slate border-hairline`,
-  purple: `${base} bg-primarySoft text-primaryDeep border-primarySoft`,
-  pink: `${base} bg-cardTintRose text-brandPinkDeep border-cardTintRose`,
-  orange: `${base} bg-cardTintPeach text-brandOrangeDeep border-cardTintPeach`,
-  'tag-purple': `${base} bg-primarySoft text-primaryDeep border-primarySoft`,
-  'tag-orange': `${base} bg-cardTintPeach text-brandOrangeDeep border-cardTintPeach`,
-  'tag-green': `${base} bg-cardTintMint/60 text-semanticSuccess border-cardTintMint`,
-  popular: `${base} bg-primary text-onPrimary border-primary`
+  success: `${base} bg-successSoft text-success`,
+  warning: `${base} bg-warningSoft text-warning`,
+  error: `${base} bg-errorSoft text-error`,
+  neutral: `${base} bg-background text-slate border border-outline`,
+  purple: `${base} bg-primarySoft text-primaryStrong`,
+  pink: `${base} bg-errorSoft text-error`,
+  orange: `${base} bg-warningSoft text-warning`,
+  'tag-purple': `${base} bg-primarySoft text-primaryStrong`,
+  'tag-orange': `${base} bg-warningSoft text-warning`,
+  'tag-green': `${base} bg-successSoft text-success`,
+  popular: `${base} bg-primary text-onPrimary`
 };
 
 export function Badge({
@@ -25,5 +25,5 @@ export function Badge({
   className = '',
   ...props
 }: HTMLAttributes<HTMLSpanElement> & { tone?: BadgeTone }) {
-  return <span {...props} className={`inline-flex items-center ${styles[tone]} ${className}`} />;
+  return <span {...props} className={`inline-flex items-center font-bold ${styles[tone]} ${className}`} />;
 }

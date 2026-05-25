@@ -42,7 +42,7 @@ describe('playgroundSearch', () => {
   it('omits topK from payload when undefined', async () => {
     const payload = JSON.stringify({ results: [], providersUsed: [], errors: [] });
     const lambda = { send: vi.fn().mockResolvedValue({ Payload: new TextEncoder().encode(payload) }) };
-    await playgroundSearch(lambda as any, 'arn', 'q');
+    await playgroundSearch(lambda as any, 'arn', 'q', undefined);
     const cmd = lambda.send.mock.calls[0][0];
     const sent = JSON.parse(new TextDecoder().decode(cmd.input.Payload));
     expect(sent.arguments).toEqual({ query: 'q' });

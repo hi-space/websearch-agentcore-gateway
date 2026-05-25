@@ -72,14 +72,14 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card variant="panel">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="min-w-0">
-            <Link href="/admin/providers" className="text-caption text-linkBlue hover:underline">
-              ← Providers
+            <Link href="/admin/providers" className="text-caption text-primary hover:underline inline-flex items-center gap-1">
+              <span aria-hidden="true">←</span> Providers
             </Link>
-            <div className="mt-1 flex items-center gap-3 flex-wrap">
-              <h2 className="text-heading-3 text-ink leading-tight tracking-tight font-mono">{initial.providerId}</h2>
+            <div className="mt-2 flex items-center gap-3 flex-wrap">
+              <h2 className="text-card-title text-onBackground leading-tight tracking-tight font-mono">{initial.providerId}</h2>
               <Badge tone={initial.enabled ? 'success' : 'neutral'}>
                 {initial.enabled ? 'Enabled' : 'Disabled'}
               </Badge>
@@ -113,7 +113,7 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
             >
               {testing ? 'Testing…' : 'Run connectivity test'}
             </Button>
-            <span className="text-caption text-steel">Probes a single search via the router.</span>
+            <span className="text-caption text-slate">Probes a single search via the router.</span>
           </div>
         </div>
       </Card>
@@ -134,7 +134,7 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
       {tab === 'overview' && <OverviewPanel initial={initial} metric={metric} />}
 
       {tab === 'configuration' && (
-        <Card>
+        <Card variant="panel">
           <CardHeader title="Configuration" subtitle="Live values are applied to the router on save." />
           <label className="flex items-center gap-3 mb-6">
             <input
@@ -143,8 +143,8 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
               checked={enabled}
               onChange={(e) => setEnabled(e.target.checked)}
             />
-            <span className="text-body-md text-ink">Enabled</span>
-            <span className="text-caption text-steel">When off, the router rejects requests for this provider.</span>
+            <span className="text-body-md text-onBackground">Enabled</span>
+            <span className="text-caption text-slate">When off, the router rejects requests for this provider.</span>
           </label>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -193,13 +193,13 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
             >
               Discard
             </Button>
-            {dirty && <span className="text-caption text-brandOrangeDeep">Unsaved changes</span>}
+            {dirty && <span className="text-caption text-warning font-bold">Unsaved changes</span>}
           </div>
         </Card>
       )}
 
       {tab === 'secret' && (
-        <Card>
+        <Card variant="panel">
           <CardHeader
             title="API credential"
             subtitle="Stored in AWS Secrets Manager. Reveals require step-up MFA and are rate-limited to 5 per hour."
@@ -237,7 +237,7 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
             <Button variant="secondary" onClick={() => setRevealOpen(true)}>
               Reveal current secret
             </Button>
-            <span className="text-caption text-steel">
+            <span className="text-caption text-slate">
               Each reveal is captured in audit log with reason and operator identity.
             </span>
           </div>
@@ -315,10 +315,10 @@ function FieldLabel({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1.5 text-body-sm-medium text-ink">
+    <label className="flex flex-col gap-1.5 text-body-sm-medium text-onBackground">
       {label}
       {children}
-      {hint && <span className="text-caption text-steel font-normal">{hint}</span>}
+      {hint && <span className="text-caption text-slate font-normal">{hint}</span>}
     </label>
   );
 }
@@ -326,28 +326,28 @@ function FieldLabel({
 function OverviewPanel({ initial, metric }: { initial: ProviderRow; metric?: ProviderMetric | undefined }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <div className="rounded-lg border border-hairline bg-canvas p-5">
-        <div className="text-caption text-steel">p95 latency · last hour</div>
-        <div className="mt-2 text-heading-3 text-ink leading-none tabular-nums">
+      <div className="rounded-2xl border border-outline bg-surface p-6 shadow-card lift-on-hover">
+        <div className="text-label-sm uppercase tracking-wider text-stone">p95 latency · last hour</div>
+        <div className="mt-2 text-card-title text-onBackground leading-none tabular-nums">
           {metric?.p95LatencyMs !== undefined ? `${Math.round(metric.p95LatencyMs)} ms` : '—'}
         </div>
         <div className="mt-4 text-primary">
           <Sparkline values={metric?.latencySeries ?? []} width={240} height={36} ariaLabel="latency trend" />
         </div>
       </div>
-      <div className="rounded-lg border border-hairline bg-canvas p-5">
-        <div className="text-caption text-steel">error rate · last hour</div>
-        <div className="mt-2 text-heading-3 text-ink leading-none tabular-nums">
+      <div className="rounded-2xl border border-outline bg-surface p-6 shadow-card lift-on-hover">
+        <div className="text-label-sm uppercase tracking-wider text-stone">error rate · last hour</div>
+        <div className="mt-2 text-card-title text-onBackground leading-none tabular-nums">
           {metric?.errorRate !== undefined ? `${(metric.errorRate * 100).toFixed(2)} %` : '—'}
         </div>
         <div className="mt-4 text-primary">
           <Sparkline values={metric?.errorSeries ?? []} width={240} height={36} ariaLabel="error trend" />
         </div>
       </div>
-      <Card className="md:col-span-2">
+      <Card variant="panel" className="md:col-span-2">
         <CardHeader title="Provider summary" />
         <dl className="grid grid-cols-2 md:grid-cols-3 gap-y-4 text-body-sm">
-          <Term label="Provider ID" value={<span className="font-mono text-ink">{initial.providerId}</span>} />
+          <Term label="Provider ID" value={<span className="font-mono text-onBackground">{initial.providerId}</span>} />
           <Term label="State" value={initial.enabled ? 'Enabled' : 'Disabled'} />
           <Term label="Secret" value={initial.hasSecret ? 'Stored' : 'Not stored'} />
           <Term label="RPM" value={initial.quota.rpm.toLocaleString()} />
@@ -362,8 +362,8 @@ function OverviewPanel({ initial, metric }: { initial: ProviderRow; metric?: Pro
 function MetaItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-baseline gap-1.5">
-      <dt className="text-caption text-steel">{label}</dt>
-      <dd className="text-body-sm-medium text-ink tabular-nums">{value}</dd>
+      <dt className="text-label-sm uppercase tracking-wider text-stone">{label}</dt>
+      <dd className="text-body-sm-medium text-onBackground tabular-nums">{value}</dd>
     </div>
   );
 }
@@ -371,30 +371,34 @@ function MetaItem({ label, value }: { label: string; value: React.ReactNode }) {
 function MetricsPanel({ metric }: { metric?: ProviderMetric | undefined }) {
   if (!metric) {
     return (
-      <Card>
-        <p className="text-body-md text-steel">Metrics are populated by CloudWatch every 5 minutes.</p>
+      <Card variant="panel">
+        <p className="text-body-md text-slate">Metrics are populated by CloudWatch every 5 minutes.</p>
       </Card>
     );
   }
   return (
     <div className="grid gap-6 md:grid-cols-2">
-      <Card>
+      <Card variant="panel">
         <CardHeader title="Latency (p95)" subtitle="ms · last 60 minutes · 5-minute buckets" />
-        <Sparkline
-          values={metric.latencySeries ?? (metric.p95LatencyMs !== undefined ? [metric.p95LatencyMs] : [])}
-          width={420}
-          height={120}
-          ariaLabel="latency series"
-        />
+        <div className="text-primary">
+          <Sparkline
+            values={metric.latencySeries ?? (metric.p95LatencyMs !== undefined ? [metric.p95LatencyMs] : [])}
+            width={420}
+            height={120}
+            ariaLabel="latency series"
+          />
+        </div>
       </Card>
-      <Card>
+      <Card variant="panel">
         <CardHeader title="Error rate" subtitle="% · last 60 minutes · 5-minute buckets" />
-        <Sparkline
-          values={metric.errorSeries ?? (metric.errorRate !== undefined ? [metric.errorRate] : [])}
-          width={420}
-          height={120}
-          ariaLabel="error series"
-        />
+        <div className="text-primary">
+          <Sparkline
+            values={metric.errorSeries ?? (metric.errorRate !== undefined ? [metric.errorRate] : [])}
+            width={420}
+            height={120}
+            ariaLabel="error series"
+          />
+        </div>
       </Card>
     </div>
   );
@@ -403,24 +407,24 @@ function MetricsPanel({ metric }: { metric?: ProviderMetric | undefined }) {
 function ActivityPanel({ history }: { history: TestHistoryEntry[] }) {
   if (history.length === 0) {
     return (
-      <Card>
-        <p className="text-body-md text-steel">
+      <Card variant="panel">
+        <p className="text-body-md text-slate">
           Run a connectivity test to populate this panel. Each test emits an audit row.
         </p>
       </Card>
     );
   }
   return (
-    <Card>
+    <Card variant="panel">
       <CardHeader title="Recent connectivity tests" />
-      <ul className="divide-y divide-hairline-soft">
+      <ul className="divide-y divide-outline">
         {history.map((h, i) => (
           <li key={i} className="py-3 flex items-center justify-between gap-4">
-            <span className="font-mono text-caption text-steel">{h.ts}</span>
+            <span className="font-mono text-caption text-slate">{h.ts}</span>
             {h.ok ? (
-              <span className="text-body-sm text-charcoal">OK — {h.results} results</span>
+              <span className="text-body-sm text-onBackground">OK — {h.results} results</span>
             ) : (
-              <span className="text-body-sm text-semanticError">FAIL — {h.error}</span>
+              <span className="text-body-sm text-error">FAIL — {h.error}</span>
             )}
             <Badge tone={h.ok ? 'success' : 'error'}>{h.ok ? 'OK' : 'FAIL'}</Badge>
           </li>
@@ -433,8 +437,8 @@ function ActivityPanel({ history }: { history: TestHistoryEntry[] }) {
 function Term({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <dt className="text-caption text-steel">{label}</dt>
-      <dd className="text-body-sm-medium text-ink tabular-nums">{value}</dd>
+      <dt className="text-label-sm uppercase tracking-wider text-stone">{label}</dt>
+      <dd className="text-body-sm-medium text-onBackground tabular-nums">{value}</dd>
     </div>
   );
 }

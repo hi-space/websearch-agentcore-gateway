@@ -66,13 +66,13 @@ export function Dashboard({
         ]}
       />
 
-      <Card>
+      <Card variant="panel">
         <CardHeader
           title="Per-provider performance"
           subtitle="p95 latency and error rate over the last hour, sourced from CloudWatch."
           action={
-            <Link href="/admin/providers" className="text-linkBlue text-body-sm-medium hover:underline">
-              Manage providers →
+            <Link href="/admin/providers" className="text-primary text-body-md-medium hover:underline inline-flex items-center gap-1">
+              Manage providers <span aria-hidden="true">→</span>
             </Link>
           }
         />
@@ -109,12 +109,12 @@ function ProviderMetricTile({ metric }: { metric: DashboardMetric }) {
       className="block focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-lg"
       data-testid="provider-metric-tile"
     >
-      <div className="rounded-lg border border-hairline bg-canvas p-5 hover:border-hairlineStrong hover:shadow-card transition-colors">
+      <div className="rounded-2xl border border-outline bg-surface p-5 lift-on-hover hover:border-primary/40 hover:shadow-card">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-micro-uppercase uppercase text-steel tracking-wider">{metric.providerId}</div>
-            <div className="mt-2 text-heading-3 text-ink leading-none tabular-nums">{fmtLatency(metric.p95LatencyMs)}</div>
-            <div className="mt-1 text-caption text-steel">p95 latency · last hour</div>
+            <div className="text-label-sm uppercase tracking-wider text-stone">{metric.providerId}</div>
+            <div className="mt-2 text-card-title text-onBackground leading-none tabular-nums">{fmtLatency(metric.p95LatencyMs)}</div>
+            <div className="mt-1.5 text-caption text-slate">p95 latency · last hour</div>
           </div>
           <Badge tone={errorTone}>{fmtErrorRate(metric.errorRate)}</Badge>
         </div>

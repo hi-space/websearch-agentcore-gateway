@@ -35,22 +35,22 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : undefined}
-        className="relative z-10 w-full max-w-lg bg-canvas rounded-lg shadow-modal border border-hairline overflow-hidden"
+        className="relative z-10 w-full max-w-lg bg-surface rounded-2xl shadow-modal border border-outline overflow-hidden"
       >
-        <div className="flex items-start justify-between px-6 pt-6 pb-2">
-          <h2 className="text-heading-4 text-ink">{title}</h2>
+        <div className="flex items-start justify-between px-7 pt-7 pb-2">
+          <h2 className="text-card-title text-onBackground">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="text-steel hover:text-ink rounded-sm p-1 -m-1"
+            className="text-stone hover:text-onBackground rounded-full p-1.5 -m-1.5 hover:bg-background"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
               <path d="m4 4 8 8M12 4l-8 8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </button>
         </div>
-        <div className="px-6 pb-6 pt-2 text-body-md text-charcoal">{children}</div>
-        {footer && <div className="px-6 py-4 bg-surface border-t border-hairline flex justify-end gap-2">{footer}</div>}
+        <div className="px-7 pb-7 pt-2 text-body-md text-slate leading-relaxed">{children}</div>
+        {footer && <div className="px-7 py-4 bg-background border-t border-outline flex justify-end gap-2">{footer}</div>}
       </div>
     </div>
   );

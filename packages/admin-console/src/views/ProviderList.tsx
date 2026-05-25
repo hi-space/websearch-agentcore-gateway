@@ -53,7 +53,7 @@ export function ProviderList({ rows }: { rows: ProviderRow[] }) {
   const slice = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   return (
-    <Card>
+    <Card variant="panel">
       <CardHeader
         title="Providers"
         subtitle="Toggle availability, set quotas, and rotate API credentials. Changes are audited."
@@ -104,23 +104,23 @@ export function ProviderList({ rows }: { rows: ProviderRow[] }) {
           }
         />
       ) : (
-        <div className="overflow-hidden rounded-md border border-hairline">
+        <div className="overflow-hidden rounded-2xl border border-outline">
           <table className="w-full text-body-sm">
-            <thead className="bg-surface text-caption-bold text-steel uppercase">
+            <thead className="bg-background text-label-sm uppercase tracking-wider text-stone">
               <tr>
-                <th className="text-left px-5 py-3 font-semibold">Provider</th>
-                <th className="text-left px-5 py-3 font-semibold">Status</th>
-                <th className="text-left px-5 py-3 font-semibold">Secret</th>
-                <th className="text-right px-5 py-3 font-semibold">RPM</th>
-                <th className="text-right px-5 py-3 font-semibold">Daily</th>
-                <th className="text-right px-5 py-3 font-semibold">Timeout</th>
+                <th className="text-left px-5 py-3 font-bold">Provider</th>
+                <th className="text-left px-5 py-3 font-bold">Status</th>
+                <th className="text-left px-5 py-3 font-bold">Secret</th>
+                <th className="text-right px-5 py-3 font-bold">RPM</th>
+                <th className="text-right px-5 py-3 font-bold">Daily</th>
+                <th className="text-right px-5 py-3 font-bold">Timeout</th>
                 <th />
               </tr>
             </thead>
             <tbody>
               {slice.map((r) => (
-                <tr key={r.providerId} className="border-t border-hairline-soft hover:bg-surfaceSoft">
-                  <td className="px-5 py-3 font-medium text-ink">
+                <tr key={r.providerId} className="border-t border-outline hover:bg-primarySoft/50">
+                  <td className="px-5 py-3 font-bold text-onBackground">
                     <span className="inline-flex items-center gap-2">
                       <ProviderDot id={r.providerId} />
                       {r.providerId}
@@ -138,12 +138,12 @@ export function ProviderList({ rows }: { rows: ProviderRow[] }) {
                       <Badge tone="warning">no secret</Badge>
                     )}
                   </td>
-                  <td className="px-5 py-3 text-right text-ink tabular-nums">{r.quota.rpm}</td>
-                  <td className="px-5 py-3 text-right text-ink tabular-nums">{r.quota.daily}</td>
-                  <td className="px-5 py-3 text-right text-ink tabular-nums">{r.timeoutMs} ms</td>
+                  <td className="px-5 py-3 text-right text-onBackground tabular-nums">{r.quota.rpm}</td>
+                  <td className="px-5 py-3 text-right text-onBackground tabular-nums">{r.quota.daily}</td>
+                  <td className="px-5 py-3 text-right text-onBackground tabular-nums">{r.timeoutMs} ms</td>
                   <td className="px-5 py-3 text-right">
-                    <Link href={`/admin/providers/${r.providerId}`} className="text-linkBlue text-body-sm-medium hover:underline">
-                      Manage →
+                    <Link href={`/admin/providers/${r.providerId}`} className="text-primary text-body-sm-medium hover:underline inline-flex items-center gap-1">
+                      Manage <span aria-hidden="true">→</span>
                     </Link>
                   </td>
                 </tr>

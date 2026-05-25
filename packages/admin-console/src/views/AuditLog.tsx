@@ -61,7 +61,7 @@ export function AuditLog({ rows }: { rows: AuditRow[] }) {
   const slice = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   return (
-    <Card>
+    <Card variant="panel">
       <CardHeader
         title="Audit log"
         subtitle="Append-only record of every privileged change. Click a row to inspect the before/after diff."
@@ -99,14 +99,14 @@ export function AuditLog({ rows }: { rows: AuditRow[] }) {
           }
         />
       ) : (
-        <div className="rounded-md border border-hairline overflow-hidden">
+        <div className="rounded-2xl border border-outline overflow-hidden">
           <table className="w-full text-body-sm">
-            <thead className="bg-surface text-caption-bold text-steel uppercase">
+            <thead className="bg-background text-label-sm uppercase tracking-wider text-stone">
               <tr>
-                <th className="text-left px-5 py-3 font-semibold w-44">Timestamp</th>
-                <th className="text-left px-5 py-3 font-semibold">Actor</th>
-                <th className="text-left px-5 py-3 font-semibold">Action</th>
-                <th className="text-left px-5 py-3 font-semibold">Target</th>
+                <th className="text-left px-5 py-3 font-bold w-44">Timestamp</th>
+                <th className="text-left px-5 py-3 font-bold">Actor</th>
+                <th className="text-left px-5 py-3 font-bold">Action</th>
+                <th className="text-left px-5 py-3 font-bold">Target</th>
                 <th />
               </tr>
             </thead>
@@ -117,18 +117,18 @@ export function AuditLog({ rows }: { rows: AuditRow[] }) {
                 const hasDiff = r.before !== undefined || r.after !== undefined;
                 return (
                   <React.Fragment key={id}>
-                    <tr className={`border-t border-hairline-soft ${isOpen ? 'bg-surfaceSoft' : 'hover:bg-surfaceSoft'}`}>
-                      <td className="px-5 py-3 font-mono text-caption text-steel">{r.ts}</td>
-                      <td className="px-5 py-3 text-ink">{r.actor}</td>
+                    <tr className={`border-t border-outline ${isOpen ? 'bg-primarySoft/50' : 'hover:bg-primarySoft/30'}`}>
+                      <td className="px-5 py-3 font-mono text-caption text-slate">{r.ts}</td>
+                      <td className="px-5 py-3 text-onBackground">{r.actor}</td>
                       <td className="px-5 py-3">
                         <Badge tone={actionTone(r.action)}>{r.action}</Badge>
                       </td>
-                      <td className="px-5 py-3 font-mono text-caption text-charcoal">{r.target}</td>
+                      <td className="px-5 py-3 font-mono text-caption text-onBackground">{r.target}</td>
                       <td className="px-5 py-3 text-right">
                         {hasDiff && (
                           <button
                             onClick={() => setExpanded(isOpen ? null : id)}
-                            className="text-linkBlue text-body-sm-medium hover:underline"
+                            className="text-primary text-body-sm-medium hover:underline"
                           >
                             {isOpen ? 'Hide' : 'Inspect'}
                           </button>
@@ -136,7 +136,7 @@ export function AuditLog({ rows }: { rows: AuditRow[] }) {
                       </td>
                     </tr>
                     {isOpen && hasDiff && (
-                      <tr className="bg-surfaceSoft">
+                      <tr className="bg-primarySoft/30">
                         <td colSpan={5} className="px-5 py-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <DiffPanel label="Before" value={r.before} />
@@ -162,9 +162,9 @@ export function AuditLog({ rows }: { rows: AuditRow[] }) {
 
 function DiffPanel({ label, value }: { label: string; value: unknown }) {
   return (
-    <div className="rounded-md border border-hairline bg-canvas p-3">
-      <div className="text-caption-bold uppercase text-steel mb-1">{label}</div>
-      <pre className="text-caption text-charcoal whitespace-pre-wrap break-all max-h-64 overflow-auto">
+    <div className="rounded-xl border border-outline bg-surface p-4">
+      <div className="text-label-sm uppercase tracking-wider text-stone mb-2">{label}</div>
+      <pre className="text-caption text-onBackground whitespace-pre-wrap break-all max-h-64 overflow-auto">
         {value === undefined || value === null ? '—' : JSON.stringify(value, null, 2)}
       </pre>
     </div>

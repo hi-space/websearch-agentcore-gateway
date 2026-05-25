@@ -49,28 +49,28 @@ export default function SettingsPage() {
         ]}
       />
 
-      <Card>
+      <Card variant="panel">
         <CardHeader
           title="Deployment metadata"
           subtitle="These values are injected by CDK at deploy time. Edit infra/lib/stack.ts to change them."
         />
-        <div className="rounded-md border border-hairline overflow-hidden">
+        <div className="rounded-2xl border border-outline overflow-hidden">
           <table className="w-full text-body-sm">
-            <thead className="bg-surface text-caption-bold text-steel uppercase">
+            <thead className="bg-background text-label-sm uppercase tracking-wider text-stone">
               <tr>
-                <th className="text-left px-5 py-3 font-semibold w-64">Setting</th>
-                <th className="text-left px-5 py-3 font-semibold">Value</th>
-                <th className="text-left px-5 py-3 font-semibold w-40">Status</th>
+                <th className="text-left px-5 py-3 font-bold w-64">Setting</th>
+                <th className="text-left px-5 py-3 font-bold">Value</th>
+                <th className="text-left px-5 py-3 font-bold w-40">Status</th>
               </tr>
             </thead>
             <tbody>
               {items.map((it) => (
-                <tr key={it.label} className="border-t border-hairline-soft">
-                  <td className="px-5 py-3 text-ink">
+                <tr key={it.label} className="border-t border-outline">
+                  <td className="px-5 py-3 text-onBackground">
                     <div className="text-body-sm-medium">{it.label}</div>
-                    {it.hint && <div className="text-caption text-steel">{it.hint}</div>}
+                    {it.hint && <div className="text-caption text-slate">{it.hint}</div>}
                   </td>
-                  <td className="px-5 py-3 font-mono text-caption text-charcoal break-all">{it.value}</td>
+                  <td className="px-5 py-3 font-mono text-caption text-onBackground break-all">{it.value}</td>
                   <td className="px-5 py-3">
                     {it.value === '(not set)' ? (
                       <Badge tone="warning">missing</Badge>
@@ -85,16 +85,16 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <Card>
+      <Card variant="panel">
         <CardHeader title="Operator account" subtitle="Account changes are managed through Cognito Hosted UI." />
-        <p className="text-body-md text-charcoal">
+        <p className="text-body-md text-slate leading-relaxed">
           Password resets, MFA enrollment, and identity attributes are managed in your Cognito user pool. Provider
           enablement, quotas, and credential rotation live under{' '}
-          <span className="font-mono">/admin/providers</span>.
+          <span className="font-mono text-onBackground">/admin/providers</span>.
         </p>
       </Card>
 
-      <Card>
+      <Card variant="panel">
         <CardHeader title="Frequently asked" />
         <FaqAccordion
           items={[

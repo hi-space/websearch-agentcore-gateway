@@ -1,6 +1,6 @@
 import React, { type ButtonHTMLAttributes } from 'react';
 
-// Notion's geometry is rectangular-sober — buttons use rounded-md (8px), NOT pills.
+// Galois geometry — pill-shaped CTAs (height 48), heavy weight.
 type Variant =
   | 'primary'
   | 'dark'
@@ -11,16 +11,18 @@ type Variant =
   | 'link'
   | 'danger';
 
+const pill = 'rounded-full h-12 px-5 text-button-md font-bold';
+const compact = 'rounded-full h-10 px-4 text-button-md font-bold';
+
 const styles: Record<Variant, string> = {
-  primary: 'bg-primary text-onPrimary hover:bg-primaryPressed active:bg-primaryDeep rounded-md px-[18px] py-[10px]',
-  dark: 'bg-inkDeep text-onDark hover:opacity-90 rounded-md px-[18px] py-[10px]',
-  secondary: 'bg-transparent text-ink border border-hairlineStrong hover:bg-surface rounded-md px-[18px] py-[10px]',
-  'on-dark': 'bg-onDark text-ink hover:opacity-90 rounded-md px-[18px] py-[10px]',
-  'secondary-on-dark':
-    'bg-transparent text-onDark border border-onDarkMuted hover:bg-white/10 rounded-md px-[18px] py-[10px]',
-  ghost: 'bg-transparent text-ink hover:bg-surface rounded-sm px-3 py-2',
-  link: 'bg-transparent text-linkBlue hover:text-linkBluePressed underline-offset-2 hover:underline px-0 py-0',
-  danger: 'bg-semanticError text-onPrimary hover:opacity-90 rounded-md px-[18px] py-[10px]'
+  primary: `${pill} bg-primary text-onPrimary hover:bg-primaryStrong active:bg-primaryDeep`,
+  dark: `${pill} bg-darkSurface text-onDark hover:bg-darkPanel`,
+  secondary: `${pill} bg-transparent text-onBackground border border-outline hover:border-primary hover:text-primary`,
+  'on-dark': `${pill} bg-onDark text-onBackground hover:bg-surfaceSoft`,
+  'secondary-on-dark': `${pill} bg-transparent text-onDark border border-darkOnSurfaceMuted/50 hover:bg-white/10`,
+  ghost: `${compact} bg-transparent text-onBackground hover:bg-surfaceSoft`,
+  link: 'bg-transparent text-primary hover:text-primaryStrong underline-offset-2 hover:underline px-0 py-0 font-medium',
+  danger: `${pill} bg-error text-onPrimary hover:opacity-90`
 };
 
 export function Button({
@@ -31,7 +33,7 @@ export function Button({
   return (
     <button
       {...props}
-      className={`text-button-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 ${styles[variant]} ${className}`}
+      className={`transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 ${styles[variant]} ${className}`}
     />
   );
 }

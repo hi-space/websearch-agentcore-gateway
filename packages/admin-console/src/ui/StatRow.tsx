@@ -12,11 +12,11 @@ export function StatRow({ items }: { items: StatItem[] }) {
       {items.map((it, i) => (
         <div
           key={i}
-          className="rounded-lg border border-hairline bg-canvas px-5 py-4 flex flex-col gap-1"
+          className="rounded-2xl border border-outline bg-surface px-6 py-5 shadow-card flex flex-col gap-1.5"
         >
-          <span className="text-caption text-steel">{it.label}</span>
-          <span className="text-heading-4 text-ink leading-tight tabular-nums">{it.value}</span>
-          {it.hint && <span className="text-caption text-stone">{it.hint}</span>}
+          <span className="text-label-sm uppercase tracking-wider text-stone">{it.label}</span>
+          <span className="text-card-title text-onBackground tabular-nums">{it.value}</span>
+          {it.hint && <span className="text-body-sm text-slate">{it.hint}</span>}
         </div>
       ))}
     </section>

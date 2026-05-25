@@ -31,10 +31,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={it.id}
             className={[
-              'rounded-md border px-4 py-3 shadow-hover bg-canvas text-body-sm-medium',
-              it.tone === 'success' && 'border-semanticSuccess text-charcoal',
-              it.tone === 'error' && 'border-semanticError text-semanticError',
-              it.tone === 'info' && 'border-hairlineStrong text-ink'
+              'rounded-2xl border px-5 py-3.5 shadow-card bg-surface text-body-sm-medium',
+              it.tone === 'success' && 'border-success/40 text-onBackground',
+              it.tone === 'error' && 'border-error/40 text-error',
+              it.tone === 'info' && 'border-outline text-onBackground'
             ]
               .filter(Boolean)
               .join(' ')}
