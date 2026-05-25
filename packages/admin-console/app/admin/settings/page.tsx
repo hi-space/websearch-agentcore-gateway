@@ -16,11 +16,11 @@ function deploymentSettings(): Setting[] {
   const region = process.env.AWS_REGION ?? 'us-east-1';
   const userPoolId = process.env.COGNITO_USER_POOL_ID ?? '(not set)';
   const gatewayId = process.env.AGENTCORE_GATEWAY_ID ?? '(not set)';
-  const configTable = process.env.PROVIDER_CONFIG_TABLE ?? '(not set)';
+  const configTable = process.env.CONFIG_TABLE ?? '(not set)';
   const auditTable = process.env.AUDIT_TABLE ?? '(not set)';
-  const replayTable = process.env.REPLAY_TABLE ?? '(not set)';
+  const replayTable = process.env.MFA_REPLAY_TABLE ?? '(not set)';
   const mfaKeyId = process.env.MFA_KMS_KEY_ID ?? '(not set)';
-  const routerArn = process.env.ROUTER_LAMBDA_ARN ?? '(not set)';
+  const routerArn = process.env.SEARCH_ROUTER_ARN ?? '(not set)';
   return [
     { label: 'AWS Region', value: region },
     { label: 'Cognito User Pool', value: userPoolId, hint: 'Operator identity provider.' },

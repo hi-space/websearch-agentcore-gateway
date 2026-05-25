@@ -55,6 +55,7 @@ const admin = new AdminConsoleStack(app, 'AdminConsoleStack-v1-0', {
   mfaReplayTable: search.mfaReplayTable,
   mfaSigningKeyArn: search.mfaSigningKeyArn,
   mfaSigningKeyId: search.mfaSigningKeyId,
+  gatewayId: search.gatewayId,
   adminAssetPath: existsSync(adminAssetPath) ? adminAssetPath : resolve(__dirname, '../test/fixtures/admin-asset')
 });
 

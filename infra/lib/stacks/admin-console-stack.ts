@@ -32,6 +32,7 @@ export interface AdminConsoleStackProps extends StackProps {
   mfaReplayTable?: ITable;
   mfaSigningKeyArn?: string;
   mfaSigningKeyId?: string;
+  gatewayId?: string;
 }
 
 export class AdminConsoleStack extends Stack {
@@ -72,7 +73,8 @@ export class AdminConsoleStack extends Stack {
         COGNITO_USER_POOL_ID: props.userPoolId,
         COGNITO_CLIENT_ID: props.userPoolClientId,
         ...(props.mfaReplayTable ? { MFA_REPLAY_TABLE: props.mfaReplayTable.tableName } : {}),
-        ...(props.mfaSigningKeyId ? { MFA_KMS_KEY_ID: props.mfaSigningKeyId } : {})
+        ...(props.mfaSigningKeyId ? { MFA_KMS_KEY_ID: props.mfaSigningKeyId } : {}),
+        ...(props.gatewayId ? { AGENTCORE_GATEWAY_ID: props.gatewayId } : {})
       }
     });
 
