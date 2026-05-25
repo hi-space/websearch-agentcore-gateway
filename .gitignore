@@ -5,6 +5,8 @@ next-env.d.ts
 *.tsbuildinfo
 .turbo/
 cdk.out/
+cdk.out.*/
+cdk-outputs*.json
 .cdk.staging/
 coverage/
 .env
