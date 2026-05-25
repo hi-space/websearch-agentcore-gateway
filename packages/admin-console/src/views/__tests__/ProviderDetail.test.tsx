@@ -13,30 +13,37 @@ const stubApi = {
 } as const;
 
 describe('ProviderDetail', () => {
-  afterEach(() => { vi.clearAllMocks(); });
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('toggles enabled and calls updateProvider', async () => {
     const update = vi.fn().mockResolvedValue({ ...row, enabled: true });
     render(<ProviderDetail initial={row} api={{ ...stubApi, updateProvider: update }} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Configuration' }));
     fireEvent.click(screen.getByLabelText(/enabled/i));
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
     await waitFor(() => expect(update).toHaveBeenCalledWith('exa', expect.objectContaining({ enabled: true })));
   });
 
-  it('reveals secret only after confirmation', async () => {
+  it('reveals secret only after MFA modal confirmation', async () => {
     const reveal = vi.fn().mockResolvedValue({ providerId: 'exa', value: 'sk_real' });
     render(<ProviderDetail initial={row} api={{ ...stubApi, revealSecret: reveal }} />);
-    const revealButtons = screen.getAllByRole('button', { name: /reveal/i });
-    fireEvent.click(revealButtons[0]!);
-    await waitFor(() => {
-      expect(screen.getByText(/are you sure/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: 'Secret' }));
+    fireEvent.click(screen.getByRole('button', { name: /reveal current secret/i }));
+    expect(screen.getByRole('dialog', { name: /reveal api credential/i })).toBeInTheDocument();
+    expect(reveal).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByPlaceholderText(/rotating shared API key/i), {
+      target: { value: 'incident-482' }
     });
+    fireEvent.click(screen.getByRole('button', { name: /confirm reveal/i }));
+    await waitFor(() => expect(reveal).toHaveBeenCalledWith('exa'));
   });
 
-  it('test button shows result', async () => {
+  it('connectivity test pushes a result row', async () => {
     const test = vi.fn().mockResolvedValue({ ok: true, results: 3 });
     render(<ProviderDetail initial={row} api={{ ...stubApi, testProvider: test }} />);
-    const buttons = screen.getAllByRole('button', { name: 'Test' });
-    fireEvent.click(buttons[buttons.length - 1]!);
-    await waitFor(() => expect(screen.getByText(/3 results/i)).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /run connectivity test/i }));
+    await waitFor(() => expect(test).toHaveBeenCalledWith('exa'));
   });
 });

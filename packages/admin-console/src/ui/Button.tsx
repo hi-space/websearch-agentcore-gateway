@@ -1,11 +1,26 @@
 import React, { type ButtonHTMLAttributes } from 'react';
 
-type Variant = 'primary' | 'ghost' | 'danger';
+// Notion's geometry is rectangular-sober — buttons use rounded-md (8px), NOT pills.
+type Variant =
+  | 'primary'
+  | 'dark'
+  | 'secondary'
+  | 'on-dark'
+  | 'secondary-on-dark'
+  | 'ghost'
+  | 'link'
+  | 'danger';
 
 const styles: Record<Variant, string> = {
-  primary: 'bg-primary text-white hover:bg-primaryPressed',
-  ghost: 'bg-transparent text-charcoal hover:bg-surface',
-  danger: 'bg-semanticError text-white hover:opacity-90'
+  primary: 'bg-primary text-onPrimary hover:bg-primaryPressed active:bg-primaryDeep rounded-md px-[18px] py-[10px]',
+  dark: 'bg-inkDeep text-onDark hover:opacity-90 rounded-md px-[18px] py-[10px]',
+  secondary: 'bg-transparent text-ink border border-hairlineStrong hover:bg-surface rounded-md px-[18px] py-[10px]',
+  'on-dark': 'bg-onDark text-ink hover:opacity-90 rounded-md px-[18px] py-[10px]',
+  'secondary-on-dark':
+    'bg-transparent text-onDark border border-onDarkMuted hover:bg-white/10 rounded-md px-[18px] py-[10px]',
+  ghost: 'bg-transparent text-ink hover:bg-surface rounded-sm px-3 py-2',
+  link: 'bg-transparent text-linkBlue hover:text-linkBluePressed underline-offset-2 hover:underline px-0 py-0',
+  danger: 'bg-semanticError text-onPrimary hover:opacity-90 rounded-md px-[18px] py-[10px]'
 };
 
 export function Button({
@@ -16,7 +31,7 @@ export function Button({
   return (
     <button
       {...props}
-      className={`px-4 py-2 rounded-pill text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${styles[variant]} ${className}`}
+      className={`text-button-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 ${styles[variant]} ${className}`}
     />
   );
 }

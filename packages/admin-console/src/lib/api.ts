@@ -11,6 +11,8 @@ export interface AuditRow {
   ts: string;
   action: string;
   target: string;
+  before?: unknown;
+  after?: unknown;
 }
 
 export class ApiError extends Error {
@@ -19,8 +21,14 @@ export class ApiError extends Error {
   }
 }
 
+function resolveUrl(path: string): string {
+  if (typeof window !== 'undefined') return path;
+  const base = process.env.APP_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+  return new URL(path, base).toString();
+}
+
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, { ...init, headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) } });
+  const res = await fetch(resolveUrl(path), { ...init, headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) } });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new ApiError(res.status, (body as Record<string, unknown>).error as string ?? 'UNKNOWN');
   return body as T;
@@ -37,8 +45,14 @@ export const adminApi = {
   testProvider: (id: string) =>
     call<{ ok: boolean; results?: number; error?: string }>(`/api/providers/${id}/test`, { method: 'POST' }),
   metrics: (ids: string[]) =>
-    call<{ metrics: Array<{ providerId: string; p95LatencyMs?: number; errorRate?: number }> }>(
-      `/api/metrics?providers=${ids.join(',')}`
-    ),
+    call<{
+      metrics: Array<{
+        providerId: string;
+        p95LatencyMs?: number;
+        errorRate?: number;
+        latencySeries?: number[];
+        errorSeries?: number[];
+      }>;
+    }>(`/api/metrics?providers=${ids.join(',')}`),
   auditList: () => call<{ rows: AuditRow[] }>('/api/audit')
 };

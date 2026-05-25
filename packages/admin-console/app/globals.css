@@ -2,5 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: light; }
-body { background: theme(colors.surface); color: theme(colors.ink); }
+:root {
+  color-scheme: light;
+  --font-sans: 'Notion Sans', 'Inter', -apple-system, system-ui, 'Segoe UI', Helvetica, sans-serif;
+}
+
+html, body {
+  background: theme(colors.surface);
+  color: theme(colors.ink);
+  font-family: var(--font-sans);
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Decorative sticky-note dots used on dark hero bands. */
+.dot {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  opacity: 0.85;
+  filter: blur(0.2px);
+}
+
+/* Mesh wire decoration on dark hero bands (DESIGN.md hero-band-dark). */
+.mesh-wire {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+    radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 32px 32px, 96px 96px;
+  background-position: 0 0, 16px 16px;
+  pointer-events: none;
+}

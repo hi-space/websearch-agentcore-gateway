@@ -7,6 +7,8 @@ export interface ProviderMetric {
   providerId: string;
   p95LatencyMs?: number;
   errorRate?: number;
+  latencySeries?: number[];
+  errorSeries?: number[];
 }
 
 export async function getMetrics(
@@ -39,11 +41,15 @@ export async function getMetrics(
     new GetMetricDataCommand({ StartTime: start, EndTime: now, MetricDataQueries: queries })
   );
   return providerIds.map((p) => {
-    const lat = out.MetricDataResults?.find((r) => r.Id === `lat_${p}`)?.Values?.[0];
-    const err = out.MetricDataResults?.find((r) => r.Id === `err_${p}`)?.Values?.[0];
+    const latRow = out.MetricDataResults?.find((r) => r.Id === `lat_${p}`);
+    const errRow = out.MetricDataResults?.find((r) => r.Id === `err_${p}`);
+    const lat = latRow?.Values?.[0];
+    const err = errRow?.Values?.[0];
     const result: ProviderMetric = { providerId: p };
     if (lat !== undefined) result.p95LatencyMs = lat;
     if (err !== undefined) result.errorRate = err;
+    if (latRow?.Values && latRow.Values.length > 1) result.latencySeries = [...latRow.Values].reverse();
+    if (errRow?.Values && errRow.Values.length > 1) result.errorSeries = [...errRow.Values].reverse();
     return result;
   });
 }

@@ -6,6 +6,8 @@ export interface AuditRow {
   ts: string;
   action: string;
   target: string;
+  before?: unknown;
+  after?: unknown;
 }
 
 export async function listAudit(ddb: DynamoDBClient, tableName: string, limit: number): Promise<AuditRow[]> {
