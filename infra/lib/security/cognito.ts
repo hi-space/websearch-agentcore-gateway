@@ -25,6 +25,10 @@ export class CognitoConstruct extends Construct {
       selfSignUpEnabled: false,
       signInAliases: { email: true },
       autoVerify: { email: true },
+      // Admin Console operators must enroll TOTP at first sign-in. SMS is
+      // intentionally disabled (SIM-swap risk) — only authenticator apps are
+      // accepted. Reveal-secret flows additionally require step-up MFA via
+      // KMS-signed challenge (see MfaReplayTable).
       mfa: Mfa.REQUIRED,
       mfaSecondFactor: { sms: false, otp: true },
       passwordPolicy: {
