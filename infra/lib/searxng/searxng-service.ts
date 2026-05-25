@@ -50,6 +50,37 @@ export class SearxngService extends Construct {
       removalPolicy: RemovalPolicy.DESTROY
     });
 
+    // SearXNG default settings.yml enables only the html format, which makes
+    // JSON API queries return 403. We materialize a minimal settings.yml at
+    // /etc/searxng/settings.yml (the SEARXNG_SETTINGS_PATH default) before the
+    // image's original entrypoint runs — entrypoint.sh keeps an existing file
+    // and only copies the template when missing. We also generate a per-task
+    // secret_key inline. Then we exec /usr/local/searxng/entrypoint.sh which
+    // launches granian → searx.webapp:app on $GRANIAN_PORT (8080).
+    const settingsYaml = [
+      'use_default_settings: true',
+      'server:',
+      '  bind_address: "0.0.0.0"',
+      '  port: 8080',
+      '  secret_key: "__SEARXNG_SECRET__"',
+      '  limiter: false',
+      '  image_proxy: false',
+      'search:',
+      '  safe_search: 0',
+      '  formats:',
+      '    - html',
+      '    - json'
+    ].join('\n');
+    const bootstrap = [
+      'set -e',
+      'mkdir -p /etc/searxng',
+      'SECRET=$(head -c 24 /dev/urandom | base64 | tr -dc "a-zA-Z0-9")',
+      `cat > /etc/searxng/settings.yml <<'YAML_EOF'\n${settingsYaml}\nYAML_EOF`,
+      'sed -i "s|__SEARXNG_SECRET__|$SECRET|g" /etc/searxng/settings.yml',
+      'chown -R searxng:searxng /etc/searxng',
+      'exec /usr/local/searxng/entrypoint.sh'
+    ].join('\n');
+
     // Add container
     taskDef.addContainer('SearXNG', {
       image: ContainerImage.fromRegistry('searxng/searxng:latest'),
@@ -62,7 +93,9 @@ export class SearxngService extends Construct {
           containerPort: 8080,
           protocol: Protocol.TCP
         }
-      ]
+      ],
+      entryPoint: ['sh', '-c'],
+      command: [bootstrap]
     });
 
     // Create ALB
