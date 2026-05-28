@@ -9,7 +9,8 @@ import { SearchPill } from '../ui/SearchPill';
 import { PillTabs, type PillTabItem } from '../ui/PillTab';
 import { Pagination } from '../ui/Pagination';
 import { EmptyState } from '../ui/EmptyState';
-import { getVerifyStatus, type VerifyStatus } from '../lib/verify-status';
+import { getVerifyStatus } from '../lib/verify-status';
+import { VerifyBadge } from '../ui/VerifyBadge';
 import type { ProviderRow } from '../lib/api';
 
 type Filter = 'all' | 'enabled' | 'disabled' | 'no-secret';
@@ -175,14 +176,3 @@ function ProviderDot({ id }: { id: string }) {
   return <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />;
 }
 
-function VerifyBadge({ status, reason }: { status: VerifyStatus; reason?: string }) {
-  if (status === 'verified') return <Badge tone="success">Verified</Badge>;
-  if (status === 'stale') return <Badge tone="warning">Verification stale</Badge>;
-  if (status === 'failed')
-    return (
-      <Badge tone="error" title={reason ?? undefined}>
-        Verification failed
-      </Badge>
-    );
-  return <Badge tone="neutral">Unverified</Badge>;
-}

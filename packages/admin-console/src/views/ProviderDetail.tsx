@@ -11,7 +11,8 @@ import { Modal } from '../ui/Modal';
 import { Sparkline } from '../ui/Sparkline';
 import { useToast } from '../ui/Toast';
 import { adminApi as defaultApi, ApiError, type ProviderRow } from '../lib/api';
-import { getVerifyStatus, type VerifyStatus, type LastVerify } from '../lib/verify-status';
+import { getVerifyStatus, type LastVerify } from '../lib/verify-status';
+import { VerifyBadge } from '../ui/VerifyBadge';
 
 interface ProviderMetric {
   providerId: string;
@@ -460,14 +461,3 @@ function Term({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function VerifyBadge({ status, reason }: { status: VerifyStatus; reason?: string }) {
-  if (status === 'verified') return <Badge tone="success">Verified</Badge>;
-  if (status === 'stale') return <Badge tone="warning">Verification stale</Badge>;
-  if (status === 'failed')
-    return (
-      <Badge tone="error" title={reason ?? undefined}>
-        Verification failed
-      </Badge>
-    );
-  return <Badge tone="neutral">Unverified</Badge>;
-}
