@@ -16,6 +16,8 @@
     "constructs": "^10.3.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1055.0",
+    "@aws-sdk/util-dynamodb": "^3.996.2",
     "@types/node": "^20.11.0",
     "@types/source-map-support": "^0.5.10",
     "aws-cdk": "^2.140.0",
