@@ -1,9 +1,12 @@
+import type { LastVerify } from './verify-status';
+
 export interface ProviderRow {
   providerId: string;
   enabled: boolean;
   hasSecret: boolean;
   quota: { rpm: number; daily: number };
   timeoutMs: number;
+  lastVerify?: LastVerify;
 }
 
 export interface AuditRow {
@@ -43,7 +46,10 @@ export const adminApi = {
   revealSecret: (id: string) =>
     call<{ providerId: string; value: string }>(`/api/providers/${id}/secret/reveal`, { method: 'POST' }),
   testProvider: (id: string) =>
-    call<{ ok: boolean; results?: number; error?: string }>(`/api/providers/${id}/test`, { method: 'POST' }),
+    call<{ ok: boolean; results?: number; error?: string; lastVerify?: LastVerify }>(
+      `/api/providers/${id}/test`,
+      { method: 'POST' }
+    ),
   playgroundSearch: (query: string, topK?: number) =>
     call<{
       query: string;
@@ -67,3 +73,5 @@ export const adminApi = {
     }>(`/api/metrics?providers=${ids.join(',')}`),
   auditList: () => call<{ rows: AuditRow[] }>('/api/audit')
 };
+
+export type { LastVerify } from './verify-status';
