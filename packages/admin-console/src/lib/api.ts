@@ -19,7 +19,7 @@ export interface AuditRow {
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, public code: string, message?: string) {
+  constructor(public status: number, public code: string, message?: string, public lastVerify?: LastVerify) {
     super(message ?? code);
   }
 }
@@ -32,8 +32,12 @@ function resolveUrl(path: string): string {
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(resolveUrl(path), { ...init, headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) } });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiError(res.status, (body as Record<string, unknown>).error as string ?? 'UNKNOWN');
+  const body = await res.json().catch(() => ({})) as Record<string, unknown>;
+  if (!res.ok) {
+    const code = (body.error as string) ?? 'UNKNOWN';
+    const lv = body.lastVerify as LastVerify | undefined;
+    throw new ApiError(res.status, code, undefined, lv);
+  }
   return body as T;
 }
 
