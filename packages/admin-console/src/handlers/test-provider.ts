@@ -61,5 +61,5 @@ export async function testProvider(
   if (lastVerify.ok) {
     return { ok: true, results: body.results?.length ?? 0, lastVerify };
   }
-  return { ok: false, error: lastVerify.code, lastVerify };
+  return { ok: false, ...(lastVerify.code ? { error: lastVerify.code } : {}), lastVerify };
 }
