@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ProviderDetail } from '../ProviderDetail.js';
+import { ApiError } from '../../lib/api.js';
 
 const row = { providerId: 'exa', enabled: false, hasSecret: false, quota: { rpm: 60, daily: 1000 }, timeoutMs: 8000 };
 
@@ -11,6 +12,15 @@ const stubApi = {
   revealSecret: vi.fn(),
   testProvider: vi.fn()
 } as const;
+
+function makeApi() {
+  return {
+    updateProvider: vi.fn().mockResolvedValue({ providerId: 'exa', enabled: true, quota: { rpm: 10, daily: 100 }, timeoutMs: 8000 }),
+    putSecret: vi.fn().mockResolvedValue({ providerId: 'exa', versionId: 'v1' }),
+    revealSecret: vi.fn().mockResolvedValue({ providerId: 'exa', value: 'sk' }),
+    testProvider: vi.fn().mockResolvedValue({ ok: true, results: 1, lastVerify: { at: new Date().toISOString(), ok: true } })
+  };
+}
 
 describe('ProviderDetail', () => {
   afterEach(() => {
@@ -45,5 +55,49 @@ describe('ProviderDetail', () => {
     render(<ProviderDetail initial={row} api={{ ...stubApi, testProvider: test }} />);
     fireEvent.click(screen.getByRole('button', { name: /run connectivity test/i }));
     await waitFor(() => expect(test).toHaveBeenCalledWith('exa'));
+  });
+
+  it('reverts the Enabled toggle on VERIFICATION_FAILED', async () => {
+    const api = makeApi();
+    api.updateProvider = vi.fn().mockRejectedValue(
+      Object.assign(new ApiError(400, 'VERIFICATION_FAILED'), {
+        lastVerify: { at: new Date().toISOString(), ok: false, code: 'UPSTREAM_ERROR', error: '401' }
+      })
+    );
+    const initial = {
+      providerId: 'exa',
+      enabled: false,
+      hasSecret: true,
+      quota: { rpm: 10, daily: 100 },
+      timeoutMs: 8000
+    };
+    render(<ProviderDetail initial={initial} api={api} />);
+    fireEvent.click(screen.getByRole('tab', { name: /Configuration/i }));
+    const checkbox = screen.getByLabelText(/Enabled/i) as HTMLInputElement;
+    fireEvent.click(checkbox);
+    expect(checkbox.checked).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: /Save changes/i }));
+    await waitFor(() => expect(checkbox.checked).toBe(false));
+    expect(api.updateProvider).toHaveBeenCalled();
+  });
+
+  it('surfaces the disabled-after-secret helper after Store new version', async () => {
+    const api = makeApi();
+    api.putSecret = vi.fn().mockResolvedValue({ providerId: 'exa', versionId: 'v2' });
+    const initial = {
+      providerId: 'exa',
+      enabled: true,
+      hasSecret: true,
+      quota: { rpm: 10, daily: 100 },
+      timeoutMs: 8000,
+      lastVerify: { at: new Date().toISOString(), ok: true }
+    };
+    render(<ProviderDetail initial={initial} api={api} />);
+    fireEvent.click(screen.getByRole('tab', { name: /Secret/i }));
+    fireEvent.change(screen.getByPlaceholderText(/Enter new secret value/i), {
+      target: { value: 'sk_new_key_123' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Store new version/i }));
+    await screen.findByText(/Verification reset and provider disabled/i);
   });
 });

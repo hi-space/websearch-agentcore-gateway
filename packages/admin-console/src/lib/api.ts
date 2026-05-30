@@ -1,9 +1,12 @@
+import type { LastVerify } from './verify-status';
+
 export interface ProviderRow {
   providerId: string;
   enabled: boolean;
   hasSecret: boolean;
   quota: { rpm: number; daily: number };
   timeoutMs: number;
+  lastVerify?: LastVerify;
 }
 
 export interface AuditRow {
@@ -16,7 +19,7 @@ export interface AuditRow {
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, public code: string, message?: string) {
+  constructor(public status: number, public code: string, message?: string, public lastVerify?: LastVerify) {
     super(message ?? code);
   }
 }
@@ -29,8 +32,12 @@ function resolveUrl(path: string): string {
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(resolveUrl(path), { ...init, cache: 'no-store', headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) } });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiError(res.status, (body as Record<string, unknown>).error as string ?? 'UNKNOWN');
+  const body = await res.json().catch(() => ({})) as Record<string, unknown>;
+  if (!res.ok) {
+    const code = (body.error as string) ?? 'UNKNOWN';
+    const lv = body.lastVerify as LastVerify | undefined;
+    throw new ApiError(res.status, code, undefined, lv);
+  }
   return body as T;
 }
 
@@ -46,7 +53,10 @@ export const adminApi = {
       body: JSON.stringify({ reason })
     }),
   testProvider: (id: string) =>
-    call<{ ok: boolean; results?: number; error?: string }>(`/api/providers/${id}/test`, { method: 'POST' }),
+    call<{ ok: boolean; results?: number; error?: string; lastVerify?: LastVerify }>(
+      `/api/providers/${id}/test`,
+      { method: 'POST' }
+    ),
   playgroundSearch: (query: string, topK?: number) =>
     call<{
       query: string;
@@ -70,3 +80,5 @@ export const adminApi = {
     }>(`/api/metrics?providers=${ids.join(',')}`),
   auditList: () => call<{ rows: AuditRow[] }>('/api/audit')
 };
+
+export type { LastVerify } from './verify-status';

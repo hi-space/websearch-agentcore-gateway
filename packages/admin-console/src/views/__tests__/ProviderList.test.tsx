@@ -35,4 +35,23 @@ describe('ProviderList', () => {
     expect(within(table).queryByText('exa')).not.toBeInTheDocument();
     expect(within(table).getByText('you')).toBeInTheDocument();
   });
+
+  it('renders the four verification badges based on lastVerify', () => {
+    const isoNow = new Date().toISOString();
+    const isoStale = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    render(
+      <ProviderList
+        rows={[
+          { providerId: 'a', enabled: true, hasSecret: true, quota: { rpm: 10, daily: 100 }, timeoutMs: 8000, lastVerify: { at: isoNow, ok: true } },
+          { providerId: 'b', enabled: true, hasSecret: true, quota: { rpm: 10, daily: 100 }, timeoutMs: 8000, lastVerify: { at: isoStale, ok: true } },
+          { providerId: 'c', enabled: false, hasSecret: true, quota: { rpm: 10, daily: 100 }, timeoutMs: 8000, lastVerify: { at: isoNow, ok: false, code: 'UPSTREAM_ERROR', error: '401' } },
+          { providerId: 'd', enabled: false, hasSecret: false, quota: { rpm: 10, daily: 100 }, timeoutMs: 8000 }
+        ]}
+      />
+    );
+    expect(screen.getByText('Verified')).toBeInTheDocument();
+    expect(screen.getByText('Verification stale')).toBeInTheDocument();
+    expect(screen.getByText('Verification failed')).toBeInTheDocument();
+    expect(screen.getByText('Unverified')).toBeInTheDocument();
+  });
 });

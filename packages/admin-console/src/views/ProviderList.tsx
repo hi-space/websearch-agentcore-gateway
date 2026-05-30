@@ -9,6 +9,8 @@ import { SearchPill } from '../ui/SearchPill';
 import { PillTabs, type PillTabItem } from '../ui/PillTab';
 import { Pagination } from '../ui/Pagination';
 import { EmptyState } from '../ui/EmptyState';
+import { getVerifyStatus } from '../lib/verify-status';
+import { VerifyBadge } from '../ui/VerifyBadge';
 import type { ProviderRow } from '../lib/api';
 
 type Filter = 'all' | 'enabled' | 'disabled' | 'no-secret';
@@ -110,6 +112,7 @@ export function ProviderList({ rows }: { rows: ProviderRow[] }) {
               <tr>
                 <th className="text-left px-5 py-3 font-medium">Provider</th>
                 <th className="text-left px-5 py-3 font-medium">Status</th>
+                <th className="text-left px-5 py-3 font-medium">Verification</th>
                 <th className="text-left px-5 py-3 font-medium">Secret</th>
                 <th className="text-right px-5 py-3 font-medium">RPM</th>
                 <th className="text-right px-5 py-3 font-medium">Daily</th>
@@ -130,6 +133,9 @@ export function ProviderList({ rows }: { rows: ProviderRow[] }) {
                     <Badge tone={r.enabled ? 'success' : 'neutral'}>
                       {r.enabled ? 'Enabled' : 'Disabled'}
                     </Badge>
+                  </td>
+                  <td className="px-5 py-3">
+                    <VerifyBadge status={getVerifyStatus(r.lastVerify)} reason={r.lastVerify?.error || r.lastVerify?.code} />
                   </td>
                   <td className="px-5 py-3">
                     {r.hasSecret ? (
@@ -169,3 +175,4 @@ function ProviderDot({ id }: { id: string }) {
   const color = PROVIDER_TINTS[Math.abs(h) % PROVIDER_TINTS.length];
   return <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />;
 }
+

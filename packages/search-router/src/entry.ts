@@ -50,36 +50,36 @@ if (CONFIG_TABLE) {
   );
 }
 
-// Build unified configuration if Gateway URL and token param are set
-let unifiedConfig: { builtinTools: string[]; callBuiltin: (tool: string, query: string, topK?: number) => Promise<SearchResult[]> } | undefined;
+// Unified search is always enabled. When GATEWAY_URL + GATEWAY_TOKEN_SSM_PARAM are
+// set, builtin tools (e.g. Tavily/Brave) join the fan-out via the AgentCore Gateway;
+// otherwise unified runs over the lambda adapters alone.
+const gatewayConfigured = Boolean(GATEWAY_URL && GATEWAY_TOKEN_SSM_PARAM);
 
-if (GATEWAY_URL && GATEWAY_TOKEN_SSM_PARAM) {
-  const ssm = new SSMClient({});
-  let cachedToken: string | undefined;
+const builtinTools = gatewayConfigured
+  ? UNIFIED_BUILTINS.split(',').map((t) => t.trim()).filter(Boolean)
+  : [];
 
-  const callBuiltin = async (tool: string, query: string, topK?: number): Promise<SearchResult[]> => {
-    if (!cachedToken) {
-      const param = await ssm.send(
-        new GetParameterCommand({ Name: GATEWAY_TOKEN_SSM_PARAM, WithDecryption: true })
-      );
-      cachedToken = param.Parameter?.Value;
-      if (!cachedToken) throw new Error('Failed to resolve Gateway token from SSM');
-    }
-    return callGatewayBuiltin({
-      gatewayUrl: GATEWAY_URL,
-      token: cachedToken,
-      tool,
-      query,
-      topK
-    });
-  };
+const callBuiltin: (tool: string, query: string, topK?: number) => Promise<SearchResult[]> =
+  gatewayConfigured
+    ? (() => {
+        const ssm = new SSMClient({});
+        let cachedToken: string | undefined;
+        return async (tool, query, topK) => {
+          if (!cachedToken) {
+            const param = await ssm.send(
+              new GetParameterCommand({ Name: GATEWAY_TOKEN_SSM_PARAM, WithDecryption: true })
+            );
+            cachedToken = param.Parameter?.Value;
+            if (!cachedToken) throw new Error('Failed to resolve Gateway token from SSM');
+          }
+          return callGatewayBuiltin({ gatewayUrl: GATEWAY_URL!, token: cachedToken, tool, query, topK });
+        };
+      })()
+    : async () => {
+        throw new Error('Gateway builtin invocation requested but GATEWAY_URL is not configured');
+      };
 
-  const builtinTools = UNIFIED_BUILTINS.split(',')
-    .map((t) => t.trim())
-    .filter(Boolean);
-
-  unifiedConfig = { builtinTools, callBuiltin };
-}
+const unifiedConfig = { builtinTools, callBuiltin };
 
 export const handler = createHandler({
   adapters,

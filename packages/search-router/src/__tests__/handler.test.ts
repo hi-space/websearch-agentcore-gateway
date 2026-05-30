@@ -208,6 +208,16 @@ describe('search-router handler', () => {
 });
 
 describe('handler search_unified', () => {
+  it('returns INTERNAL when deps.unified is missing', async () => {
+    const handler = createHandler({
+      adapters: { arxiv: fakeAdapter },
+      quota: fakeQuota,
+      limits: { arxiv: { rpm: 60, daily: 1000 } }
+    });
+    const out = await handler(makeEvent('search_unified', { query: 'q' }));
+    expect(out).toMatchObject({ error: { code: 'INTERNAL', message: 'unified not configured' } });
+  });
+
   it('routes to runUnified and returns merged results', async () => {
     const exa = { name: 'exa', search: vi.fn().mockResolvedValue([{ title: 'A', url: 'u', snippet: '', provider: 'exa', rank: 1 }]) };
     const handler = createHandler({

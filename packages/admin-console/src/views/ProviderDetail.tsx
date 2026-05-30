@@ -10,7 +10,9 @@ import { SegmentedTabs } from '../ui/SegmentedTabs';
 import { Modal } from '../ui/Modal';
 import { Sparkline } from '../ui/Sparkline';
 import { useToast } from '../ui/Toast';
-import { adminApi as defaultApi, type ProviderRow } from '../lib/api';
+import { adminApi as defaultApi, ApiError, type ProviderRow } from '../lib/api';
+import { getVerifyStatus, type LastVerify } from '../lib/verify-status';
+import { VerifyBadge } from '../ui/VerifyBadge';
 
 interface ProviderMetric {
   providerId: string;
@@ -24,7 +26,7 @@ interface Api {
   updateProvider: (id: string, body: { enabled: boolean; quota: { rpm: number; daily: number }; timeoutMs: number }) => Promise<ProviderRow>;
   putSecret: (id: string, value: string) => Promise<{ providerId: string; versionId: string }>;
   revealSecret: (id: string, reason: string) => Promise<{ providerId: string; value: string }>;
-  testProvider: (id: string) => Promise<{ ok: boolean; results?: number; error?: string }>;
+  testProvider: (id: string) => Promise<{ ok: boolean; results?: number; error?: string; lastVerify?: LastVerify }>;
 }
 
 interface ProviderDetailProps {
@@ -54,6 +56,7 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
 
   const [newSecret, setNewSecret] = useState('');
   const [storingSecret, setStoringSecret] = useState(false);
+  const [secretJustRotated, setSecretJustRotated] = useState(false);
   const [revealValue, setRevealValue] = useState('');
   const [revealOpen, setRevealOpen] = useState(false);
   const [revealReason, setRevealReason] = useState('');
@@ -86,6 +89,7 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
               <Badge tone={initial.hasSecret ? 'neutral' : 'warning'}>
                 {initial.hasSecret ? 'Secret stored' : 'No secret'}
               </Badge>
+              <VerifyBadge status={getVerifyStatus(initial.lastVerify)} reason={initial.lastVerify?.error ?? initial.lastVerify?.code} />
             </div>
             <dl className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-body-sm">
               <MetaItem label="RPM" value={initial.quota.rpm.toLocaleString()} />
@@ -171,15 +175,21 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
                     quota: { rpm, daily },
                     timeoutMs
                   });
-                  toast.push('Configuration saved', 'success');
+                  toast.push('Configuration saved & verified', 'success');
                 } catch (e) {
-                  toast.push((e as Error).message ?? 'Save failed', 'error');
+                  if (e instanceof ApiError && e.code === 'VERIFICATION_FAILED') {
+                    setEnabled(false);
+                    const reason = e.lastVerify?.error ?? e.lastVerify?.code ?? 'unknown';
+                    toast.push(`Verification failed: ${reason}. Toggle stays off.`, 'error');
+                  } else {
+                    toast.push((e as Error).message ?? 'Save failed', 'error');
+                  }
                 } finally {
                   setSavingConfig(false);
                 }
               }}
             >
-              {savingConfig ? 'Saving…' : 'Save changes'}
+              {savingConfig ? (enabled !== initial.enabled && enabled ? 'Verifying & saving…' : 'Saving…') : 'Save changes'}
             </Button>
             <Button
               variant="ghost"
@@ -222,8 +232,10 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
                   await api.putSecret(initial.providerId, newSecret);
                   toast.push('Secret stored', 'success');
                   setNewSecret('');
+                  setSecretJustRotated(true);
                 } catch (e) {
                   toast.push((e as Error).message ?? 'Store failed', 'error');
+                  setSecretJustRotated(false);
                 } finally {
                   setStoringSecret(false);
                 }
@@ -232,6 +244,12 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
               {storingSecret ? 'Storing…' : 'Store new version'}
             </Button>
           </div>
+
+          {secretJustRotated && (
+            <p className="mt-3 text-caption-sm text-charcoal">
+              Verification reset and provider disabled — re-verify before re-enabling.
+            </p>
+          )}
 
           <div className="mt-6 flex items-center gap-3 flex-wrap">
             <Button variant="secondary" onClick={() => setRevealOpen(true)}>
@@ -442,3 +460,4 @@ function Term({ label, value }: { label: string; value: React.ReactNode }) {
     </div>
   );
 }
+

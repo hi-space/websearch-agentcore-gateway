@@ -18,7 +18,9 @@ export async function revealSecret(input: RevealSecretInput): Promise<{ provider
 
   if (!reason || reason.trim().length < 4) throw new Error('INVALID_INPUT');
 
-  const cfg = await ddb.send(new GetItemCommand({ TableName: configTable, Key: marshall({ providerId }) }));
+  const cfg = await ddb.send(
+    new GetItemCommand({ TableName: configTable, Key: marshall({ pk: 'provider', sk: providerId }) })
+  );
   const arn = cfg.Item?.secretArn?.S;
   if (!arn) throw new Error('NOT_FOUND');
   const out = await sm.send(new GetSecretValueCommand({ SecretId: arn }));
