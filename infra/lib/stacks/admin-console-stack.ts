@@ -13,6 +13,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { buildWebAcl } from '../admin/waf.js';
 import { buildCloudFront } from '../admin/cloudfront.js';
+import { GatewayClientRegistration } from '../gateway/register-client.js';
 
 const __dirname = resolve(fileURLToPath(import.meta.url), '..');
 
@@ -29,10 +30,19 @@ export interface AdminConsoleStackProps extends StackProps {
   userPoolId: string;
   userPoolClientId: string;
   hostedUiBaseUrl: string;
-  mfaReplayTable?: ITable;
-  mfaSigningKeyArn?: string;
-  mfaSigningKeyId?: string;
   gatewayId?: string;
+  /**
+   * Fully-qualified Gateway scope (e.g. `gateway/invoke`) — when set, the
+   * admin OAuth client requests it so the Hosted-UI-issued access token can
+   * be replayed against AgentCore Gateway from the playground.
+   */
+  gatewayScope?: string;
+  /**
+   * Gateway execution role ARN. Required when `gatewayScope` is set so the
+   * post-deploy registration custom resource can iam:PassRole during
+   * UpdateGateway.
+   */
+  gatewayRoleArn?: string;
 }
 
 export class AdminConsoleStack extends Stack {
@@ -72,27 +82,9 @@ export class AdminConsoleStack extends Stack {
         SEARCH_ROUTER_ARN: props.searchRouterFn.functionArn,
         COGNITO_USER_POOL_ID: props.userPoolId,
         COGNITO_CLIENT_ID: props.userPoolClientId,
-        ...(props.mfaReplayTable ? { MFA_REPLAY_TABLE: props.mfaReplayTable.tableName } : {}),
-        ...(props.mfaSigningKeyId ? { MFA_KMS_KEY_ID: props.mfaSigningKeyId } : {}),
         ...(props.gatewayId ? { AGENTCORE_GATEWAY_ID: props.gatewayId } : {})
       }
     });
-
-    // MFA replay/cap table — single-use assertion fingerprints + per-actor hourly counters
-    if (props.mfaReplayTable) {
-      props.mfaReplayTable.grantReadWriteData(fn);
-    }
-
-    // KMS Sign/Verify for step-up MFA assertion tokens (RSASSA_PSS_SHA_256, 5-min lifetime)
-    if (props.mfaSigningKeyArn) {
-      fn.addToRolePolicy(
-        new PolicyStatement({
-          effect: Effect.ALLOW,
-          actions: ['kms:Sign', 'kms:Verify', 'kms:GetPublicKey'],
-          resources: [props.mfaSigningKeyArn]
-        })
-      );
-    }
 
     // Grant permissions to ConfigTable
     props.configTable.grantReadData(fn);
@@ -182,15 +174,25 @@ export class AdminConsoleStack extends Stack {
     //   - Lambda env intentionally omits the console base URL; the Next.js handler derives it
     //     from the incoming request's Host header at runtime.
     const consoleUrl = `https://${distribution.attrDomainName}`;
+    const adminScopes = props.gatewayScope
+      ? ['openid', 'email', 'profile', props.gatewayScope]
+      : ['openid', 'email', 'profile'];
     const oauthClient = new CfnUserPoolClient(this, 'AdminConsoleClient', {
       userPoolId: props.userPool.userPoolId,
       clientName: 'admin-console',
       generateSecret: false,
+      enableTokenRevocation: true,
+      // Refresh-token rotation: a stolen refresh token becomes single-use, and
+      // a 30s grace covers in-flight retries from the admin SPA.
+      refreshTokenRotation: {
+        feature: 'ENABLED',
+        retryGracePeriodSeconds: 30
+      },
       explicitAuthFlows: ['ALLOW_USER_SRP_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH'],
       preventUserExistenceErrors: 'ENABLED',
       allowedOAuthFlows: ['code'],
       allowedOAuthFlowsUserPoolClient: true,
-      allowedOAuthScopes: ['openid', 'email', 'profile'],
+      allowedOAuthScopes: adminScopes,
       callbackUrLs: ['https://placeholder.invalid/api/auth/callback'],
       logoutUrLs: ['https://placeholder.invalid'],
       supportedIdentityProviders: ['COGNITO']
@@ -208,7 +210,7 @@ export class AdminConsoleStack extends Stack {
           LogoutURLs: [consoleUrl],
           AllowedOAuthFlows: ['code'],
           AllowedOAuthFlowsUserPoolClient: true,
-          AllowedOAuthScopes: ['openid', 'email', 'profile'],
+          AllowedOAuthScopes: adminScopes,
           SupportedIdentityProviders: ['COGNITO'],
           ExplicitAuthFlows: ['ALLOW_USER_SRP_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH'],
           PreventUserExistenceErrors: 'ENABLED'
@@ -225,7 +227,7 @@ export class AdminConsoleStack extends Stack {
           LogoutURLs: [consoleUrl],
           AllowedOAuthFlows: ['code'],
           AllowedOAuthFlowsUserPoolClient: true,
-          AllowedOAuthScopes: ['openid', 'email', 'profile'],
+          AllowedOAuthScopes: adminScopes,
           SupportedIdentityProviders: ['COGNITO'],
           ExplicitAuthFlows: ['ALLOW_USER_SRP_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH'],
           PreventUserExistenceErrors: 'ENABLED'
@@ -263,5 +265,18 @@ export class AdminConsoleStack extends Stack {
       value: oauthClient.ref,
       description: 'Cognito OAuth client used by the admin Hosted UI flow'
     });
+
+    // When the admin client requests gateway/invoke we must also admit it on
+    // the Gateway authorizer. The Gateway is in SearchStack — adding the
+    // admin client at create time would cycle SearchStack ← AdminConsoleStack,
+    // so we patch allowedClients post-deploy via UpdateGateway.
+    if (props.gatewayScope && props.gatewayId && props.gatewayRoleArn) {
+      const registration = new GatewayClientRegistration(this, 'AdminClientRegistration', {
+        gatewayId: props.gatewayId,
+        clientId: oauthClient.ref,
+        gatewayRoleArn: props.gatewayRoleArn
+      });
+      registration.node.addDependency(oauthClient);
+    }
   }
 }

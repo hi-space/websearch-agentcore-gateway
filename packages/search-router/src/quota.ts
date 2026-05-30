@@ -8,7 +8,12 @@ export interface QuotaLimits {
 }
 
 export interface QuotaService {
-  consume(provider: string, limits: QuotaLimits): Promise<void>;
+  /**
+   * Consumes one unit against the (principal, provider) quota window. The
+   * principal scopes counters per-user (or `service` for headless workloads)
+   * so a single noisy user can't burn the global RPM/daily allowance.
+   */
+  consume(provider: string, limits: QuotaLimits, principal?: string): Promise<void>;
 }
 
 export interface QuotaServiceOptions {
@@ -21,11 +26,17 @@ export function createQuotaService(opts: QuotaServiceOptions): QuotaService {
   const ddb = opts.client ?? DynamoDBDocumentClient.from(new DynamoDBClient({}));
   const clock = opts.clock ?? (() => new Date());
 
-  async function increment(provider: string, window: 'rpm' | 'daily', bucket: string, limit: number, ttl: number) {
+  async function increment(
+    pk: string,
+    window: 'rpm' | 'daily',
+    bucket: string,
+    limit: number,
+    ttl: number
+  ) {
     try {
       await ddb.send(new UpdateCommand({
         TableName: opts.tableName,
-        Key: { pk: `provider#${provider}`, sk: `window#${window}#${bucket}` },
+        Key: { pk, sk: `window#${window}#${bucket}` },
         UpdateExpression: 'ADD #c :one SET #t = if_not_exists(#t, :ttl)',
         ConditionExpression: 'attribute_not_exists(#c) OR #c < :limit',
         ExpressionAttributeNames: { '#c': 'count', '#t': 'ttl' },
@@ -41,21 +52,22 @@ export function createQuotaService(opts: QuotaServiceOptions): QuotaService {
   }
 
   return {
-    async consume(provider, limits) {
+    async consume(provider, limits, principal = 'service') {
       const now = clock();
       const minBucket = now.toISOString().slice(0, 16);
       const dayBucket = now.toISOString().slice(0, 10);
       const minTtl = Math.floor(now.getTime() / 1000) + 120;
       const dayTtl = Math.floor(now.getTime() / 1000) + 86_400 * 2;
+      const pk = `principal#${principal}#provider#${provider}`;
 
-      const rpmOk = await increment(provider, 'rpm', minBucket, limits.rpm, minTtl);
+      const rpmOk = await increment(pk, 'rpm', minBucket, limits.rpm, minTtl);
       if (!rpmOk) {
         const retryAfterSec = 60 - now.getUTCSeconds();
         throw new SearchError(ErrorCode.RATE_LIMITED, `RPM exceeded for ${provider}`, {
           provider, retryAfterSec
         });
       }
-      const dailyOk = await increment(provider, 'daily', dayBucket, limits.daily, dayTtl);
+      const dailyOk = await increment(pk, 'daily', dayBucket, limits.daily, dayTtl);
       if (!dailyOk) {
         const retryAfterSec = 86_400 -
           (now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds());

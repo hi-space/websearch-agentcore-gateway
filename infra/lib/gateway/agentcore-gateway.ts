@@ -15,11 +15,17 @@ export interface GatewayProps {
   routerFn: IFunction;
   toolDefinitions: Array<{ name: string; description: string; inputSchema: unknown }>;
   cognitoDiscoveryUrl: string;
-  cognitoClientId: string;
+  /**
+   * One or more Cognito app client IDs whose JWTs Gateway will accept. Typical
+   * shape: `[gatewayUserClientId, gatewayM2mClientId]` so both interactive
+   * users and headless workloads can call the same Gateway.
+   */
+  cognitoClientIds: string[];
 }
 
 export class AgentCoreGateway extends Construct {
   readonly gatewayId: string;
+  readonly gatewayRoleArn: string;
 
   constructor(scope: Construct, id: string, props: GatewayProps) {
     super(scope, id);
@@ -59,7 +65,7 @@ export class AgentCoreGateway extends Construct {
           authorizerConfiguration: {
             customJWTAuthorizer: {
               discoveryUrl: props.cognitoDiscoveryUrl,
-              allowedClients: [props.cognitoClientId]
+              allowedClients: props.cognitoClientIds
             }
           }
         },
@@ -103,6 +109,7 @@ export class AgentCoreGateway extends Construct {
     });
 
     this.gatewayId = create.getResponseField('gatewayId');
+    this.gatewayRoleArn = gatewayRole.roleArn;
 
     const wait = new GatewayWaitForReady(this, 'WaitReady', { gatewayId: this.gatewayId });
     wait.node.addDependency(create);

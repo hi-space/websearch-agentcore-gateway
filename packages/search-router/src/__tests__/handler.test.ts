@@ -36,7 +36,22 @@ describe('search-router handler', () => {
     expect(out).toMatchObject({
       results: [{ url: 'http://arxiv.org/abs/1', title: 't', snippet: 's', provider: 'arxiv' }]
     });
-    expect(fakeQuota.consume).toHaveBeenCalledWith('arxiv', { rpm: 60, daily: 1000 });
+    expect(fakeQuota.consume).toHaveBeenCalledWith('arxiv', { rpm: 60, daily: 1000 }, 'service');
+  });
+
+  it('routes quota by the __principal field injected by the Gateway interceptor', async () => {
+    fakeQuota.consume.mockResolvedValue(undefined);
+    fakeAdapter.search.mockResolvedValue([]);
+    const handler = createHandler({
+      adapters: { arxiv: fakeAdapter },
+      quota: fakeQuota,
+      limits: { arxiv: { rpm: 60, daily: 1000 } }
+    });
+    await handler(makeEvent('search_arxiv', { query: 'transformer', __principal: 'user-abc-123' }));
+    expect(fakeQuota.consume).toHaveBeenCalledWith('arxiv', { rpm: 60, daily: 1000 }, 'user-abc-123');
+    // The principal must not leak into the adapter — adapters validate args
+    // strictly and don't expect quota metadata.
+    expect(fakeAdapter.search).toHaveBeenCalledWith('transformer', expect.any(Object));
   });
 
   it('returns RATE_LIMITED error envelope when quota throws', async () => {

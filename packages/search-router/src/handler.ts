@@ -24,6 +24,33 @@ interface AgentCoreClientContext {
   };
 }
 
+const SERVICE_PRINCIPAL = 'service';
+const PRINCIPAL_FIELD = '__principal';
+
+/**
+ * Reads the principal from the tool arguments. AgentCore Gateway does NOT
+ * forward inbound JWT claims to a Lambda target's clientContext — its
+ * documented mechanism is a Request Interceptor Lambda that decodes the
+ * Bearer token and injects fields into the request body. Our interceptor
+ * (`packages/gateway-interceptor`) writes the JWT's `sub` claim into
+ * `arguments.__principal`. M2M tokens carry no user; the interceptor falls
+ * back to `service` so per-principal quotas still segregate workloads.
+ *
+ * Reference: aws-samples/sample-agentcore-multi-tenant — interceptor pattern.
+ */
+function resolvePrincipal(args: unknown): { principal: string; cleaned: unknown } {
+  if (args && typeof args === 'object' && PRINCIPAL_FIELD in (args as Record<string, unknown>)) {
+    const obj = args as Record<string, unknown>;
+    const raw = obj[PRINCIPAL_FIELD];
+    const { [PRINCIPAL_FIELD]: _drop, ...rest } = obj;
+    return {
+      principal: typeof raw === 'string' && raw.length > 0 ? raw : SERVICE_PRINCIPAL,
+      cleaned: rest
+    };
+  }
+  return { principal: SERVICE_PRINCIPAL, cleaned: args };
+}
+
 export interface LambdaContext {
   clientContext?: AgentCoreClientContext;
 }
@@ -143,16 +170,17 @@ export function createHandler(deps: HandlerDeps) {
       return { error: err.toJSON() as { code: string; message: string; provider?: string; retryAfterSec?: number } };
     }
 
+    const { principal, cleaned } = resolvePrincipal(args);
     let parsed;
     try {
-      parsed = ArgsSchema.parse(args);
+      parsed = ArgsSchema.parse(cleaned);
     } catch {
       const err = new SearchError(ErrorCode.INVALID_ARGUMENT, 'invalid arguments', { provider });
       return { error: err.toJSON() as { code: string; message: string; provider?: string; retryAfterSec?: number } };
     }
 
     try {
-      await deps.quota.consume(provider, limits);
+      await deps.quota.consume(provider, limits, principal);
 
       let opts: SearchOpts | undefined;
       if (adapter.requiresApiKey) {

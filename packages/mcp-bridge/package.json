@@ -1,0 +1,35 @@
+{
+  "name": "@search-gateway/mcp-bridge",
+  "version": "0.1.0",
+  "description": "Local stdio↔HTTP MCP bridge that handles Cognito PKCE login, OS keychain storage, and automatic token refresh for AgentCore Gateway.",
+  "type": "module",
+  "bin": {
+    "mcp-bridge": "./dist/bin/mcp-bridge.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "keytar": "^7.9.0",
+    "open": "^10.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0"
+  }
+}

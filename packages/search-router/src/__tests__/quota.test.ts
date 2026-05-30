@@ -26,4 +26,25 @@ describe('QuotaService', () => {
       retryAfterSec: 30
     });
   });
+
+  it('partitions counters by principal so per-user quotas are independent', async () => {
+    ddb.on(UpdateCommand).resolves({ Attributes: { count: 1 } });
+    const svc = createQuotaService({ tableName: 't', clock: () => new Date('2026-05-23T12:34:00Z') });
+    await svc.consume('arxiv', { rpm: 60, daily: 1000 }, 'user-alice');
+    const calls = ddb.commandCalls(UpdateCommand);
+    expect(calls).toHaveLength(2);
+    for (const call of calls) {
+      expect(call.args[0].input.Key).toMatchObject({ pk: 'principal#user-alice#provider#arxiv' });
+    }
+  });
+
+  it('defaults principal to "service" for headless workloads with no user identity', async () => {
+    ddb.on(UpdateCommand).resolves({ Attributes: { count: 1 } });
+    const svc = createQuotaService({ tableName: 't', clock: () => new Date('2026-05-23T12:34:00Z') });
+    await svc.consume('arxiv', { rpm: 60, daily: 1000 });
+    const calls = ddb.commandCalls(UpdateCommand);
+    for (const call of calls) {
+      expect(call.args[0].input.Key).toMatchObject({ pk: 'principal#service#provider#arxiv' });
+    }
+  });
 });

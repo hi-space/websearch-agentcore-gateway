@@ -10,9 +10,9 @@ import { CognitoConstruct } from '../security/cognito.js';
 import { ConfigTableConstruct } from '../data/config-table.js';
 import { ConfigSeed } from '../data/config-seed.js';
 import { QuotaTableConstruct } from '../data/quota-table.js';
-import { MfaReplayTableConstruct } from '../data/mfa-replay-table.js';
 import { SearchRouterFn } from '../compute/search-router-fn.js';
 import { AgentCoreGateway } from '../gateway/agentcore-gateway.js';
+import { GatewayInterceptor } from '../gateway/interceptor.js';
 import { AlarmsConstruct } from '../observability/alarms.js';
 import { SearxngService } from '../searxng/searxng-service.js';
 import { enableGuardDuty } from '../security/guardduty.js';
@@ -36,14 +36,15 @@ export class SearchStack extends Stack {
   readonly auditTableArn: string;
   readonly auditTableStreamArn: string;
   readonly gatewayId: string;
+  readonly gatewayRoleArn: string;
   readonly snsTopicArn: string;
   readonly userPool: IUserPool;
   readonly userPoolId: string;
   readonly userPoolClientId: string;
+  readonly userPoolM2mClientId: string;
+  readonly userPoolM2mClientSecretArn: string;
+  readonly gatewayScope: string;
   readonly hostedUiBaseUrl: string;
-  readonly mfaReplayTable: ITable;
-  readonly mfaSigningKeyId: string;
-  readonly mfaSigningKeyArn: string;
 
   constructor(scope: Construct, id: string, props?: SearchStackProps) {
     super(scope, id, props);
@@ -52,14 +53,13 @@ export class SearchStack extends Stack {
     const cognito = new CognitoConstruct(this, 'Cognito');
     this.userPool = cognito.userPool;
     this.userPoolId = cognito.userPool.userPoolId;
-    this.userPoolClientId = cognito.client.userPoolClientId;
+    this.userPoolClientId = cognito.userClient.userPoolClientId;
+    this.userPoolM2mClientId = cognito.m2mClient.userPoolClientId;
+    this.userPoolM2mClientSecretArn = cognito.m2mClientSecret.secretArn;
+    this.gatewayScope = cognito.gatewayScope;
     this.hostedUiBaseUrl = cognito.hostedUiBaseUrl;
     const configTableConstruct = new ConfigTableConstruct(this, 'Config', { kmsKey: kms.ddbKey });
     const quotaTable = new QuotaTableConstruct(this, 'Quota', { kmsKey: kms.ddbKey });
-    const mfaReplay = new MfaReplayTableConstruct(this, 'MfaReplay', { kmsKey: kms.ddbKey });
-    this.mfaReplayTable = mfaReplay.table as ITable;
-    this.mfaSigningKeyId = kms.mfaSigningKey.keyId;
-    this.mfaSigningKeyArn = kms.mfaSigningKey.keyArn;
 
     this.vpc = network.vpc;
     this.configTable = configTableConstruct.table as ITable;
@@ -148,12 +148,30 @@ export class SearchStack extends Stack {
       routerFn: this.searchRouter.fn,
       toolDefinitions,
       cognitoDiscoveryUrl: cognito.discoveryUrl,
-      cognitoClientId: cognito.client.userPoolClientId
+      cognitoClientIds: [
+        cognito.userClient.userPoolClientId,
+        cognito.m2mClient.userPoolClientId
+      ]
     });
     this.gatewayId = gateway.gatewayId;
+    this.gatewayRoleArn = gateway.gatewayRoleArn;
+
+    // Per-user identity propagation: Gateway runs the interceptor between JWT
+    // validation and target invocation; the interceptor decodes the Bearer
+    // token's `sub` claim and injects it as `arguments.__principal`, which the
+    // search-router quota service uses as a partition key.
+    new GatewayInterceptor(this, 'Interceptor', {
+      gatewayId: gateway.gatewayId,
+      gatewayRoleArn: gateway.gatewayRoleArn
+    });
+
     new CfnOutput(this, 'GatewayId', { value: gateway.gatewayId });
     new CfnOutput(this, 'UserPoolId', { value: cognito.userPool.userPoolId });
-    new CfnOutput(this, 'UserPoolClientId', { value: cognito.client.userPoolClientId });
+    new CfnOutput(this, 'UserPoolClientId', { value: cognito.userClient.userPoolClientId });
+    new CfnOutput(this, 'GatewayUserClientId', { value: cognito.userClient.userPoolClientId });
+    new CfnOutput(this, 'GatewayM2mClientId', { value: cognito.m2mClient.userPoolClientId });
+    new CfnOutput(this, 'GatewayM2mClientSecretArn', { value: cognito.m2mClientSecret.secretArn });
+    new CfnOutput(this, 'GatewayScope', { value: cognito.gatewayScope });
     new CfnOutput(this, 'HostedUiBaseUrl', { value: cognito.hostedUiBaseUrl });
 
     const alarms = new AlarmsConstruct(this, 'Alarms');

@@ -24,7 +24,7 @@ describe('IAM least privilege hardening', () => {
       routerFn: mockFn,
       toolDefinitions: [],
       cognitoDiscoveryUrl: 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_TEST/.well-known/openid-configuration',
-      cognitoClientId: 'testclient'
+      cognitoClientIds: ['testclient']
     });
 
     const t = Template.fromStack(stack);
@@ -57,7 +57,7 @@ describe('IAM least privilege hardening', () => {
       routerFn: mockFn,
       toolDefinitions: [],
       cognitoDiscoveryUrl: 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_TEST/.well-known/openid-configuration',
-      cognitoClientId: 'testclient'
+      cognitoClientIds: ['testclient']
     });
 
     const t = Template.fromStack(stack);
