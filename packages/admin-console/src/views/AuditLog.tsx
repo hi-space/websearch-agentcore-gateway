@@ -18,14 +18,13 @@ const FILTER_DEFS: Array<{ id: Filter; label: string; matches: (action: string) 
   { id: 'all', label: 'All', matches: () => true },
   { id: 'config', label: 'Configuration', matches: (a) => a.startsWith('update_provider') },
   { id: 'secret', label: 'Secret', matches: (a) => a.includes('secret') || a.includes('reveal') },
-  { id: 'auth', label: 'MFA & auth', matches: (a) => a.includes('mfa') || a.includes('login') },
+  { id: 'auth', label: 'Auth', matches: (a) => a.includes('login') },
   { id: 'test', label: 'Connectivity tests', matches: (a) => a.includes('test') }
 ];
 
 function actionTone(action: string): BadgeTone {
   if (action.includes('reveal')) return 'warning';
   if (action.includes('blocked') || action.includes('failed')) return 'error';
-  if (action.includes('mfa')) return 'tag-purple';
   if (action.includes('test')) return 'tag-orange';
   return 'tag-green';
 }

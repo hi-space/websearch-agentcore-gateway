@@ -6,7 +6,7 @@ import { AuditLog } from '../AuditLog.js';
 const rows = [
   { actor: 'u1', ts: '2026-05-23T10:00:00Z', action: 'reveal_secret', target: 'provider:exa', after: { reason: 'rotation' } },
   { actor: 'u2', ts: '2026-05-23T09:00:00Z', action: 'update_provider', target: 'provider:exa' },
-  { actor: 'u1', ts: '2026-05-23T08:00:00Z', action: 'mfa_step_up_issued', target: 'actor:u1' }
+  { actor: 'u1', ts: '2026-05-23T08:00:00Z', action: 'login', target: 'actor:u1' }
 ];
 
 describe('AuditLog', () => {
@@ -14,13 +14,13 @@ describe('AuditLog', () => {
     render(<AuditLog rows={rows} />);
     expect(screen.getByText('reveal_secret')).toBeInTheDocument();
     expect(screen.getByText('update_provider')).toBeInTheDocument();
-    expect(screen.getByText('mfa_step_up_issued')).toBeInTheDocument();
+    expect(screen.getByText('login')).toBeInTheDocument();
   });
 
   it('filters by pill tab', () => {
     render(<AuditLog rows={rows} />);
-    fireEvent.click(screen.getByRole('tab', { name: /MFA & auth/ }));
-    expect(screen.getByText('mfa_step_up_issued')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: /Auth/ }));
+    expect(screen.getByText('login')).toBeInTheDocument();
     expect(screen.queryByText('update_provider')).not.toBeInTheDocument();
   });
 

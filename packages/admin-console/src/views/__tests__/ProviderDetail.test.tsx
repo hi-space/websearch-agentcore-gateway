@@ -26,7 +26,7 @@ describe('ProviderDetail', () => {
     await waitFor(() => expect(update).toHaveBeenCalledWith('exa', expect.objectContaining({ enabled: true })));
   });
 
-  it('reveals secret only after MFA modal confirmation', async () => {
+  it('reveals secret only after reason confirmation', async () => {
     const reveal = vi.fn().mockResolvedValue({ providerId: 'exa', value: 'sk_real' });
     render(<ProviderDetail initial={row} api={{ ...stubApi, revealSecret: reveal }} />);
     fireEvent.click(screen.getByRole('tab', { name: 'Secret' }));
@@ -37,7 +37,7 @@ describe('ProviderDetail', () => {
       target: { value: 'incident-482' }
     });
     fireEvent.click(screen.getByRole('button', { name: /confirm reveal/i }));
-    await waitFor(() => expect(reveal).toHaveBeenCalledWith('exa'));
+    await waitFor(() => expect(reveal).toHaveBeenCalledWith('exa', 'incident-482'));
   });
 
   it('connectivity test pushes a result row', async () => {

@@ -1,43 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { revealSecret } from '../reveal-secret';
 
-const validAssertion = { payload: 'p', signature: 's' };
-
-function makeKms(verifyOk = true) {
-  return {
-    send: vi.fn().mockImplementation((cmd: any) => {
-      const ctor = cmd?.constructor?.name;
-      if (ctor === 'VerifyCommand') return Promise.resolve({ SignatureValid: verifyOk });
-      return Promise.resolve({});
-    })
-  };
-}
-
-// Stub the assertion module so tests don't need to round-trip a real signature.
-vi.mock('../../auth/mfa-assertion', () => ({
-  verifyMfaAssertion: vi.fn(async (_kms: any, _key: string, _assert: any, sub: string) => ({
-    sub, nonce: 'n', iat: Date.now()
-  })),
-  assertionFingerprint: vi.fn((a: any) => `fp-${a.payload}-${a.signature}`)
-}));
-
-describe('revealSecret (MFA-hardened)', () => {
+describe('revealSecret', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   function baseInput(overrides: any = {}) {
     const sm = { send: vi.fn().mockResolvedValue({ SecretString: 'sk_test_placeholder' }) };
-    // 5 calls expected on success path:
-    // 0: consumeAssertion PutItem (replay guard) → no error
-    // 1: bumpHourlyCounter UpdateItem → returns count
-    // 2: GetItemCommand on ConfigTable
-    // 3: writeAudit PutItem (audit log)
     const ddb = {
       send: vi.fn().mockImplementation((cmd: any) => {
         const ctor = cmd?.constructor?.name;
-        if (ctor === 'PutItemCommand') return Promise.resolve({});
-        if (ctor === 'UpdateItemCommand') return Promise.resolve({ Attributes: { count: { N: '1' } } });
         if (ctor === 'GetItemCommand') {
           return Promise.resolve({ Item: { providerId: { S: 'exa' }, secretArn: { S: 'arn:secret:exa' } } });
         }
@@ -45,15 +18,15 @@ describe('revealSecret (MFA-hardened)', () => {
       })
     };
     return {
-      ddb: ddb as any, sm: sm as any, kms: makeKms() as any,
-      configTable: 'ConfigTable', auditTable: 'AuditLogTable', replayTable: 'MfaReplay',
-      mfaKeyId: 'kms-id', actor: 'user-1', providerId: 'exa',
-      reason: 'rotate key per Q2 review', assertion: validAssertion,
+      ddb: ddb as any, sm: sm as any,
+      configTable: 'ConfigTable', auditTable: 'AuditLogTable',
+      actor: 'user-1', providerId: 'exa',
+      reason: 'rotate key per Q2 review',
       ...overrides
     };
   }
 
-  it('returns secret value, consumes assertion, bumps counter, audits without value', async () => {
+  it('returns secret value and writes audit row without exposing the value', async () => {
     const input = baseInput();
     const out = await revealSecret(input);
     expect(out).toEqual({ providerId: 'exa', value: 'sk_test_placeholder' });
@@ -67,24 +40,12 @@ describe('revealSecret (MFA-hardened)', () => {
     await expect(revealSecret(baseInput({ reason: 'no' }))).rejects.toThrow('INVALID_INPUT');
   });
 
-  it('throws STEP_UP_REQUIRED on assertion replay (conditional check fails)', async () => {
-    const input = baseInput();
-    (input.ddb.send as any).mockImplementationOnce(() => {
-      const err: any = new Error('replay');
-      err.name = 'ConditionalCheckFailedException';
-      return Promise.reject(err);
-    });
-    await expect(revealSecret(input)).rejects.toThrow('STEP_UP_REQUIRED');
-  });
-
-  it('throws RATE_LIMITED when hourly count exceeds cap', async () => {
+  it('throws NOT_FOUND when provider config has no secretArn', async () => {
     const input = baseInput();
     (input.ddb.send as any).mockImplementation((cmd: any) => {
-      const ctor = cmd?.constructor?.name;
-      if (ctor === 'PutItemCommand') return Promise.resolve({});
-      if (ctor === 'UpdateItemCommand') return Promise.resolve({ Attributes: { count: { N: '6' } } });
+      if (cmd?.constructor?.name === 'GetItemCommand') return Promise.resolve({ Item: { providerId: { S: 'exa' } } });
       return Promise.resolve({});
     });
-    await expect(revealSecret(input)).rejects.toThrow('RATE_LIMITED');
+    await expect(revealSecret(input)).rejects.toThrow('NOT_FOUND');
   });
 });

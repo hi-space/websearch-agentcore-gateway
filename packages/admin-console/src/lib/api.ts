@@ -28,7 +28,7 @@ function resolveUrl(path: string): string {
 }
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(resolveUrl(path), { ...init, headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) } });
+  const res = await fetch(resolveUrl(path), { ...init, cache: 'no-store', headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) } });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new ApiError(res.status, (body as Record<string, unknown>).error as string ?? 'UNKNOWN');
   return body as T;
@@ -40,8 +40,11 @@ export const adminApi = {
     call<ProviderRow>(`/api/providers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   putSecret: (id: string, value: string) =>
     call<{ providerId: string; versionId: string }>(`/api/providers/${id}/secret`, { method: 'POST', body: JSON.stringify({ value }) }),
-  revealSecret: (id: string) =>
-    call<{ providerId: string; value: string }>(`/api/providers/${id}/secret/reveal`, { method: 'POST' }),
+  revealSecret: (id: string, reason: string) =>
+    call<{ providerId: string; value: string }>(`/api/providers/${id}/secret/reveal`, {
+      method: 'POST',
+      body: JSON.stringify({ reason })
+    }),
   testProvider: (id: string) =>
     call<{ ok: boolean; results?: number; error?: string }>(`/api/providers/${id}/test`, { method: 'POST' }),
   playgroundSearch: (query: string, topK?: number) =>

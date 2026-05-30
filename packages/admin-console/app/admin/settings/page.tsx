@@ -18,8 +18,6 @@ function deploymentSettings(): Setting[] {
   const gatewayId = process.env.AGENTCORE_GATEWAY_ID ?? '(not set)';
   const configTable = process.env.CONFIG_TABLE ?? '(not set)';
   const auditTable = process.env.AUDIT_TABLE ?? '(not set)';
-  const replayTable = process.env.MFA_REPLAY_TABLE ?? '(not set)';
-  const mfaKeyId = process.env.MFA_KMS_KEY_ID ?? '(not set)';
   const routerArn = process.env.SEARCH_ROUTER_ARN ?? '(not set)';
   return [
     { label: 'AWS Region', value: region },
@@ -27,9 +25,7 @@ function deploymentSettings(): Setting[] {
     { label: 'AgentCore Gateway', value: gatewayId, hint: 'Connector dispatch surface.' },
     { label: 'Router Lambda', value: routerArn, hint: 'Connectivity tests invoke this.' },
     { label: 'Provider config table', value: configTable },
-    { label: 'Audit table', value: auditTable },
-    { label: 'Replay table', value: replayTable, hint: 'Single-use MFA assertion guard.' },
-    { label: 'MFA KMS key id', value: mfaKeyId, hint: 'Signs step-up assertions.' }
+    { label: 'Audit table', value: auditTable }
   ];
 }
 
@@ -44,7 +40,6 @@ export default function SettingsPage() {
         items={[
           { label: 'Deployment', value: `${set} / ${total}`, hint: 'environment variables resolved' },
           { label: 'Region', value: process.env.AWS_REGION ?? 'us-east-1' },
-          { label: 'Step-up MFA', value: 'KMS-signed', hint: 'rate-limited 5/hr per actor' },
           { label: 'Audit retention', value: '90 days', hint: 'append-only DDB' }
         ]}
       />
@@ -88,8 +83,8 @@ export default function SettingsPage() {
       <Card variant="panel">
         <CardHeader title="Operator account" subtitle="Account changes are managed through Cognito Hosted UI." />
         <p className="text-body-md text-charcoal leading-relaxed">
-          Password resets, MFA enrollment, and identity attributes are managed in your Cognito user pool. Provider
-          enablement, quotas, and credential rotation live under{' '}
+          Password resets and identity attributes are managed in your Cognito user pool. Provider enablement, quotas,
+          and credential rotation live under{' '}
           <span className="font-mono text-ink">/admin/providers</span>.
         </p>
       </Card>
@@ -99,8 +94,8 @@ export default function SettingsPage() {
         <FaqAccordion
           items={[
             {
-              q: 'Why does revealing a secret require MFA every time?',
-              a: 'Reveals are explicitly out-of-band: each one consumes a one-time KMS-signed assertion and is rate-limited to 5 per hour per actor. The intent is that key material exposure leaves a trail no operator can quietly bypass.'
+              q: 'How is a secret reveal recorded?',
+              a: 'Each reveal writes an audit row with the operator identity and the reason text. The row is append-only and retained for 90 days.'
             },
             {
               q: 'How do I add a new upstream search provider?',

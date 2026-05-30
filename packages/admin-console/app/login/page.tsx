@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 const journey: JourneyStep[] = [
   { number: '01', label: 'Setup', title: 'Provision the gateway', description: 'Run cdk deploy to create Cognito, DynamoDB, KMS, and the AgentCore Gateway in your account.' },
-  { number: '02', label: 'Identity', title: 'Sign in with Cognito', description: 'Authenticate with the Cognito Hosted UI. Step-up MFA is required for privileged operations.' },
+  { number: '02', label: 'Identity', title: 'Sign in with Cognito', description: 'Authenticate with the Cognito Hosted UI. Privileged actions are recorded in the audit log.' },
   { number: '03', label: 'Providers', title: 'Configure providers', description: 'Toggle providers on/off, set RPM and daily quotas, configure timeouts inline.' },
   { number: '04', label: 'Secrets', title: 'Store API credentials', description: 'New secret values are written to AWS Secrets Manager. Old versions remain for safe rollback.' },
   { number: '05', label: 'Verify', title: 'Run a connectivity test', description: 'Probe upstream search via the router. Each test emits an audit row attributed to your identity.' },
@@ -46,14 +46,14 @@ export default function LoginPage() {
             </h1>
             <p className="mt-6 text-body-md text-charcoal max-w-xl leading-relaxed">
               Provision providers, rotate API credentials, and review a hash-chained audit trail. Every privileged
-              action is MFA-gated and recorded.
+              action is recorded.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/api/auth/login">
                 <Button variant="dark">Sign in with Cognito</Button>
               </Link>
               <a href="https://docs.aws.amazon.com/cognito/" target="_blank" rel="noreferrer">
-                <Button variant="link">Learn about MFA →</Button>
+                <Button variant="link">Learn about Cognito →</Button>
               </a>
             </div>
             <p className="mt-6 text-caption-sm text-muted">
@@ -69,7 +69,7 @@ export default function LoginPage() {
                   <PreviewStat label="Providers" value="6 / 8" hint="enabled" />
                   <PreviewStat label="p95 latency" value="142 ms" hint="last hour" />
                   <PreviewStat label="Error rate" value="0.42 %" hint="last hour" />
-                  <PreviewStat label="Reveals" value="2 / 5" hint="this hour" />
+                  <PreviewStat label="Reveals" value="2" hint="this hour" />
                 </div>
                 <div className="mt-4 rounded-none bg-white/[0.03] border border-darkOutline px-4 py-3 text-body-sm text-darkOnSurfaceMuted font-mono">
                   connectivity_test · <span className="text-success">ok</span> · 18 results · provider <span className="text-onDark">exa</span>
@@ -129,7 +129,7 @@ export default function LoginPage() {
             title="Change control"
             items={[
               'Configuration saves emit an audit row',
-              'Reveals consume one-time MFA assertions',
+              'Reveals require a written reason and are audited',
               'Disable providers via toggle, not by deleting secrets'
             ]}
           />
@@ -145,7 +145,7 @@ export default function LoginPage() {
           </div>
         </div>
         <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
-          <ResourceCard category="Capture" title="Sign in" description="Cognito Hosted UI with step-up MFA." href="/api/auth/login" />
+          <ResourceCard category="Capture" title="Sign in" description="Cognito Hosted UI." href="/api/auth/login" />
           <ResourceCard category="Console" title="Provider catalog" description="Toggle, throttle, and configure upstream providers." href="/admin/providers" />
           <ResourceCard category="Console" title="Audit log" description="Filter by actor, action, and time. Export to S3 in v1.1." href="/admin/audit" />
           <ResourceCard category="Reference" title="Architecture" description="See the v1.0 walking-skeleton plan." href="https://github.com/" external />
@@ -160,7 +160,7 @@ export default function LoginPage() {
           description="The console produces a paper trail other teams can verify without asking you."
           chips={[
             { id: 'audit', label: 'Audit log', value: 'Hash-chained', hint: '90-day DDB retention' },
-            { id: 'mfa', label: 'Reveals', value: 'KMS-signed', hint: 'rate-limited 5/hr' },
+            { id: 'reveals', label: 'Reveals', value: 'Reason + actor', hint: 'every reveal audited' },
             { id: 'metrics', label: 'Metrics', value: 'CloudWatch', hint: 'p95 + error rate' }
           ]}
         />
@@ -174,7 +174,7 @@ export default function LoginPage() {
         </div>
         <FaqAccordion
           items={[
-            { q: 'Why does revealing a secret require MFA every time?', a: 'Reveals consume a one-time KMS-signed assertion and are rate-limited to 5/hr per actor. The intent is that key material exposure leaves a trail no operator can quietly bypass.' },
+            { q: 'How is a secret reveal recorded?', a: 'Each reveal writes an audit row with the operator identity and the reason text. The row is append-only and retained for 90 days.' },
             { q: 'How do I add a new upstream search provider?', a: 'Add an adapter under packages/adapters and register it via the connector framework. CDK seeds the provider config row on next deploy. v1.x will surface a console form.' },
             { q: 'How long does the audit log retain rows?', a: 'Rows live for 90 days in DynamoDB. Daily export to S3 is in v1.1.' },
             { q: 'Can I deploy this to a region other than us-east-1?', a: 'Yes. Set AWS_REGION in CDK context and re-deploy. Cognito and Bedrock-adjacent services need to be available in your target region.' }

@@ -11,8 +11,8 @@ export function applyV1NagSuppressions(stack: Stack): void {
       id: 'AwsSolutions-IAM5',
       reason: 'CloudWatch:PutMetricData and bedrock-agentcore:Create*/Delete* require resource:* by API contract; bounded by namespace/action conditions where possible.'
     },
-    // AwsSolutions-DDB3: scoped per-resource on the three tables that opt out of PITR
-    // (QuotaTable, MfaReplayTable — ephemeral; AuditLogTable — WORM via S3 Object Lock).
+    // AwsSolutions-DDB3: scoped per-resource on the tables that opt out of PITR
+    // (QuotaTable — ephemeral; AuditLogTable — WORM via S3 Object Lock).
     // Stack-level suppression removed in v1.6 hardening.
     {
       id: 'AwsSolutions-L1',
@@ -40,7 +40,7 @@ export function applyV1NagSuppressions(stack: Stack): void {
     },
     {
       id: 'AwsSolutions-COG8',
-      reason: 'Cognito Plus tier (advanced threat protection) is a paid feature deferred to v1.6 once cost model is approved; v1 admin pool enforces MFA, 12-char password policy, and rate-limited Lambda authorizer.'
+      reason: 'Cognito Plus tier (advanced threat protection) is a paid feature deferred to v1.6 once cost model is approved; v1 admin pool enforces a 12-char password policy and rate-limited Lambda authorizer.'
     },
     {
       id: 'AwsSolutions-SF1',

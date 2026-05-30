@@ -23,7 +23,7 @@ interface ProviderMetric {
 interface Api {
   updateProvider: (id: string, body: { enabled: boolean; quota: { rpm: number; daily: number }; timeoutMs: number }) => Promise<ProviderRow>;
   putSecret: (id: string, value: string) => Promise<{ providerId: string; versionId: string }>;
-  revealSecret: (id: string) => Promise<{ providerId: string; value: string }>;
+  revealSecret: (id: string, reason: string) => Promise<{ providerId: string; value: string }>;
   testProvider: (id: string) => Promise<{ ok: boolean; results?: number; error?: string }>;
 }
 
@@ -202,7 +202,7 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
         <Card variant="panel">
           <CardHeader
             title="API credential"
-            subtitle="Stored in AWS Secrets Manager. Reveals require step-up MFA and are rate-limited to 5 per hour."
+            subtitle="Stored in AWS Secrets Manager. Each reveal records actor and reason in the audit log."
           />
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
             <Input
@@ -271,7 +271,7 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
               onClick={async () => {
                 setRevealing(true);
                 try {
-                  const r = await api.revealSecret(initial.providerId);
+                  const r = await api.revealSecret(initial.providerId, revealReason.trim());
                   setRevealValue(r.value);
                   setRevealOpen(false);
                   setRevealReason('');
@@ -290,7 +290,7 @@ export function ProviderDetail({ initial, metric, api = defaultApi }: ProviderDe
       >
         <p className="mb-4">
           This action will surface the current secret value to your screen and emit an audit row attributed to your
-          identity. It is rate-limited to 5 per hour.
+          identity.
         </p>
         <FieldLabel label="Reason" hint="At least 4 characters. Visible in the audit row.">
           <Input
