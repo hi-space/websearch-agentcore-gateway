@@ -1,67 +1,41 @@
 # WebSearch Tool Gateway — Technical Architecture
 
-**Version**: 1.0 | **Date**: May 2026 | **AWS Region**: ap-northeast-2 (Seoul)
+**Version**: 1.1 | **Date**: 2026-05-31 | **AWS Region**: ap-northeast-2 (Seoul)
 
 ## Executive Summary
 
-WebSearch Tool Gateway is a fully managed, Infrastructure-as-Code system that integrates 6 web search engines (Serper, Exa, DuckDuckGo, Perplexity, Tavily, Brave) into AWS Bedrock AgentCore and provides unified access via Cowork 3P client integration.
+WebSearch Tool Gateway is a fully managed, Infrastructure-as-Code system that integrates multiple web search / extraction engines (Serper, Exa, DuckDuckGo, Perplexity, Brave, Anthropic, Firecrawl, You.com, Tavily) into AWS Bedrock AgentCore and provides unified access via Cowork 3P client integration.
 
 **Key Metrics**:
 - **4 deployment tracks**: Infra (Terraform), Tools (Python Lambda), Dashboard (Next.js), Cowork (setup automation)
 - **6 Terraform modules**: auth, gateway, identity-providers, gateway-lambda-tool, gateway-mcp-target, observability
-- **6 search engines**: 4 Lambda-based + 2 external MCP HTTP targets
-- **Zero-trust architecture**: JWT-based auth with Cognito allowed-clients access control
-- **Full observability**: CloudWatch Logs + Metrics + OTEL tracing
+- **10 engines**: 9 Lambda-backed targets + 1 hosted MCP server target (Tavily). Each is toggled on via an `enable_<engine>` flag and only created when its API key is present (DuckDuckGo needs none).
+- **Zero-trust architecture**: CUSTOM_JWT auth with Cognito allowed-clients access control
+- **Full observability**: CloudWatch vended logs + metrics + X-Ray (OTEL) traces
 
 ---
 
 ## System Architecture
 
+```mermaid
+flowchart TD
+    Client["Cowork 3P Client (macOS / Windows)<br/>Managed MCP preference + JWT headers helper"]
+    Gateway["AWS Bedrock AgentCore Gateway<br/>protocol=MCP · authorizer=CUSTOM_JWT<br/>JWT validation (Cognito OIDC) · allowed-clients control"]
+
+    Client -->|"HTTPS + Bearer JWT<br/>(agentcore-token helper, 900s TTL)"| Gateway
+
+    Gateway --> LambdaTargets["Lambda-backed Targets (9)<br/>gateway_iam_role credential"]
+    Gateway --> McpTarget["MCP Server Target<br/>Tavily (mcp.tavily.com)<br/>api_key credential via Identity vault"]
+
+    LambdaTargets --> L1["serper · exa · duckduckgo · perplexity"]
+    LambdaTargets --> L2["brave · anthropic · firecrawl"]
+    LambdaTargets --> L3["you · tavily_lambda"]
+
+    LambdaTargets -.->|vended logs + OTEL spans| CW["CloudWatch<br/>Application Logs · TRACES → X-Ray"]
+    Gateway -.->|vended logs + OTEL spans| CW
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                                                                     │
-│                  Cowork 3P Client (macOS/Windows)                  │
-│              (Managed Preference + JWT Token Rotation)              │
-│                                                                     │
-└──────────────────────────────────┬──────────────────────────────────┘
-                                   │ HTTPS + Custom JWT
-                                   │ (via agentcore-token helper)
-                                   ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│                                                                      │
-│          AWS Bedrock AgentCore Gateway (Custom JWT + MCP)           │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │ Gateway                                                     │   │
-│  │  - JWT validation (Cognito OIDC issuer)                   │   │
-│  │  - Allowed-clients access control                          │   │
-│  │  - Tool/MCP routing                                        │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                                                      │
-└──────────┬──────────────┬──────────────┬─────────────────┬──────────┘
-           │              │              │                 │
-    Lambda │ Targets   HTTP │ Targets  Lambda │ Targets   HTTP │ Others
-           │              │              │                 │
-    ┌──────▼──────┐  ┌────▼─────┐  ┌────▼─────┐  ┌────▼──────┐
-    │   Serper    │  │  Tavily  │  │   Exa    │  │   Brave   │
-    │  (Gateway   │  │ (Gateway)│  │ (Gateway)│  │ (Gateway) │
-    │   Lambda)   │  │  → HTTP  │  │ Lambda)  │  │  → HTTP   │
-    └─────┬──────┘  └────┬─────┘  └────┬─────┘  └────┬──────┘
-          │              │              │             │
-    ┌─────▼──────────────┴──────────────┴─────────────▼────┐
-    │                                                      │
-    │        Search Engine Integration Layer              │
-    │   (DuckDuckGo, Perplexity also as Lambda)          │
-    │                                                      │
-    └─────────────────┬───────────────────────────────────┘
-                      │
-              ┌───────▼────────┐
-              │  CloudWatch    │
-              │  - Logs        │
-              │  - Metrics     │
-              │  - Vended Logs │
-              │  - OTEL Traces │
-              └────────────────┘
-```
+
+All nine Lambda targets expose the **same** MCP tool — `web_search(query, num_results?, country?)` — via an inline tool schema; the engine differs per target. The Tavily hosted MCP server is registered as a separate `mcpServer` target whose API key the gateway injects from the AgentCore Identity token vault (query parameter `tavilyApiKey`).
 
 ---
 
@@ -72,107 +46,124 @@ WebSearch Tool Gateway is a fully managed, Infrastructure-as-Code system that in
 **Purpose**: Central MCP router with JWT-based access control.
 
 **Responsibilities**:
-- Accept MCP protocol requests (tool list, tool call)
-- Validate JWT tokens (Cognito OIDC issuer)
-- Enforce access via the allowed-clients list (Cognito M2M)
-- Route to Lambda targets or external HTTP MCP servers
+- Accept MCP protocol requests (tool list, tool call); supported version `2025-11-25`
+- Validate JWT tokens (Cognito OIDC discovery URL)
+- Enforce access via the allowed-clients list (app + web + M2M client IDs)
+- Route to Lambda targets or the external MCP server target
 - Return normalized MCP responses
 
-**Configuration**:
+**Configuration** (`infra/modules/gateway/main.tf`):
 ```terraform
-resource "aws_bedrockagentcore_gateway" "main" {
-  name = "${var.project_name}-gateway"
-  
-  # Custom JWT authentication
-  type = "CUSTOM_JWT"
-  
-  # MCP server targets (mixed: Lambda + HTTP)
-  mcp_server_targets = [
-    # Lambda targets for: serper, exa, duckduckgo, perplexity
-    # HTTP targets for: tavily, brave
-  ]
+resource "aws_bedrockagentcore_gateway" "this" {
+  name            = local.gateway_name
+  role_arn        = aws_iam_role.gateway.arn
+  authorizer_type = "CUSTOM_JWT"
+  protocol_type   = "MCP"
+
+  authorizer_configuration {
+    custom_jwt_authorizer {
+      discovery_url   = "${var.cognito_issuer_url}/.well-known/openid-configuration"
+      allowed_clients = var.cognito_allowed_clients # [app, web, m2m] client IDs
+    }
+  }
+
+  protocol_configuration {
+    mcp {
+      search_type        = "SEMANTIC"
+      supported_versions = ["2025-11-25"]
+    }
+  }
 }
 ```
+
+Lambda and MCP-server targets are separate `aws_bedrockagentcore_gateway_target` resources (see sections 2–3), not an inline list.
 
 ---
 
 ### 2. Search Tools (Lambda)
 
-**4 Search Tools as AWS Lambda functions**:
+**9 Lambda-backed targets** (`tools/<engine>/handler.py`, Python 3.12, **arm64**). Each is conditionally created from `enable_<engine>` + a non-empty API key (DuckDuckGo needs none). All expose the same MCP tool `web_search(query, num_results?, country?)`.
 
-| Tool | Engine | Auth | Lambda Runtime | Latency | Cost |
-|------|--------|------|-----------------|---------|------|
-| **serper** | Google Serper | API Key (via Identity) | Python 3.12, arm64 | 500ms avg | $0.001-0.005/call |
-| **exa** | Exa (deterministic) | API Key (via Identity) | Python 3.12, arm64 | 800ms avg | $0.002-0.01/call |
-| **duckduckgo** | DuckDuckGo | None (public API) | Python 3.12, arm64 | 400ms avg | Free |
-| **perplexity** | Perplexity Sonar | API Key (via Identity) | Python 3.12, arm64 | 1200ms avg | $0.005-0.02/call |
+| Tool | Engine | API Key | Notes |
+|------|--------|---------|-------|
+| **serper** | Google Serper | `SERPER_API_KEY` | SERP results |
+| **exa** | Exa | `EXA_API_KEY` | neural search |
+| **duckduckgo** | DuckDuckGo | none | uses `ddgs` package |
+| **perplexity** | Perplexity Sonar | `PERPLEXITY_API_KEY` | returns `answer` |
+| **brave** | Brave Search | `BRAVE_API_KEY` | independent index |
+| **anthropic** | Claude built-in web_search | `ANTHROPIC_API_KEY` | returns `answer`; snippet best-effort |
+| **firecrawl** | Firecrawl | `FIRECRAWL_API_KEY` | search + extraction |
+| **you** | You.com | `YOU_API_KEY` | web search |
+| **tavily_lambda** | Tavily (Lambda-backed) | `TAVILY_API_KEY` | distinct from hosted MCP target |
 
-**Common Interface** (SearchResponse contract):
+**Common Interface** (`SearchResponse` contract, `tools/_shared/response.py`):
 
 ```python
 {
   "results": [
-    {"title": str, "url": str, "snippet": str},
+    {"title": str, "url": str, "snippet": str,
+     "score": float | None, "published_at": str | None},  # RFC3339
     ...
   ],
-  "engine": str,        # "serper" | "exa" | "duckduckgo" | "perplexity"
-  "latency_ms": int,    # Time to retrieve results
-  "error": str | None   # Error message if failed
-}
+  "engine": str,           # e.g. "serper", "exa", "anthropic", ...
+  "latency_ms": int,       # query execution time
+  "answer": str            # OPTIONAL — present only when the engine returns
+}                          #   a synthesized answer (anthropic, perplexity, tavily)
 ```
 
-**API Key Management**:
+**API Key Management** (`tools/_shared/identity.py`):
 
-Lambda handlers retrieve API keys via **AgentCore Identity Provider API**:
+`get_api_key(provider_name)` resolves the key in priority order:
+1. A per-engine **environment variable** (e.g. `SERPER_API_KEY`) injected by Terraform — the primary path for Lambda targets.
+2. **AgentCore Identity** `GetResourceApiKey` as a *fallback*, only attempted when `WORKLOAD_TOKEN` + `IDENTITY_PROVIDER_ARN` are present.
 
-```python
-# tools/_shared/identity.py
-def get_api_key(provider_name: str) -> str:
-    client = boto3.client("bedrock-agentcore")
-    response = client.get_resource_api_key(
-        identityProviderArn=os.environ["IDENTITY_PROVIDER_ARN"],
-        workloadToken=os.environ["WORKLOAD_TOKEN"],
-        resourceIdentifier=provider_name  # "serper", "exa", etc.
-    )
-    return response["apiKey"]
-```
+Resolved keys are cached in Lambda memory for the warm window.
 
 **Environment Variables** (injected by Terraform):
 
 ```bash
-WORKLOAD_TOKEN              # Provided by AgentCore at runtime
-IDENTITY_PROVIDER_ARN       # Configured Cognito Identity provider ARN
-AWS_REGION                  # ap-northeast-2
-PROJECT_NAME                # websearch-gateway
+<ENGINE>_API_KEY            # e.g. SERPER_API_KEY — primary key source
+IDENTITY_PROVIDER_ARN       # credential provider ARN (Identity fallback)
+WORKLOAD_TOKEN              # provided by AgentCore at runtime (fallback path)
+PROJECT_NAME                # websearch-gw
 ENVIRONMENT                 # dev
+# AWS_REGION is reserved and injected by the Lambda runtime automatically.
 ```
 
 ---
 
-### 3. External MCP Targets (HTTP)
+### 3. External MCP Server Target (Tavily)
 
-**2 Search Tools as External HTTP MCP Servers**:
+**1 hosted MCP server**, registered as an `mcpServer` target. The gateway injects the
+API key from the AgentCore Identity token vault — `mcpServer` targets reject
+`gateway_iam_role`, so an `api_key` credential provider is required.
 
-| Tool | Protocol | Endpoint | Auth |
-|------|----------|----------|------|
-| **tavily** | HTTP MCP | https://api.tavily.com/search | Bearer API Key |
-| **brave** | HTTP MCP | https://api.search.brave.com/mcp | Bearer API Key |
+| Tool | Endpoint | Credential injection |
+|------|----------|----------------------|
+| **tavily** | `https://mcp.tavily.com/mcp/` | `QUERY_PARAMETER` → `tavilyApiKey` |
 
-**Gateway Registration**:
+> Note: Brave is **not** a hosted MCP target — it runs as a Lambda target (section 2).
+> `tavily_lambda` is a separate Lambda-backed Tavily target distinct from this hosted one.
+
+**Gateway Registration** (`infra/modules/gateway/main.tf`):
 
 ```terraform
-resource "aws_bedrockagentcore_gateway_target" "tavily" {
-  gateway_id = aws_bedrockagentcore_gateway.main.id
-  
-  type = "MCP_SERVER"
-  
-  configuration = {
-    server = {
-      type = "stdio"  # or "http"
-      endpoint = "https://api.tavily.com/search"
+resource "aws_bedrockagentcore_gateway_target" "mcp_server" {
+  for_each           = var.mcp_server_targets
+  gateway_identifier = aws_bedrockagentcore_gateway.this.gateway_id
+  name               = each.key
+
+  credential_provider_configuration {
+    api_key {
+      provider_arn              = var.mcp_server_credentials[each.key]
+      credential_location       = "QUERY_PARAMETER"   # tavily
+      credential_parameter_name = "tavilyApiKey"        # tavily
     }
-    credentials = {
-      credential_provider_arn = aws_bedrockagentcore_api_key_credential_provider.tavily.arn
+  }
+
+  target_configuration {
+    mcp {
+      mcp_server { endpoint = each.value }  # https://mcp.tavily.com/mcp/
     }
   }
 }
@@ -182,168 +173,157 @@ resource "aws_bedrockagentcore_gateway_target" "tavily" {
 
 ### 4. Authentication (Cognito)
 
-**Purpose**: OAuth 2.0 + M2M token issuance for Cowork clients.
+**Purpose**: OAuth 2.0 token issuance for Cowork clients and the dashboard.
 
 **Components**:
 
-1. **User Pool** (websearch-gw-up):
-   - Standard OAuth 2.0 scopes (openid, email, profile)
-   - Custom resource server (`bedrock-agentcore-control`)
-   - 2 client types:
-     - **Web Client** (Cowork interactive): Authorization Code + PKCE
-     - **M2M Client** (Service-to-service): Client Credentials flow
+1. **User Pool** + **Resource Server** (`identifier = "agentcore"`, scope `invoke` → `agentcore/invoke`)
 
-2. **OIDC Configuration**:
+2. **3 client types**:
+   - **App client** (`${project}-app-client`): `client_credentials`, scope `agentcore/invoke` — CLI/M2M.
+   - **Web client** (`${project}-web-client`): OAuth flows for the dashboard, scopes `openid email profile agentcore/invoke`.
+   - **M2M client** (`${project}-m2m-client`): `client_credentials`, scope `agentcore/invoke` — service-to-service (Cowork helper, dashboard server routes).
+
+   All three client IDs are passed to the gateway's `allowed_clients`.
+
+3. **OIDC Configuration** (issuer = Cognito IdP URL, not the hosted-UI domain):
+   - Discovery URL: `{issuer_url}/.well-known/openid-configuration`
    - Token endpoint: `https://{cognito_domain}/oauth2/token`
-   - JWKS endpoint: `https://{cognito_domain}/oauth2/token/.well-known/jwks.json`
-   - Issuer URL: `https://{cognito_domain}/`
+   - Issuer URL: `https://cognito-idp.ap-northeast-2.amazonaws.com/{user_pool_id}`
 
-**JWT Token Structure**:
+**Access tokens** are obtained via the `client_credentials` grant (no interactive
+browser login in the Cowork/dashboard paths — see [Token Refresh](#token-refresh-mechanism)):
 
-```json
-{
-  "sub": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "cognito:username": "user@example.com",
-  "aud": "xxxxxxxx...",
-  "token_use": "id",
-  "auth_time": 1234567890,
-  "iss": "https://cognito-idp.ap-northeast-2.amazonaws.com/ap-northeast-2_xxxxxxxx",
-  "exp": 1234567890,
-  "iat": 1234567890
-}
+```bash
+POST https://{cognito_domain}/oauth2/token
+  grant_type=client_credentials
+  scope=agentcore/invoke
+  # client_id + client_secret via HTTP Basic
 ```
+
+The resulting JWT's `client_id`/`scope` claims are validated by the gateway against
+`allowed_clients`.
 
 ---
 
-### 5. Identity Providers (API Key Management)
+### 5. Identity Providers (API Key Credential Providers)
 
-**Purpose**: Store and vend API keys to Lambda functions.
+**Purpose**: Hold API keys in the AgentCore Identity token vault. Used by:
+- the **hosted MCP server target** (Tavily), where the gateway injects the key outbound, and
+- Lambda handlers as a **fallback** when the per-engine env var is absent.
 
-**Architecture**:
+An `aws_bedrockagentcore_api_key_credential_provider` is created **only for engines
+that have an API key** — `tavily`, `brave`, `serper`, `exa`, `perplexity`,
+`anthropic`, `firecrawl`, `you`. **DuckDuckGo has no provider** (no key). The ARNs
+are surfaced as `identity_provider_arns` (non-sensitive — ARNs are not secrets).
 
-```terraform
-resource "aws_bedrockagentcore_api_key_credential_provider" "serper" {
-  name = "serper-provider"
-  
-  # Stores API key reference (not the key itself)
-  # Key retrieved at runtime via AgentCore Identity API
-}
-```
+**Two credential paths** (see also `tools/_shared/identity.py`):
 
-**Storage Flow**:
+| Target kind | Key source |
+|-------------|------------|
+| Lambda targets | per-engine **env var** (e.g. `SERPER_API_KEY`) injected by Terraform; Identity vault is the fallback |
+| MCP server target (Tavily) | gateway injects from the Identity vault as a query param |
 
-1. Terraform stores API key in `terraform.tfvars` (marked `sensitive=true`)
-2. Lambda retrieves key via:
-   ```
-   bedrock-agentcore:GetResourceApiKey(
-     identityProviderArn="arn:aws:bedrock-agentcore:ap-northeast-2:...",
-     resourceIdentifier="serper",
-     workloadToken=<WORKLOAD_TOKEN>
-   )
-   ```
-3. Key cached in Lambda memory for warm starts
-
-**API Key Variables** (terraform.tfvars):
+**API Key Variables** (`terraform.tfvars`, all marked `sensitive`):
 
 ```hcl
-serper_api_key       = "..."  # Google Serper API key
-exa_api_key          = "..."  # Exa API key
-perplexity_api_key   = "..."  # Perplexity API key
-tavily_api_key       = "..."  # Tavily API key
-brave_api_key        = "..."  # Brave API key
+serper_api_key     = "..."
+exa_api_key        = "..."
+perplexity_api_key = "..."
+brave_api_key      = "..."
+anthropic_api_key  = "..."
+firecrawl_api_key  = "..."
+you_api_key        = "..."
+tavily_api_key     = "..."   # shared by hosted Tavily MCP target + tavily_lambda
+# duckduckgo: no key required
 ```
+
+> `infra/scripts/seed-api-keys.sh` can populate the Identity credential providers
+> from `terraform.tfvars` after apply.
 
 ---
 
 ### 6. Observability (CloudWatch)
 
+AgentCore delivers gateway logs and OTEL spans through **CloudWatch vended-log
+deliveries** (log delivery source → destination → delivery), set up in
+`infra/modules/observability`.
+
 **Components**:
 
-1. **Log Group**: `/aws/bedrock-agentcore/websearch-gateway-dev`
-   - Retention: 30 days (configurable)
-   - Log class: STANDARD
-   - Vended logs: Enabled (CloudTrail integration)
+1. **Vended log groups** (keyed by gateway ID):
+   - Application logs: `/aws/vendedlogs/bedrock-agentcore/gateway/APPLICATION_LOGS/{gateway_id}`
+   - Traces: `/aws/vendedlogs/bedrock-agentcore/gateway/TRACES/{gateway_id}`
+   - Retention configurable (`log_retention_days`).
 
-2. **Metrics** (custom namespace: `Bedrock/AgentCore`):
-   - `GatewayInvocations` — Count of MCP calls
-   - `GatewayLatency` — Latency percentiles (p50, p90, p99)
-   - `ToolErrors` — Error count by tool + error type
+2. **Metrics** (`Bedrock/AgentCore` namespace): emitted by AgentCore with
+   per-tool / auth / api-key dimensions. Two gateways share the namespace, so
+   metric queries must filter by gateway ARN/ID.
 
-3. **Traces** (OTEL):
-   - Lambda spans: `get_serper_api_key`, `query_serper`, etc.
-   - Gateway spans: `jwt_validation`, `tool_invocation`
-   - Trace IDs propagated across services (X-Trace-ID header)
+3. **Traces** (OTEL → X-Ray Transaction Search):
+   - Gateway spans delivered to the TRACES log group and X-Ray.
+   - Indexing for query is governed by the account/region-global **"Default"
+     indexing rule**; at the 1% default sampling a low-traffic dev gateway looks
+     empty. The rule is Terraform-managed via `manage_trace_indexing_rule` +
+     `trace_sampling_percentage` (dev = 100).
+   - Gateway spans/logs carry **no `client_id`/`sub`** — "who called" is not in
+     telemetry; join logs↔traces by `trace_id` instead.
 
 ---
 
 ## Cowork 3P Integration
 
+Authentication uses the Cognito **M2M `client_credentials`** grant — there is no
+interactive browser/authorization-code login. Cowork reads a fresh `Authorization`
+header from a **headers helper** script before each request (TTL 900s).
+
 ### Setup Flow (macOS)
 
 ```bash
 $ ./setup-mac.sh
-  ├─ 1. Read Terraform outputs (cognito_domain, gateway_url, client_id)
-  ├─ 2. Initiate Cognito auth via browser
-  │   ├─ Redirect to: https://{cognito_domain}/oauth2/authorize?...
-  │   └─ User logs in → callback to http://127.0.0.1:8976/callback
-  ├─ 3. Exchange auth code for tokens (OIDC flow)
-  ├─ 4. Store JWT in ~/.websearch-gw/tokens.json (chmod 600)
-  ├─ 5. Render mobileconfig from template:
-  │   ├─ Gateway URL
-  │   ├─ Headers helper path (~/websearch-gw/agentcore-token.sh)
-  │   └── Managed MCP server config
-  ├─ 6. Install profile via `security import`
-  └─ 7. Copy helper scripts to ~/.websearch-gw/
+  ├─ 1. Read Terraform outputs (cognito_domain, gateway_url, m2m client id/secret, scope)
+  ├─ 2. Fetch an initial access token via client_credentials grant
+  ├─ 3. Write config + token cache under ~/.websearch-gw/ (chmod 600)
+  ├─ 4. Render mobileconfig from template:
+  │   ├─ Gateway URL (transport: http)
+  │   ├─ headersHelper path (agentcore-token.sh)
+  │   └─ headersHelperTtlSec = 900
+  ├─ 5. Install the configuration profile
+  └─ 6. Install helper scripts (agentcore-token.sh)
 ```
+
+Windows uses `setup-windows.ps1`, which writes the equivalent `managedMcpServers`
+registry value. Both have matching `uninstall-*` scripts.
 
 ### Token Refresh Mechanism
 
-**Helper Script** (`agentcore-token.sh`):
+**Helper Script** (`agentcore-token.sh`) — called by Cowork (per `headersHelperTtlSec`):
 
 ```bash
-#!/bin/bash
-# Called by Cowork before each MCP request
-
-TOKEN_STORE="$HOME/.websearch-gw/tokens.json"
-EXPIRY=$(jq '.id_token_expiry' $TOKEN_STORE)
-NOW=$(date +%s)
-
-# Refresh if within 60 seconds of expiry
-if [ $((EXPIRY - NOW)) -lt 60 ]; then
-  # Exchange refresh token for new ID token
-  curl -s -X POST "https://{cognito_domain}/oauth2/token" \
-    -d "grant_type=refresh_token&refresh_token=$REFRESH_TOKEN&client_id=$CLIENT_ID" \
-    | jq -r '.id_token' > /tmp/new_token.txt
-  
-  # Update store
-  jq ".id_token = $(cat /tmp/new_token.txt) | .id_token_expiry = $(date -d '1 hour' +%s)" $TOKEN_STORE > $TOKEN_STORE.tmp
-  mv $TOKEN_STORE.tmp $TOKEN_STORE
+# Refresh if the cached token expires within 60 seconds
+if [ current_time >= expires_at - 60 ]; then
+  # Re-mint via M2M client credentials (NOT refresh_token)
+  curl -s -X POST "${COGNITO_DOMAIN}/oauth2/token" \
+    -u "${CLIENT_ID}:${CLIENT_SECRET}" \
+    -d "grant_type=client_credentials&scope=${SCOPE:-agentcore/invoke}"
 fi
-
-# Output header for Cowork
-echo "{\"Authorization\": \"Bearer $(jq -r '.id_token' $TOKEN_STORE)\"}"
+# Emit the header object Cowork expects
+echo "{\"Authorization\": \"Bearer <access_token>\"}"
 ```
 
-**Cowork Config** (mobileconfig):
+**Cowork Config** (`templates/cowork-3p.mobileconfig.tmpl`):
 
 ```xml
 <key>managedMcpServers</key>
-<dict>
-  <key>bedrock-agentcore-gateway</key>
+<array>
   <dict>
-    <key>type</key>
-    <string>stdio</string>
-    <key>command</key>
-    <string>mcp-client</string>
-    <key>args</key>
-    <array>
-      <string>--url</string>
-      <string>https://{gateway_url}</string>
-      <string>--headers-helper</string>
-      <string>~/websearch-gw/agentcore-token.sh</string>
-    </array>
+    <key>url</key>            <string>{gateway_url}</string>
+    <key>transport</key>      <string>http</string>
+    <key>name</key>           <string>AgentCore Gateway</string>
+    <key>headersHelper</key>  <string>{headers_helper}</string>
+    <key>headersHelperTtlSec</key> <integer>900</integer>
   </dict>
-</dict>
+</array>
 ```
 
 ---
@@ -356,23 +336,26 @@ echo "{\"Authorization\": \"Bearer $(jq -r '.id_token' $TOKEN_STORE)\"}"
 
 | Path | Purpose | AWS Integration |
 |------|---------|-----------------|
-| `/` | Home/nav grid | None |
+| `/` | Home / gateway overview | `/api/access` (AgentCore GetGateway + ListTargets) |
 | `/inspector` | MCP tool tester | Gateway tools/list + tools/call |
-| `/observability` | Metrics dashboard | CloudWatch GetMetricStatistics |
-| `/access` | Gateway access control | AgentCore GetGateway + ListGatewayTargets |
-| `/playground` | Multi-engine search | Parallel calls to all 6 engines |
+| `/observability` | Metrics dashboard | CloudWatch GetMetricData |
+| `/traces` | X-Ray trace explorer | X-Ray Transaction Search (GetTraceSummaries) |
+| `/playground` | Multi-engine search compare | Parallel fan-out + LLM judge |
 | `/audit` | Logs Insights | CloudWatch StartQuery + GetQueryResults |
 
 **API Routes** (server-side only):
 
 ```
-/api/mcp/list          → GET gateway tools
-/api/mcp/call          → POST tool execution
-/api/mcp/parallel-search → POST fan-out to all engines
-/api/cw/metrics        → GET CloudWatch metrics
-/api/cw/logs           → GET Logs Insights results
-/api/access            → GET gateway access overview
-/api/auth/login        → POST Cognito token exchange
+/api/access              → GET  gateway access overview (targets, allowed clients)
+/api/mcp/list            → GET/POST gateway tools
+/api/mcp/call            → POST tool execution
+/api/mcp/parallel-search → POST fan-out across engines (Playground)
+/api/cw/metrics          → GET  CloudWatch metrics
+/api/cw/logs             → GET  Logs Insights results (Audit)
+/api/xray/traces         → GET  trace summaries
+/api/xray/traces/[id]    → GET  single trace detail
+/api/eval/judge          → POST LLM-as-judge scoring (Playground)
+/api/auth/login          → POST Cognito client_credentials token
 ```
 
 ---
@@ -391,41 +374,38 @@ echo "{\"Authorization\": \"Bearer $(jq -r '.id_token' $TOKEN_STORE)\"}"
 
 ### Module: `identity-providers`
 
-**Creates** credential providers for each enabled engine:
-- `serper` (if `enable_serper=true`)
-- `exa` (if `enable_exa=true`)
-- `duckduckgo` (always, no key needed)
-- `perplexity` (if `enable_perplexity=true`)
-- `tavily` (if `enable_tavily=true`)
-- `brave` (if `enable_brave=true`)
+**Creates an API-key credential provider only for engines that have a key**
+(no provider for keyless DuckDuckGo): `tavily`, `brave`, `serper`, `exa`,
+`perplexity`, `anthropic`, `firecrawl`, `you` — each gated by
+`enable_<engine>` + non-empty key. Outputs the `name → ARN` map.
 
 ### Module: `gateway-lambda-tool`
 
-**For each Lambda tool**:
-1. Build deployment package (handler + dependencies)
+Instantiated once **per enabled Lambda tool** (`for_each`). For each:
+1. Build deployment package (handler + `_shared/` + dependencies), Python 3.12 / arm64
 2. Create IAM role + policies
 3. Create CloudWatch log group
-4. Deploy Lambda function
+4. Deploy the Lambda function (name `{project}-{env}-tool-{engine}`)
 
 ### Module: `gateway-mcp-target`
 
-**For each external MCP server** (HTTP targets):
-1. Register endpoint URL
-2. Attach credential provider
+Registers external **MCP server** endpoints (currently Tavily) and wires each to
+its API-key credential provider.
 
 ### Module: `gateway`
 
-**Creates AgentCore Gateway**:
-1. Registers all Lambda + HTTP targets
-2. Configures the CUSTOM_JWT authorizer + allowed clients
+**Creates the AgentCore Gateway** (`protocol_type=MCP`, `authorizer_type=CUSTOM_JWT`):
+1. Registers Lambda targets (`gateway_iam_role` credential, inline `web_search` schema)
+   and MCP-server targets (`api_key` credential)
+2. Configures the CUSTOM_JWT authorizer (Cognito discovery URL + allowed clients)
 3. Outputs gateway URL + ID
 
 ### Module: `observability`
 
-**CloudWatch setup**:
-1. Create log group
-2. Enable vended logs (CloudTrail)
-3. Set retention policy
+**CloudWatch / X-Ray setup**:
+1. Create vended-log groups (APPLICATION_LOGS, TRACES)
+2. Wire log delivery source → destination → delivery
+3. Optionally manage the X-Ray "Default" indexing rule + set retention
 
 ---
 
@@ -437,8 +417,8 @@ flowchart TD
     B --> C["3. terraform apply<br/>(deploy resources)"]
     C --> D["Create Cognito User Pool<br/>+ OAuth clients"]
     C --> E["Create API Key<br/>Credential Providers"]
-    C --> F["Build + Deploy<br/>4x Lambda functions"]
-    C --> G["Register MCP Targets<br/>(Tavily, Brave)"]
+    C --> F["Build + Deploy<br/>enabled Lambda targets (≤9)"]
+    C --> G["Register MCP Server Target<br/>(Tavily)"]
     D --> H["Create AgentCore<br/>Gateway"]
     E --> H
     F --> H
@@ -461,44 +441,44 @@ flowchart TD
      "id": 1,
      "method": "tools/call",
      "params": {
-       "name": "serper",
-       "input": {
+       "name": "serper___web_search",
+       "arguments": {
          "query": "python async",
          "num_results": 10
        }
      }
    }
+   # Tool names are namespaced <target>___web_search; every Lambda target
+   # exposes the same web_search tool, distinguished by target name.
 
 2. Gateway Processing:
    - Validate JWT (Cognito OIDC issuer)
    - Verify caller is in the allowed-clients list ✓
-   - Route to Lambda: serper
+   - Route to the Lambda target: serper
    
 3. Lambda Execution:
    - Extract query + num_results
-   - Retrieve API key: GetResourceApiKey(serper)
+   - Resolve API key: SERPER_API_KEY env var (Identity vault fallback)
    - Call Serper API: https://google.serper.dev/search?q=python+async
    - Normalize response → SearchResponse
    - Return to Gateway
    
-4. Gateway Response:
+4. Gateway Response (MCP tools/call result — payload is JSON-encoded in content[].text):
    {
      "jsonrpc": "2.0",
      "id": 1,
      "result": {
-       "results": [
-         {"title": "Async Python...", "url": "https://...", "snippet": "..."},
-         ...
-       ],
-       "engine": "serper",
-       "latency_ms": 523
+       "isError": false,
+       "content": [
+         {"type": "text", "text": "{\"results\":[...],\"engine\":\"serper\",\"latency_ms\":523}"}
+       ]
      }
    }
 
 5. Observability:
-   - Log entry: { tool: serper, latency_ms: 523, status: success }
-   - Metric: GatewayLatency += 523ms
-   - Trace span: query → serper_api → response
+   - Vended log entry for the gateway invocation
+   - Bedrock/AgentCore metrics (per-tool dimensions)
+   - OTEL span delivered to the TRACES log group + X-Ray (join by trace_id)
 ```
 
 ---
@@ -509,25 +489,23 @@ flowchart TD
 |-----------|-----------|-----------|-------|
 | Lambda concurrent executions | 1000 (default AWS) | 10,000 | Configurable per region |
 | CloudWatch Logs ingestion | 10 MB/s | 100 MB/s | Partition key per tool |
-| MCP server targets | 20 | 100 | Lambda + HTTP mixed |
-| API key storage (Cognito) | 256 KB per attribute | No practical limit | Keys <1 KB each |
+| MCP / Lambda targets | 20 | 100 | Lambda + MCP-server mixed |
 
 **Optimization Tips**:
 - Use Lambda warm starts (reserved concurrency if needed)
-- Enable S3 caching for frequently accessed search results
-- Use CloudWatch Logs retention policies (30 days default)
+- Keep CloudWatch Logs retention short in dev (`log_retention_days`)
 
 ---
 
 ## Security & Compliance
 
 **Authentication**:
-- ✅ JWT-based (Cognito OIDC)
-- ✅ No API keys in headers (retrieved via Identity Provider)
-- ✅ Token rotation (60s before expiry)
+- ✅ CUSTOM_JWT (Cognito OIDC discovery URL)
+- ✅ No API keys in client headers; outbound keys injected from the Identity vault / env vars
+- ✅ Token re-minted via M2M `client_credentials` (refreshed ≤60s before expiry)
 
 **Authorization**:
-- ✅ Allowed-clients list (Cognito M2M client access control)
+- ✅ Allowed-clients list (app + web + M2M client IDs)
 - ✅ IAM roles (Lambda, Gateway)
 - ✅ Resource-level permissions
 
@@ -538,25 +516,22 @@ flowchart TD
 - ✅ No plaintext secrets in code (Terraform tfvars marked sensitive)
 
 **Audit & Compliance**:
-- ✅ CloudWatch Logs (immutable, timestamped)
-- ✅ Vended logs (CloudTrail integration)
-- ✅ Trace IDs (request traceability)
+- ✅ CloudWatch vended logs (immutable, timestamped)
+- ✅ X-Ray traces (request traceability via `trace_id`)
 
 ---
 
 ## Troubleshooting
 
-### Issue: "INVALID_JWT" error from Gateway
+### Issue: "INVALID_JWT" / unauthorized from Gateway
 
-**Cause**: Token expired or issuer mismatch.
+**Cause**: Token expired, wrong scope, or client not in allowed-clients.
 
 **Solution**:
 ```bash
-# Check token expiry
-jq '.id_token | split(".")[1] | @base64d | fromjson' ~/.websearch-gw/tokens.json
-
-# Force refresh
-./cowork/agentcore-token.sh --refresh
+# Re-mint a token and inspect claims
+./cowork/agentcore-token.sh        # prints the Authorization header
+# Verify the gateway's allowed_clients include this client_id
 ```
 
 ### Issue: Lambda function timeout (>60s)
