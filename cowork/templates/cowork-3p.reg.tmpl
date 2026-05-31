@@ -1,0 +1,19 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\SOFTWARE\Policies\Claude]
+
+; Inference Configuration
+"inferenceProvider"="bedrock"
+"inferenceBedrockRegion"="ap-northeast-2"
+"inferenceBedrockProfile"="websearch-gw"
+"inferenceModels"="[\"opus\", \"sonnet\", \"haiku\"]"
+
+; Feature Configuration
+"isClaudeCodeForDesktopEnabled"="true"
+"isDesktopExtensionEnabled"="true"
+"isDesktopExtensionDirectoryEnabled"="true"
+"isDesktopExtensionSignatureRequired"="true"
+"isLocalDevMcpEnabled"="true"
+
+; Managed MCP Servers (JSON-encoded array)
+"managedMcpServers"="[{\"url\": \"@GATEWAY_URL@\", \"transport\": \"http\", \"name\": \"AgentCore Gateway\", \"headersHelper\": \"@HEADERS_HELPER@\", \"headersHelperTtlSec\": 900}]"

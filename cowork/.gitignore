@@ -1,0 +1,13 @@
+# Generated tokens and sensitive data
+tokens.json
+config.env
+
+# Generated profiles
+profiles/*.mobileconfig
+profiles/*.reg
+
+# Temporary files
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db

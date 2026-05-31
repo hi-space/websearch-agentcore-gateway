@@ -1,3 +1,0 @@
-[allowlist]
-description = "Test fixtures only"
-paths = ["__fixtures__/.*"]
