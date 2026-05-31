@@ -1,9 +1,0 @@
-{
-  "files": [],
-  "references": [
-    { "path": "./packages/shared" },
-    { "path": "./packages/adapters" },
-    { "path": "./packages/search-router" },
-    { "path": "./infra" }
-  ]
-}

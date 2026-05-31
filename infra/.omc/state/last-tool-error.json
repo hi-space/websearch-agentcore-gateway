@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cat /home/ubuntu/workspace/search-agentcore-gateway/pnpm-workspace.yaml ; echo \\\"---\\\" ; ls /home/ubuntu/workspace/search-agentcore-gateway/.npmrc 2>&1 ; cat /home/ubuntu/workspace/search-...",
-  "error": "Exit code 1\npackages:\n  - \"packages/*\"\n  - \"infra\"\n---\nls: cannot access '/home/ubuntu/workspace/search-agentcore-gateway/.npmrc': No such file or directory\ncat: /home/ubuntu/workspace/search-agentcore-gateway/.npmrc: No such file or directory",
-  "timestamp": "2026-05-23T12:54:31.046Z",
-  "retry_count": 1
-}

@@ -1,0 +1,291 @@
+@import "tailwindcss";
+
+/* Enable class-based dark mode so `dark:` utilities follow the .dark class */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================================================
+   Websearch Gateway — design system
+   A refined observability console. Light + dark, driven entirely
+   by CSS variables so the whole UI flips by toggling `.dark`.
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* Core surfaces — cool paper white */
+  --background: #f4f6fb;
+  --foreground: #0e1626;
+
+  --card: #ffffff;
+  --card-foreground: #0e1626;
+
+  --popover: #ffffff;
+  --popover-foreground: #0e1626;
+
+  /* Brand / signal accent — teal, darkened for contrast on light */
+  --primary: #0d9b87;
+  --primary-foreground: #ffffff;
+
+  --secondary: #eef1f7;
+  --secondary-foreground: #29354b;
+
+  --muted: #eef1f7;
+  --muted-foreground: #5a6884;
+
+  --accent: #e7ecf5;
+  --accent-foreground: #0e1626;
+
+  --destructive: #e23b51;
+  --destructive-foreground: #ffffff;
+
+  --border: #dde3ee;
+  --input: #cdd5e4;
+  --ring: #0d9b87;
+
+  --radius: 0.85rem;
+
+  /* Atmospheric background tints (subtle on light) */
+  --mesh-1: rgba(13, 155, 135, 0.1);
+  --mesh-2: rgba(70, 110, 220, 0.1);
+  --mesh-3: rgba(120, 80, 220, 0.07);
+  --grid-line: rgba(40, 60, 110, 0.05);
+  --glass-top: rgba(255, 255, 255, 0.7);
+
+  /* Code/JSON syntax accents */
+  --syntax-number: #b5179e;
+  --syntax-keyword: #c2410c;
+
+  /* Typography (wired up in layout.tsx via next/font) */
+  --font-display: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SFMono-Regular", monospace;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --background: #060912;
+  --foreground: #e8edf7;
+
+  --card: #0d1322;
+  --card-foreground: #e8edf7;
+
+  --popover: #0f1626;
+  --popover-foreground: #e8edf7;
+
+  --primary: #34e3c0;
+  --primary-foreground: #04130f;
+
+  --secondary: #182236;
+  --secondary-foreground: #cdd8ec;
+
+  --muted: #131b2c;
+  --muted-foreground: #8595b3;
+
+  --accent: #1a2740;
+  --accent-foreground: #eaf2ff;
+
+  --destructive: #fb5d6d;
+  --destructive-foreground: #1a060a;
+
+  --border: #1d293f;
+  --input: #243150;
+  --ring: #34e3c0;
+
+  --mesh-1: rgba(52, 227, 192, 0.12);
+  --mesh-2: rgba(70, 110, 220, 0.14);
+  --mesh-3: rgba(120, 80, 220, 0.1);
+  --grid-line: rgba(150, 170, 210, 0.045);
+  --glass-top: rgba(255, 255, 255, 0.04);
+
+  --syntax-number: #f0a3ff;
+  --syntax-keyword: #ffb27a;
+}
+
+/* Map design tokens to Tailwind v4 utilities (bg-card, text-muted-foreground, …) */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 0.25rem);
+  --radius-sm: calc(var(--radius) - 0.4rem);
+}
+
+@layer base {
+  /* shadcn-style default border color so bare `border` utilities read as lines */
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+    font-feature-settings: "cv11", "ss01";
+    letter-spacing: -0.006em;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Atmospheric depth — gradient mesh, theme-aware via vars. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background:
+      radial-gradient(60rem 60rem at 82% -8%, var(--mesh-1), transparent 60%),
+      radial-gradient(48rem 48rem at 2% 4%, var(--mesh-2), transparent 55%),
+      radial-gradient(40rem 40rem at 50% 120%, var(--mesh-3), transparent 60%);
+    pointer-events: none;
+  }
+
+  /* Faint engineering grid for texture */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(120% 120% at 50% 0%, #000 35%, transparent 78%);
+    -webkit-mask-image: radial-gradient(120% 120% at 50% 0%, #000 35%, transparent 78%);
+    pointer-events: none;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 28%, transparent);
+    color: var(--foreground);
+  }
+
+  /* Refined scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--input) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--input);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+}
+
+/* ---- Reusable atmospheric helpers ---- */
+
+/* Glassy elevated surface used by the shell + feature cards */
+.surface-glass {
+  background:
+    linear-gradient(180deg, var(--glass-top), transparent 38%),
+    var(--card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Hairline edge highlight + soft drop shadow */
+.edge-light {
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-top),
+    0 1px 2px 0 rgba(8, 15, 30, 0.06);
+}
+
+.glow-primary {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--primary) 25%, transparent),
+    0 8px 40px -12px color-mix(in srgb, var(--primary) 50%, transparent);
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.82); }
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-rise {
+  animation: rise-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.live-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .live-dot,
+  .spin-ring { animation: none !important; }
+}
+
+/* ---- JSON viewer (@uiw/react-json-view) theming ----
+   The library ships a light-leaning default that is unreadable on our dark
+   surfaces. Map its CSS variables to our tokens + a readable syntax palette so
+   it tracks light/dark automatically. */
+.w-json-view-container,
+[class*="w-rjv"] {
+  --w-rjv-font-family: var(--font-mono);
+  --w-rjv-background-color: transparent;
+  --w-rjv-color: var(--foreground);              /* numbers */
+  --w-rjv-key-string: var(--foreground);          /* object keys */
+  --w-rjv-key-number: var(--muted-foreground);    /* array indices */
+  --w-rjv-colon-color: var(--muted-foreground);
+  --w-rjv-brackets-color: var(--muted-foreground);
+  --w-rjv-curlybraces-color: var(--muted-foreground);
+  --w-rjv-quotes-color: var(--muted-foreground);
+  --w-rjv-ellipsis-color: var(--muted-foreground);
+  --w-rjv-arrow-color: var(--muted-foreground);
+  --w-rjv-info-color: var(--muted-foreground);
+  --w-rjv-line-color: var(--border);
+  --w-rjv-border-left: 1px solid var(--border);
+
+  --w-rjv-type-string-color: var(--primary);
+  --w-rjv-quotes-string-color: var(--primary);
+  --w-rjv-type-int-color: var(--syntax-number);
+  --w-rjv-type-float-color: var(--syntax-number);
+  --w-rjv-type-bigint-color: var(--syntax-number);
+  --w-rjv-type-boolean-color: var(--syntax-keyword);
+  --w-rjv-type-null-color: var(--syntax-keyword);
+  --w-rjv-type-nan-color: var(--syntax-keyword);
+  --w-rjv-type-undefined-color: var(--syntax-keyword);
+  --w-rjv-type-date-color: var(--syntax-number);
+  --w-rjv-type-url-color: var(--syntax-number);
+  --w-rjv-type-map-color: var(--syntax-keyword);
+  --w-rjv-type-set-color: var(--syntax-keyword);
+}
