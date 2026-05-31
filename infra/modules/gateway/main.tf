@@ -99,8 +99,11 @@ resource "time_sleep" "wait_for_iam_propagation" {
 # ============================================================
 # Lambda-backed Gateway Targets
 # ============================================================
-# Every Lambda search tool exposes the same MCP tool: web_search(query, num_results, country).
-# Schema is defined inline because the four engines share an identical contract.
+# Every Lambda search tool exposes the same MCP tool:
+#   web_search(query, num_results, country, freshness).
+# Schema is defined inline because all engines share an identical contract.
+# country/freshness are normalized here and each handler translates them into
+# its provider's native parameters (see tools/_shared/search_params.py).
 
 resource "aws_bedrockagentcore_gateway_target" "lambda" {
   for_each = var.lambda_tool_arns
@@ -141,7 +144,13 @@ resource "aws_bedrockagentcore_gateway_target" "lambda" {
               property {
                 name        = "country"
                 type        = "string"
-                description = "Two-letter country code (e.g., KR, US) to localize results."
+                description = "Two-letter country code (e.g., KR, US) to localize results. Not all engines honor this."
+                required    = false
+              }
+              property {
+                name        = "freshness"
+                type        = "string"
+                description = "Restrict results by recency. One of: day, week, month, year. Not all engines honor this."
                 required    = false
               }
             }
