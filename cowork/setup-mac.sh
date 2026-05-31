@@ -170,7 +170,7 @@ log_info "Installed $HEADERS_HELPER"
 TOKEN_EXPIRED=true
 if [ -f "$TOKEN_STORE" ] && [ "$FORCE_LOGIN" != "true" ]; then
   # Check if token is still valid (not expiring in next 60 seconds)
-  EXPIRED=$(python3 << 'PYEOF'
+  EXPIRED=$(python3 - "$TOKEN_STORE" << 'PYEOF' 2>/dev/null || echo "yes"
 import json, time, sys
 try:
     with open(sys.argv[1]) as f:
@@ -181,7 +181,7 @@ try:
 except (FileNotFoundError, json.JSONDecodeError, ValueError):
     print('yes')
 PYEOF
-  "$TOKEN_STORE" 2>/dev/null || echo "yes")
+)
 
   if [ "$EXPIRED" = "no" ]; then
     log_info "Valid tokens found. Skipping authentication."
@@ -238,7 +238,7 @@ fi
 
 log_section "Installing Cowork Configuration Profile"
 
-ACCESS_TOKEN=$(python3 << 'PYEOF'
+ACCESS_TOKEN=$(python3 << PYEOF
 import json
 with open("$TOKEN_STORE") as f:
     t = json.load(f)
