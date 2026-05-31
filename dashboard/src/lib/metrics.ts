@@ -8,10 +8,12 @@ export interface EngineResultItem {
   snippet?: string;
   score?: number;
   published_at?: string;
+  favicon?: string;
 }
 
 export interface EngineResult {
   results?: EngineResultItem[];
+  answer?: string;  // 일부 엔진(Anthropic, Tavily)이 합성한 직접 답변. 없을 수 있음.
   latency_ms?: number;
   isError?: boolean;
   error?: string;

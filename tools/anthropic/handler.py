@@ -6,9 +6,9 @@ Claude's first-party web search against the other providers. The Anthropic API
 key comes from the ANTHROPIC_API_KEY env var (AgentCore Identity fallback).
 
 Note: Claude's web_search returns result url/title/page_age but the page body is
-encrypted_content (only decryptable inside Claude's context), so the normalized
-snippet is best-effort (page_age) and may be empty. The model's synthesized text
-is returned as the ``answer`` field.
+encrypted_content (only decryptable inside Claude's context), so there is no
+plaintext snippet — it is left empty and page_age is surfaced as published_at
+instead. The model's synthesized text is returned as the ``answer`` field.
 """
 
 import os
@@ -113,10 +113,14 @@ def lambda_handler(event, context):
                 for hit in hits:
                     if hit.get("type") != "web_search_result":
                         continue
+                    # Claude's web_search has no plaintext snippet (page body is
+                    # encrypted_content), but it does expose page_age as the
+                    # publish date. Surface it as published_at, not snippet.
                     results.append({
                         "title": hit.get("title", ""),
                         "url": hit.get("url", ""),
-                        "snippet": hit.get("page_age", "") or "",
+                        "snippet": "",
+                        "published_at": hit.get("page_age") or None,
                     })
 
         results = results[:num_results]

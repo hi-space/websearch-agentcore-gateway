@@ -8,6 +8,7 @@ import requests
 
 from _shared.identity import get_api_key
 from _shared.response import normalize_response
+from _shared.search_params import apply_brave
 from _shared.otel import create_span
 
 
@@ -28,6 +29,7 @@ def lambda_handler(event, context):
         query = input_params.get("query") or input_params.get("q")
         num_results = int(input_params.get("num_results", 10))
         country = input_params.get("country", "")
+        freshness = input_params.get("freshness", "")
 
         if not query:
             return {
@@ -56,8 +58,7 @@ def lambda_handler(event, context):
                 "q": query,
                 "count": num_results,
             }
-            if country:
-                params["country"] = country
+            apply_brave(params, freshness, country)
 
             response = requests.get(
                 "https://api.search.brave.com/res/v1/web/search",
@@ -76,6 +77,8 @@ def lambda_handler(event, context):
                 "title": item.get("title", ""),
                 "url": item.get("url", ""),
                 "snippet": item.get("description", ""),
+                "published_at": item.get("page_age") or None,
+                "favicon": (item.get("meta_url") or {}).get("favicon") or None,
             })
 
         latency_ms = int((time.time() - start_time) * 1000)

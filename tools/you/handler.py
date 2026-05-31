@@ -7,6 +7,7 @@ import requests
 
 from _shared.identity import get_api_key
 from _shared.response import normalize_response
+from _shared.search_params import apply_you
 from _shared.otel import create_span
 
 
@@ -26,6 +27,8 @@ def lambda_handler(event, context):
         input_params = extract_gateway_input(event)
         query = input_params.get("query") or input_params.get("q")
         num_results = int(input_params.get("num_results", 10))
+        country = input_params.get("country", "")
+        freshness = input_params.get("freshness", "")
 
         if not query:
             return {
@@ -48,6 +51,7 @@ def lambda_handler(event, context):
         with create_span("query_you"):
             headers = {"X-API-Key": api_key}
             params = {"query": query, "count": num_results}
+            apply_you(params, freshness, country)
 
             response = requests.get(
                 "https://ydc-index.io/v1/search",
@@ -68,6 +72,7 @@ def lambda_handler(event, context):
                 "title": item.get("title", ""),
                 "url": item.get("url", ""),
                 "snippet": snippet,
+                "favicon": item.get("favicon_url") or None,
             })
 
         latency_ms = int((time.time() - start_time) * 1000)

@@ -12,6 +12,7 @@ except ImportError:
     DDGS_AVAILABLE = False
 
 from _shared.response import normalize_response
+from _shared.search_params import ddg_kwargs
 from _shared.otel import create_span
 
 
@@ -34,6 +35,8 @@ def lambda_handler(event, context):
         input_params = extract_gateway_input(event)
         query = input_params.get("query") or input_params.get("q")
         num_results = int(input_params.get("num_results", 10))
+        country = input_params.get("country", "")
+        freshness = input_params.get("freshness", "")
 
         if not query:
             return {
@@ -49,7 +52,7 @@ def lambda_handler(event, context):
         # Query DuckDuckGo
         with create_span("query_duckduckgo"):
             ddgs = DDGS(timeout=10)
-            raw_results = ddgs.text(query, max_results=num_results)
+            raw_results = ddgs.text(query, max_results=num_results, **ddg_kwargs(freshness, country))
 
         # Parse results
         results = []
