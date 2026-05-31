@@ -19,19 +19,11 @@ cd infra
 ./scripts/deploy.sh bootstrap
 ```
 
-Outputs the backend configuration. Copy to `environments/dev/backend.tf`:
-
-```hcl
-terraform {
-  backend "s3" {
-    bucket         = "websearch-gw-tfstate-<account>-ap-northeast-2"
-    region         = "ap-northeast-2"
-    encrypt        = true
-    dynamodb_table = "websearch-gw-tfstate-lock"
-    key            = "dev/terraform.tfstate"
-  }
-}
-```
+This creates the state bucket and lock table. The bucket name embeds your
+account ID, so the backend block in `environments/dev/backend.tf` is left
+empty on purpose — the settings are injected at init time via
+`-backend-config` (handled automatically by `./scripts/deploy.sh init`),
+keeping the account-specific bucket name out of version control.
 
 ### 2. Configure Variables
 
