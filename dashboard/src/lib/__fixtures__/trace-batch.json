@@ -1,0 +1,20 @@
+{
+    "Traces": [
+        {
+            "Id": "1-6a1bdcf0-1d83a1497d662d8b187cc941",
+            "Duration": 1.972,
+            "LimitExceeded": false,
+            "Segments": [
+                {
+                    "Id": "c0f08f4851f320b5",
+                    "Document": "{\"id\":\"c0f08f4851f320b5\",\"name\":\"tool-gateway-dev-gateway-a3lti3pqig\",\"start_time\":1.7802109283100002E9,\"trace_id\":\"1-6a1bdcf0-1d83a1497d662d8b187cc941\",\"end_time\":1.7802109302819998E9,\"http\":{\"request\":{\"method\":\"POST\"},\"response\":{\"status\":200}},\"aws\":{\"account.id\":\"913524902871\",\"operation.name\":\"InvokeGateway\",\"span.kind\":\"LOCAL_ROOT\",\"xray.origin\":\"AWS::BedrockAgentCore::Gateway\",\"resource.arn\":\"arn:aws:bedrock-agentcore:ap-northeast-2:913524902871:gateway/tool-gateway-dev-gateway-a3lti3pqig\",\"resource.type\":\"AWS::BedrockAgentCore::Gateway\",\"region\":\"ap-northeast-2\",\"request.id\":\"32da1938-630a-4de1-8718-7c488f0b6b2f\"},\"annotations\":{\"aws:span.name\":\"AgentCore.Gateway.InvokeTool\",\"aws:aws.local.environment\":\"bedrock-agentcore:default\",\"aws:aws.local.service\":\"tool-gateway-dev-gateway-a3lti3pqig\",\"aws:span.kind\":\"SERVER\",\"aws:aws.local.operation\":\"AgentCore.Gateway.InvokeTool\"},\"metadata\":{\"telemetry.extended\":\"true\",\"service.name\":\"tool-gateway-dev-gateway-a3lti3pqig\",\"execute_tool_latency_ms\":1666,\"latency_ms\":1763,\"http.status_code\":200,\"gateway.id\":\"tool-gateway-dev-gateway-a3lti3pqig\",\"cloud.provider\":\"aws\",\"url.path\":\"tools/call\",\"gateway.name\":\"tool-gateway-dev-gateway\",\"cloud.resource_id\":\"arn:aws:bedrock-agentcore:ap-northeast-2:913524902871:gateway/tool-gateway-dev-gateway-a3lti3pqig\",\"PlatformType\":\"AWS::BedrockAgentCore\",\"http.method\":\"POST\",\"http.response.status_code\":200,\"cloud.platform\":\"aws_bedrock_agentcore\",\"tool.name\":\"you___you_search\",\"overhead_latency_ms\":97},\"origin\":\"AWS::BedrockAgentCore::Gateway\",\"subsegments\":[{\"id\":\"32883c0983aaaaad\",\"name\":\"UnknownRemoteService\",\"start_time\":1.780210928456E9,\"end_time\":1.780210930122E9,\"aws\":{\"account.id\":\"913524902871\",\"span.kind\":\"CLIENT\",\"xray.origin\":\"AWS::BedrockAgentCore::Gateway\",\"resource.arn\":\"arn:aws:bedrock-agentcore:ap-northeast-2:913524902871:gateway/tool-gateway-dev-gateway-a3lti3pqig\",\"resource.type\":\"AWS::BedrockAgentCore::Gateway\",\"region\":\"ap-northeast-2\",\"request.id\":\"32da1938-630a-4de1-8718-7c488f0b6b2f\"},\"annotations\":{\"aws.local.service\":\"tool-gateway-dev-gateway-a3lti3pqig\",\"span.name\":\"AgentCore.Gateway.InvokeTool.you___you_search\",\"aws.local.operation\":\"AgentCore.Gateway.InvokeTool.you___you_search\",\"span.kind\":\"CLIENT\",\"aws.remote.service\":\"UnknownRemoteService\",\"aws.local.environment\":\"bedrock-agentcore:default\",\"aws.remote.operation\":\"UnknownRemoteOperation\"},\"metadata\":{\"gateway.id\":\"tool-gateway-dev-gateway-a3lti3pqig\",\"cloud.provider\":\"aws\",\"gateway.name\":\"tool-gateway-dev-gateway\",\"targetId\":\"JLVZLEREW7\",\"telemetry.extended\":\"true\",\"service.name\":\"tool-gateway-dev-gateway-a3lti3pqig\",\"cloud.resource_id\":\"arn:aws:bedrock-agentcore:ap-northeast-2:913524902871:gateway/tool-gateway-dev-gateway-a3lti3pqig\",\"target.type\":\"LAMBDA\",\"PlatformType\":\"AWS::BedrockAgentCore\",\"cloud.platform\":\"aws_bedrock_agentcore\",\"tool.name\":\"you___you_search\"},\"namespace\":\"remote\"}]}"
+                },
+                {
+                    "Id": "0ed43c0305a796c0",
+                    "Document": "{\"id\":\"0ed43c0305a796c0\",\"name\":\"UnknownRemoteService\",\"start_time\":1.780210928456E9,\"trace_id\":\"1-6a1bdcf0-1d83a1497d662d8b187cc941\",\"end_time\":1.780210930122E9,\"parent_id\":\"32883c0983aaaaad\",\"inferred\":true,\"annotations\":{\"aws.local.service\":\"UnknownRemoteService\",\"aws.local.operation\":\"UnknownRemoteOperation\"}}"
+                }
+            ]
+        }
+    ],
+    "UnprocessedTraceIds": []
+}

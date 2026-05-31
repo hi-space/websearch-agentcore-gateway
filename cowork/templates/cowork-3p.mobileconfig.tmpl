@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>PayloadType</key>
+			<string>com.anthropic.claudefordesktop</string>
+			<key>PayloadUUID</key>
+			<string>{payload_uuid}</string>
+			<key>PayloadIdentifier</key>
+			<string>com.anthropic.claudefordesktop.config</string>
+			<key>PayloadDisplayName</key>
+			<string>Claude Cowork - Bedrock Configuration</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+
+			<!-- Inference Configuration -->
+			<key>inferenceProvider</key>
+			<string>bedrock</string>
+			<key>inferenceBedrockRegion</key>
+			<string>ap-northeast-2</string>
+			<key>inferenceBedrockProfile</key>
+			<string>websearch-gw</string>
+			<key>inferenceModels</key>
+			<array>
+				<string>opus</string>
+				<string>sonnet</string>
+				<string>haiku</string>
+			</array>
+
+			<!-- Feature Configuration -->
+			<key>isClaudeCodeForDesktopEnabled</key>
+			<true/>
+			<key>isDesktopExtensionEnabled</key>
+			<true/>
+			<key>isDesktopExtensionDirectoryEnabled</key>
+			<true/>
+			<key>isDesktopExtensionSignatureRequired</key>
+			<true/>
+			<key>isLocalDevMcpEnabled</key>
+			<true/>
+
+			<!-- Managed MCP Servers -->
+			<key>managedMcpServers</key>
+			<array>
+				<dict>
+					<key>url</key>
+					<string>{gateway_url}</string>
+					<key>transport</key>
+					<string>http</string>
+					<key>name</key>
+					<string>AgentCore Gateway</string>
+					<key>headersHelper</key>
+					<string>{headers_helper}</string>
+					<key>headersHelperTtlSec</key>
+					<integer>900</integer>
+				</dict>
+			</array>
+		</dict>
+	</array>
+
+	<key>PayloadDisplayName</key>
+	<string>Claude Cowork with Amazon Bedrock</string>
+	<key>PayloadIdentifier</key>
+	<string>com.websearch-gw.claude-cowork-bedrock</string>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>{profile_uuid}</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>

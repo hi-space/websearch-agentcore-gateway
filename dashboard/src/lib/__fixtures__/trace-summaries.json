@@ -1,0 +1,277 @@
+{
+    "TraceSummaries": [
+        {
+            "Id": "1-6a1bdcf0-1d83a1497d662d8b187cc941",
+            "StartTime": "2026-05-31T07:02:08+00:00",
+            "Duration": 1.972,
+            "ResponseTime": 1.972,
+            "HasFault": false,
+            "HasError": false,
+            "HasThrottle": false,
+            "IsPartial": false,
+            "Http": {
+                "HttpStatus": 200,
+                "HttpMethod": "POST"
+            },
+            "Annotations": {
+                "aws.local.environment": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "bedrock-agentcore:default"
+                        }
+                    }
+                ],
+                "aws.local.operation": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "AgentCore.Gateway.InvokeTool.you___you_search"
+                        }
+                    },
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "UnknownRemoteOperation"
+                        }
+                    }
+                ],
+                "aws.local.service": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "tool-gateway-dev-gateway-a3lti3pqig"
+                        }
+                    },
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "UnknownRemoteService"
+                        }
+                    }
+                ],
+                "aws.remote.operation": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "UnknownRemoteOperation"
+                        }
+                    }
+                ],
+                "aws.remote.service": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "UnknownRemoteService"
+                        }
+                    }
+                ],
+                "aws:aws.local.environment": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "bedrock-agentcore:default"
+                        }
+                    }
+                ],
+                "aws:aws.local.operation": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "AgentCore.Gateway.InvokeTool"
+                        }
+                    }
+                ],
+                "aws:aws.local.service": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "tool-gateway-dev-gateway-a3lti3pqig"
+                        }
+                    }
+                ],
+                "aws:span.kind": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "SERVER"
+                        }
+                    }
+                ],
+                "aws:span.name": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "AgentCore.Gateway.InvokeTool"
+                        }
+                    }
+                ],
+                "span.kind": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "CLIENT"
+                        }
+                    }
+                ],
+                "span.name": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "AgentCore.Gateway.InvokeTool.you___you_search"
+                        }
+                    }
+                ]
+            },
+            "Users": [],
+            "ServiceIds": [
+                {
+                    "Name": "tool-gateway-dev-gateway-a3lti3pqig",
+                    "Names": [
+                        "tool-gateway-dev-gateway-a3lti3pqig"
+                    ],
+                    "Type": "client"
+                },
+                {
+                    "Name": "tool-gateway-dev-gateway-a3lti3pqig",
+                    "Names": [
+                        "tool-gateway-dev-gateway-a3lti3pqig"
+                    ],
+                    "Type": "AWS::BedrockAgentCore::Gateway"
+                },
+                {
+                    "Name": "UnknownRemoteService",
+                    "Names": [
+                        "UnknownRemoteService"
+                    ],
+                    "Type": "remote"
+                }
+            ],
+            "ResourceARNs": [],
+            "InstanceIds": [],
+            "AvailabilityZones": [],
+            "EntryPoint": {
+                "Name": "tool-gateway-dev-gateway-a3lti3pqig",
+                "Names": [
+                    "tool-gateway-dev-gateway-a3lti3pqig"
+                ],
+                "Type": "AWS::BedrockAgentCore::Gateway"
+            },
+            "FaultRootCauses": [],
+            "ErrorRootCauses": [],
+            "ResponseTimeRootCauses": [
+                {
+                    "Services": [
+                        {
+                            "Name": "tool-gateway-dev-gateway-a3lti3pqig",
+                            "Names": [
+                                "tool-gateway-dev-gateway-a3lti3pqig"
+                            ],
+                            "Type": "AWS::BedrockAgentCore::Gateway",
+                            "EntityPath": [
+                                {
+                                    "Name": "tool-gateway-dev-gateway-a3lti3pqig",
+                                    "Coverage": 1.0,
+                                    "Remote": false
+                                },
+                                {
+                                    "Name": "UnknownRemoteService",
+                                    "Coverage": 0.845,
+                                    "Remote": true
+                                }
+                            ],
+                            "Inferred": false
+                        },
+                        {
+                            "Name": "UnknownRemoteService",
+                            "Names": [
+                                "UnknownRemoteService"
+                            ],
+                            "Type": "remote",
+                            "EntityPath": [
+                                {
+                                    "Name": "UnknownRemoteService",
+                                    "Coverage": 0.845,
+                                    "Remote": false
+                                }
+                            ],
+                            "Inferred": true
+                        }
+                    ],
+                    "ClientImpacting": true
+                }
+            ],
+            "Revision": 1
+        },
+        {
+            "Id": "1-6a1bd89a-570828f4184fa58b0981d82b",
+            "StartTime": "2026-05-31T06:43:38+00:00",
+            "Duration": 0.113,
+            "ResponseTime": 0.113,
+            "HasFault": false,
+            "HasError": false,
+            "HasThrottle": false,
+            "IsPartial": false,
+            "Http": {
+                "HttpStatus": 200,
+                "HttpMethod": "POST"
+            },
+            "Annotations": {
+                "aws:aws.local.environment": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "bedrock-agentcore:default"
+                        }
+                    }
+                ],
+                "aws:aws.local.operation": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "AgentCore.Gateway.ListTools"
+                        }
+                    }
+                ],
+                "aws:aws.local.service": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "websearch-gw-dev-gateway-p3uu3ntbs3"
+                        }
+                    }
+                ],
+                "aws:span.kind": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "SERVER"
+                        }
+                    }
+                ],
+                "aws:span.name": [
+                    {
+                        "AnnotationValue": {
+                            "StringValue": "AgentCore.Gateway.ListTools"
+                        }
+                    }
+                ]
+            },
+            "Users": [],
+            "ServiceIds": [
+                {
+                    "Name": "websearch-gw-dev-gateway-p3uu3ntbs3",
+                    "Names": [
+                        "websearch-gw-dev-gateway-p3uu3ntbs3"
+                    ],
+                    "Type": "client"
+                },
+                {
+                    "Name": "websearch-gw-dev-gateway-p3uu3ntbs3",
+                    "Names": [
+                        "websearch-gw-dev-gateway-p3uu3ntbs3"
+                    ],
+                    "Type": "AWS::BedrockAgentCore::Gateway"
+                }
+            ],
+            "ResourceARNs": [],
+            "InstanceIds": [],
+            "AvailabilityZones": [],
+            "EntryPoint": {
+                "Name": "websearch-gw-dev-gateway-p3uu3ntbs3",
+                "Names": [
+                    "websearch-gw-dev-gateway-p3uu3ntbs3"
+                ],
+                "Type": "AWS::BedrockAgentCore::Gateway"
+            },
+            "FaultRootCauses": [],
+            "ErrorRootCauses": [],
+            "ResponseTimeRootCauses": [],
+            "Revision": 1
+        }
+    ],
+    "TracesProcessedCount": 0,
+    "ApproximateTime": "2026-05-31T08:00:00+00:00"
+}
