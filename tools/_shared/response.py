@@ -15,7 +15,7 @@ def normalize_response(
     Normalize search results to the contract schema.
 
     Args:
-        results: List of result dicts with title, url, snippet, and optional score/published_at
+        results: List of result dicts with title, url, snippet, and optional score/published_at/favicon
         engine: Engine name (serper, exa, duckduckgo, perplexity, tavily, brave)
         latency_ms: Query execution time in milliseconds
         answer: Optional provider-generated answer/summary (e.g. anthropic, tavily)
@@ -31,6 +31,7 @@ def normalize_response(
             "snippet": result.get("snippet", ""),
             "score": result.get("score"),
             "published_at": result.get("published_at"),
+            "favicon": result.get("favicon"),
         })
 
     response = {

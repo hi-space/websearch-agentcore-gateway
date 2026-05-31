@@ -8,6 +8,7 @@ import requests
 
 from _shared.identity import get_api_key
 from _shared.response import normalize_response
+from _shared.search_params import apply_exa
 from _shared.otel import create_span
 
 
@@ -27,6 +28,8 @@ def lambda_handler(event, context):
         input_params = extract_gateway_input(event)
         query = input_params.get("query") or input_params.get("q")
         num_results = int(input_params.get("num_results", 10))
+        country = input_params.get("country", "")
+        freshness = input_params.get("freshness", "")
 
         if not query:
             return {
@@ -53,6 +56,7 @@ def lambda_handler(event, context):
                 "numResults": num_results,
                 "useAutoprompt": False,  # Deterministic results
             }
+            apply_exa(payload, freshness, country)
 
             response = requests.post(
                 "https://api.exa.ai/search",
@@ -67,10 +71,14 @@ def lambda_handler(event, context):
         raw_results = data.get("results", [])
         results = []
         for item in raw_results:
+            # Exa's /search response carries no relevance score, so we omit it
+            # (it would always be null). publishedDate/favicon are always present.
             results.append({
                 "title": item.get("title", ""),
                 "url": item.get("url", ""),
                 "snippet": item.get("text", ""),
+                "published_at": item.get("publishedDate") or None,
+                "favicon": item.get("favicon") or None,
             })
 
         latency_ms = int((time.time() - start_time) * 1000)
