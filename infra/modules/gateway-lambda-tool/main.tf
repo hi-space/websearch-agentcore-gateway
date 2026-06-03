@@ -102,7 +102,7 @@ resource "aws_iam_role_policy" "bedrock_agentcore" {
 # Browser tool only: drive AgentCore browser sessions + invoke Bedrock models.
 # Conditionally created so existing search tools are unaffected.
 resource "aws_iam_role_policy" "browser" {
-  count = var.browser_arn != "" ? 1 : 0
+  count = var.enable_browser_policy ? 1 : 0
   name  = "browser"
   role  = aws_iam_role.lambda.id
   policy = jsonencode({
