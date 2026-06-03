@@ -99,6 +99,34 @@ resource "aws_iam_role_policy" "bedrock_agentcore" {
   })
 }
 
+# Browser tool only: drive AgentCore browser sessions + invoke Bedrock models.
+# Conditionally created so existing search tools are unaffected.
+resource "aws_iam_role_policy" "browser" {
+  count = var.browser_arn != "" ? 1 : 0
+  name  = "browser"
+  role  = aws_iam_role.lambda.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = concat(
+      [{
+        Effect = "Allow"
+        Action = [
+          "bedrock-agentcore:StartBrowserSession",
+          "bedrock-agentcore:StopBrowserSession",
+          "bedrock-agentcore:ConnectBrowserAutomationStream",
+          "bedrock-agentcore:GetBrowserSession",
+        ]
+        Resource = var.browser_arn
+      }],
+      length(var.bedrock_model_arns) > 0 ? [{
+        Effect   = "Allow"
+        Action   = ["bedrock:InvokeModel"]
+        Resource = var.bedrock_model_arns
+      }] : [],
+    )
+  })
+}
+
 # ============================================================
 # CloudWatch Log Group
 # ============================================================
@@ -135,5 +163,10 @@ resource "aws_lambda_function" "this" {
     )
   }
 
-  depends_on = [aws_cloudwatch_log_group.lambda, aws_iam_role_policy.logs, aws_iam_role_policy.bedrock_agentcore]
+  depends_on = [
+    aws_cloudwatch_log_group.lambda,
+    aws_iam_role_policy.logs,
+    aws_iam_role_policy.bedrock_agentcore,
+    aws_iam_role_policy.browser,
+  ]
 }
