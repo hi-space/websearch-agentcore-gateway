@@ -153,6 +153,12 @@ variable "browser_model_id" {
   default     = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
 }
 
+variable "browser_model_arns" {
+  type        = list(string)
+  description = "Bedrock model/inference-profile ARNs the browser tool Lambda may invoke. Leave empty to auto-grant the default Claude Haiku 4.5 ARNs; override when changing browser_model_id."
+  default     = []
+}
+
 # ============================================================
 # Authentication
 # ============================================================

@@ -240,9 +240,10 @@ module "browser_tool" {
   }
 
   browser_arn = module.browser[0].browser_arn
-  # browser-use invokes Bedrock for both foundation-model and (for global.* IDs)
-  # cross-region inference-profile ARNs; grant both in this account/region.
-  bedrock_model_arns = [
+  # browser-use invokes Bedrock from inside the Lambda. Default grants the
+  # Claude Haiku 4.5 foundation-model + cross-region inference-profile ARNs;
+  # override via var.browser_model_arns if you change var.browser_model_id.
+  bedrock_model_arns = length(var.browser_model_arns) > 0 ? var.browser_model_arns : [
     "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5*",
     "arn:aws:bedrock:*:${local.account_id}:inference-profile/*anthropic.claude-haiku-4-5*",
   ]
