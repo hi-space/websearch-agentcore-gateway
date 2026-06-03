@@ -53,3 +53,9 @@ variable "mcp_server_credential_param" {
   description = "Map of tool_name -> name of the header/query param carrying the API key"
   default     = {}
 }
+
+variable "browser_tool_arn" {
+  type        = string
+  description = "Lambda ARN backing the browser_task target. Empty disables the browser target."
+  default     = ""
+}

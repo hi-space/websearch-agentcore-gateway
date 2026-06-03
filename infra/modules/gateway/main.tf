@@ -26,10 +26,13 @@ resource "aws_iam_role_policy" "gateway" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = concat(
-      length(var.lambda_tool_arns) > 0 ? [{
-        Effect   = "Allow"
-        Action   = ["lambda:InvokeFunction"]
-        Resource = values(var.lambda_tool_arns)
+      length(var.lambda_tool_arns) > 0 || var.browser_tool_arn != "" ? [{
+        Effect = "Allow"
+        Action = ["lambda:InvokeFunction"]
+        Resource = concat(
+          values(var.lambda_tool_arns),
+          var.browser_tool_arn != "" ? [var.browser_tool_arn] : [],
+        )
       }] : [],
       [{
         Effect = "Allow"
@@ -190,6 +193,55 @@ resource "aws_bedrockagentcore_gateway_target" "mcp_server" {
     mcp {
       mcp_server {
         endpoint = each.value
+      }
+    }
+  }
+
+  depends_on = [time_sleep.wait_for_iam_propagation]
+}
+
+# ============================================================
+# Browser Gateway Target (AgentCore Browser via browser-use)
+# ============================================================
+# Distinct from the web_search targets: a natural-language browser_task contract.
+
+resource "aws_bedrockagentcore_gateway_target" "browser" {
+  count = var.browser_tool_arn != "" ? 1 : 0
+
+  gateway_identifier = aws_bedrockagentcore_gateway.this.gateway_id
+  name               = "browser"
+  description        = "Perform a natural-language web task in a managed browser"
+
+  credential_provider_configuration {
+    gateway_iam_role {}
+  }
+
+  target_configuration {
+    mcp {
+      lambda {
+        lambda_arn = var.browser_tool_arn
+        tool_schema {
+          inline_payload {
+            name        = "browser_task"
+            description = "Drive a managed headless browser to perform a natural-language web task (navigate, click, read) and return the result."
+            input_schema {
+              type        = "object"
+              description = "Browser task parameters."
+              property {
+                name        = "task"
+                type        = "string"
+                description = "Natural-language description of the web task to perform."
+                required    = true
+              }
+              property {
+                name        = "max_steps"
+                type        = "integer"
+                description = "Maximum agent steps (1-50, default 15)."
+                required    = false
+              }
+            }
+          }
+        }
       }
     }
   }
