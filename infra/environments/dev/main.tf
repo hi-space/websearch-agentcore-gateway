@@ -210,6 +210,52 @@ module "gateway_mcp_targets" {
 }
 
 # ============================================================
+# AgentCore Browser (custom resource) + browser task Lambda
+# ============================================================
+
+module "browser" {
+  count  = var.enable_browser ? 1 : 0
+  source = "../../modules/browser"
+
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+}
+
+module "browser_tool" {
+  count  = var.enable_browser ? 1 : 0
+  source = "../../modules/gateway-lambda-tool"
+
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+  account_id   = local.account_id
+
+  tool_name   = "browser"
+  source_root = local.tools_root
+
+  env_vars = {
+    BROWSER_ID       = module.browser[0].browser_id
+    BEDROCK_MODEL_ID = var.browser_model_id
+  }
+
+  browser_arn = module.browser[0].browser_arn
+  # browser-use invokes Bedrock for both foundation-model and (for global.* IDs)
+  # cross-region inference-profile ARNs; grant both in this account/region.
+  bedrock_model_arns = [
+    "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5*",
+    "arn:aws:bedrock:*:${local.account_id}:inference-profile/*anthropic.claude-haiku-4-5*",
+  ]
+
+  # browser-use + playwright is a large/slow dependency tree; give it headroom.
+  timeout            = 300
+  memory_size        = 2048
+  log_retention_days = 7
+
+  depends_on = [module.browser]
+}
+
+# ============================================================
 # AgentCore Gateway
 # ============================================================
 
@@ -240,7 +286,9 @@ module "gateway" {
     tavily = "tavilyApiKey"
   }
 
-  depends_on = [module.auth, module.lambda_tools, module.gateway_mcp_targets]
+  browser_tool_arn = var.enable_browser ? module.browser_tool[0].function_arn : ""
+
+  depends_on = [module.auth, module.lambda_tools, module.gateway_mcp_targets, module.browser_tool]
 }
 
 # ============================================================

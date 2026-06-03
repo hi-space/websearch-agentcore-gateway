@@ -141,6 +141,18 @@ variable "enable_tavily_lambda" {
   default     = false
 }
 
+variable "enable_browser" {
+  type        = bool
+  description = "Enable the AgentCore Browser task tool"
+  default     = false
+}
+
+variable "browser_model_id" {
+  type        = string
+  description = "Bedrock model ID that browser-use drives inside the browser tool Lambda"
+  default     = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+}
+
 # ============================================================
 # Authentication
 # ============================================================
