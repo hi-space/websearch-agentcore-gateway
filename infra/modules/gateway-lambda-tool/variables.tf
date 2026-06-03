@@ -60,6 +60,12 @@ variable "browser_arn" {
   default     = ""
 }
 
+variable "enable_browser_policy" {
+  type        = bool
+  description = "Whether to attach the browser-session + Bedrock InvokeModel policy. Set true only for the browser tool. Gated as a plan-time-known bool (browser_arn is computed)."
+  default     = false
+}
+
 variable "bedrock_model_arns" {
   type        = list(string)
   description = "Bedrock model/inference-profile ARNs the browser tool may invoke."

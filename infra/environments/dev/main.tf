@@ -239,7 +239,8 @@ module "browser_tool" {
     BEDROCK_MODEL_ID = var.browser_model_id
   }
 
-  browser_arn = module.browser[0].browser_arn
+  browser_arn           = module.browser[0].browser_arn
+  enable_browser_policy = true
   # browser-use invokes Bedrock from inside the Lambda. Default grants the
   # Claude Haiku 4.5 foundation-model + cross-region inference-profile ARNs;
   # override via var.browser_model_arns if you change var.browser_model_id.
@@ -287,7 +288,8 @@ module "gateway" {
     tavily = "tavilyApiKey"
   }
 
-  browser_tool_arn = var.enable_browser ? module.browser_tool[0].function_arn : ""
+  browser_tool_arn      = var.enable_browser ? module.browser_tool[0].function_arn : ""
+  enable_browser_target = var.enable_browser
 
   depends_on = [module.auth, module.lambda_tools, module.gateway_mcp_targets, module.browser_tool]
 }

@@ -59,3 +59,9 @@ variable "browser_tool_arn" {
   description = "Lambda ARN backing the browser_task target. Empty disables the browser target."
   default     = ""
 }
+
+variable "enable_browser_target" {
+  type        = bool
+  description = "Whether to create the browser_task gateway target. Plan-time-known bool because browser_tool_arn is a computed Lambda ARN."
+  default     = false
+}

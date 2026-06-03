@@ -206,7 +206,7 @@ resource "aws_bedrockagentcore_gateway_target" "mcp_server" {
 # Distinct from the web_search targets: a natural-language browser_task contract.
 
 resource "aws_bedrockagentcore_gateway_target" "browser" {
-  count = var.browser_tool_arn != "" ? 1 : 0
+  count = var.enable_browser_target ? 1 : 0
 
   gateway_identifier = aws_bedrockagentcore_gateway.this.gateway_id
   name               = "browser"
