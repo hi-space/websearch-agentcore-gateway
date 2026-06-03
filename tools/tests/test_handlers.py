@@ -563,3 +563,35 @@ class TestResponseNormalization:
         response = normalize_response([], "tavily_lambda", 50, answer="hello")
 
         assert response["answer"] == "hello"
+
+
+class TestBrowserHandler:
+    """Test AgentCore Browser task handler (input layer only; heavy deps are lazy-imported)."""
+
+    def test_missing_task(self):
+        """Missing 'task' returns an error envelope without invoking the browser."""
+        os.environ["BROWSER_ID"] = "test_browser_id"
+        from browser.handler import lambda_handler
+
+        result = lambda_handler({}, None)
+
+        assert result["task"] == ""
+        assert result["result"] == ""
+        assert "error" in result
+        assert "latency_ms" in result
+
+    def test_extract_gateway_input_nested(self):
+        """Gateway wraps params under 'input'; direct invocation passes them flat."""
+        from browser.handler import extract_gateway_input
+
+        assert extract_gateway_input({"input": {"task": "go"}}) == {"task": "go"}
+        assert extract_gateway_input({"task": "go"}) == {"task": "go"}
+
+    def test_clamp_max_steps(self):
+        """max_steps is clamped to the 1-50 contract range."""
+        from browser.handler import clamp_max_steps
+
+        assert clamp_max_steps(0) == 1
+        assert clamp_max_steps(15) == 15
+        assert clamp_max_steps(999) == 50
+        assert clamp_max_steps("7") == 7

@@ -1,0 +1,4 @@
+bedrock-agentcore
+browser-use
+playwright>=1.40.0
+boto3
