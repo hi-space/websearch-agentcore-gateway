@@ -53,3 +53,15 @@ variable "pip_command" {
   description = "pip command to use for dependency installation"
   default     = "pip3"
 }
+
+variable "browser_arn" {
+  type        = string
+  description = "If set, grants this Lambda permission to drive the given AgentCore browser and invoke Bedrock models (used only by the browser tool)."
+  default     = ""
+}
+
+variable "bedrock_model_arns" {
+  type        = list(string)
+  description = "Bedrock model/inference-profile ARNs the browser tool may invoke."
+  default     = []
+}
