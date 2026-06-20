@@ -6,7 +6,6 @@ import { humanizeLatency } from '@/lib/eval';
 
 const AXES: { key: Axis; label: string }[] = [
   { key: 'latency', label: 'Latency' },
-  { key: 'quality', label: '품질' },
   { key: 'consensus', label: '합의도' },
   { key: 'count', label: '결과수' },
 ];
@@ -15,19 +14,12 @@ function formatValue(axis: Axis, value: number | null): string {
   if (value === null) return '—';
   switch (axis) {
     case 'latency': return humanizeLatency(value);
-    case 'quality': return value.toFixed(1);
     case 'consensus': return `${Math.round(value * 100)}%`;
     case 'count': return String(value);
   }
 }
 
-export function Scoreboard({
-  metrics,
-  qualityReady,
-}: {
-  metrics: EngineMetrics[];
-  qualityReady: boolean;
-}) {
+export function Scoreboard({ metrics }: { metrics: EngineMetrics[] }) {
   const [axis, setAxis] = useState<Axis>('latency');
   const bars = scoreboardBars(metrics, axis);
 
@@ -36,24 +28,20 @@ export function Scoreboard({
       <div className="mb-3 flex items-center justify-between">
         <span className="text-xs uppercase tracking-wide text-muted-foreground">Scoreboard</span>
         <div className="flex gap-1">
-          {AXES.map((a) => {
-            const disabled = a.key === 'quality' && !qualityReady;
-            return (
-              <button
-                key={a.key}
-                type="button"
-                disabled={disabled}
-                onClick={() => setAxis(a.key)}
-                className={`rounded-full border px-2.5 py-0.5 text-xs transition ${
-                  axis === a.key
-                    ? 'border-transparent bg-primary/15 text-primary'
-                    : 'border-border text-muted-foreground hover:text-foreground'
-                } ${disabled ? 'cursor-not-allowed opacity-40' : ''}`}
-              >
-                {a.label}
-              </button>
-            );
-          })}
+          {AXES.map((a) => (
+            <button
+              key={a.key}
+              type="button"
+              onClick={() => setAxis(a.key)}
+              className={`rounded-full border px-2.5 py-0.5 text-xs transition ${
+                axis === a.key
+                  ? 'border-transparent bg-primary/15 text-primary'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {a.label}
+            </button>
+          ))}
         </div>
       </div>
 
