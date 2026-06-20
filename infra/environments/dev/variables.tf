@@ -153,6 +153,12 @@ variable "enable_browser" {
   default     = false
 }
 
+variable "enable_web_search" {
+  type        = bool
+  description = "Enable the AgentCore Web Search Tool connector target (managed, no API key; us-east-1 only). Grants the gateway role InvokeWebSearch; the target itself is created by scripts/create-web-search-target.sh after apply."
+  default     = false
+}
+
 variable "browser_model_id" {
   type        = string
   description = "Bedrock model ID that browser-use drives inside the browser tool Lambda"
