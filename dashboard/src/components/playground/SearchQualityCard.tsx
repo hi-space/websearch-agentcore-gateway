@@ -1,7 +1,7 @@
 // dashboard/src/components/playground/SearchQualityCard.tsx
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Info } from 'lucide-react';
 import { type EngineResult } from '@/lib/metrics';
 import { type AxisScore } from '@/lib/judge-spans';
@@ -102,8 +102,8 @@ export function SearchQualityCard(props: SearchQualityCardProps) {
             const expanded =
               open === relKey ? row.relevance : open === authKey ? row.authority : null;
             return (
-              <>
-                <tr key={row.engine} className="border-b last:border-0">
+              <Fragment key={row.engine}>
+                <tr className="border-b last:border-0">
                   <td className="px-2 py-1.5 capitalize">{row.engine}</td>
                   {row.hasError ? (
                     <td colSpan={5} className="px-2 py-1.5 text-right text-destructive">오류</td>
@@ -130,14 +130,14 @@ export function SearchQualityCard(props: SearchQualityCardProps) {
                   )}
                 </tr>
                 {expanded && (expanded.explanation || expanded.label) && (
-                  <tr key={`${row.engine}-exp`} className="border-b last:border-0 bg-muted/40">
+                  <tr className="border-b last:border-0 bg-muted/40">
                     <td colSpan={6} className="px-2 py-2 text-xs text-muted-foreground">
                       {expanded.label && <span className="font-medium text-foreground">{expanded.label}: </span>}
                       {expanded.explanation}
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             );
           })}
         </tbody>
