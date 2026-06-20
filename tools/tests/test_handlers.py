@@ -719,6 +719,34 @@ class TestResponseNormalization:
         assert response["answer"] == "hello"
 
 
+class TestCallerIdentityLogging:
+    """serper handler logs caller identity at entry (for audit join)."""
+
+    def test_logs_caller_identity_line(self, capsys):
+        import base64, json as _json
+        def _jwt(payload):
+            b = lambda o: base64.urlsafe_b64encode(_json.dumps(o).encode()).decode().rstrip("=")
+            return f"{b({'alg':'RS256'})}.{b(payload)}.sig"
+        os.environ["SERPER_API_KEY"] = "sk-test"
+        event = {
+            "input": {"query": "python"},
+            "headers": {"authorization": f"Bearer {_jwt({'sub': 'user-9', 'client_id': 'web'})}"},
+        }
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.POST,
+                "https://google.serper.dev/search",
+                json={"organic": []},
+                status=200,
+            )
+            from serper.handler import lambda_handler
+            lambda_handler(event, None)
+        logged = capsys.readouterr().out
+        assert '"event": "caller_identity"' in logged
+        assert '"sub": "user-9"' in logged
+        os.environ.pop("SERPER_API_KEY", None)
+
+
 class TestBrowserHandler:
     """Test AgentCore Browser task handler (input layer only; heavy deps are lazy-imported)."""
 
