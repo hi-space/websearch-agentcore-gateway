@@ -24,7 +24,7 @@ locals {
     [for f in local.shared_files : filesha1("${local.shared_dir}/${f}")],
   )))
 
-  ecr_repo_name = "${local.fn_name}"
+  ecr_repo_name = local.fn_name
   image_tag     = substr(local.source_hash, 0, 12)
   image_uri     = local.is_image ? "${aws_ecr_repository.this[0].repository_url}:${local.image_tag}" : ""
 }
@@ -156,6 +156,22 @@ resource "aws_iam_role_policy" "bedrock_agentcore" {
   })
 }
 
+# Tool secret: read this engine's API key from Secrets Manager at runtime.
+# Conditionally created so tools without a key (duckduckgo, searxng) are unaffected.
+resource "aws_iam_role_policy" "secret" {
+  count = var.secret_arn != "" ? 1 : 0
+  name  = "tool-secret"
+  role  = aws_iam_role.lambda.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["secretsmanager:GetSecretValue"]
+      Resource = var.secret_arn
+    }]
+  })
+}
+
 # Browser tool only: drive AgentCore browser sessions + invoke Bedrock models.
 # Conditionally created so existing search tools are unaffected.
 resource "aws_iam_role_policy" "browser" {
@@ -250,5 +266,6 @@ resource "aws_lambda_function" "this" {
     aws_iam_role_policy.browser,
     aws_iam_role_policy_attachment.vpc_access,
     null_resource.image_build,
+    aws_iam_role_policy.secret,
   ]
 }

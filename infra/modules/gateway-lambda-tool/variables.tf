@@ -110,3 +110,9 @@ variable "vpc_config" {
   description = "If set, attaches the Lambda to a VPC (used by the SearXNG tool to reach its internal ALB). null leaves the Lambda outside any VPC, unchanged."
   default     = null
 }
+
+variable "secret_arn" {
+  type        = string
+  description = "If set, grants this Lambda secretsmanager:GetSecretValue on this secret ARN (the tool's API key)."
+  default     = ""
+}
