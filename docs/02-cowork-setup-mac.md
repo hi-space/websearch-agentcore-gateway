@@ -24,8 +24,8 @@ Claude Cowork를 AWS Bedrock 추론 엔진으로 전환하면 빌트인 `web_sea
 ### 1. 인프라 배포 완료
 - `01-deployment-guide.md`에 따라 **인프라 배포(`terraform apply`)를 완료**해야 합니다.
 - 배포 후 다음 정보가 준비되어야 합니다:
-  - **Gateway URL** (예: `https://gateway-abc123.bedrock-agentcore.ap-northeast-2.amazonaws.com`)
-  - **Cognito 도메인** (예: `https://websearch-gw-dev.auth.ap-northeast-2.amazoncognito.com`)
+  - **Gateway URL** (예: `https://gateway-abc123.bedrock-agentcore.us-east-1.amazonaws.com`)
+  - **Cognito 도메인** (예: `https://websearch-gw-dev.auth.us-east-1.amazoncognito.com`)
   - **M2M 클라이언트 ID** (Terraform output `auth_m2m_client_id` 또는 Cognito 콘솔에서 확인)
 
 ### 2. macOS 환경
@@ -66,7 +66,7 @@ ls -la cowork/setup-mac.sh
 Terraform 읽기에 실패하면 다음과 같이 직접 URL을 전달합니다:
 
 ```bash
-./cowork/setup-mac.sh --gateway-url https://gateway-xxxxx.bedrock-agentcore.ap-northeast-2.amazonaws.com
+./cowork/setup-mac.sh --gateway-url https://gateway-xxxxx.bedrock-agentcore.us-east-1.amazonaws.com
 ```
 
 #### 토큰 갱신 강제
@@ -88,10 +88,10 @@ Terraform 읽기에 실패하면 다음과 같이 직접 URL을 전달합니다:
 스크립트 실행 후 다음 정보를 입력합니다 (Terraform 자동 읽기 실패 시만):
 
 ```
-Cognito domain (https://xxx.auth.region.amazoncognito.com): https://websearch-gw-dev.auth.ap-northeast-2.amazoncognito.com
+Cognito domain (https://xxx.auth.region.amazoncognito.com): https://websearch-gw-dev.auth.us-east-1.amazoncognito.com
 Cognito client ID (M2M credentials): <M2M 클라이언트 ID 붙여넣기>
-Gateway URL (https://gateway.example.com): https://gateway-abc123.bedrock-agentcore.ap-northeast-2.amazonaws.com
-AWS region (ap-northeast-2): ap-northeast-2
+Gateway URL (https://gateway.example.com): https://gateway-abc123.bedrock-agentcore.us-east-1.amazonaws.com
+AWS region (us-east-1): us-east-1
 ```
 
 **Cognito 클라이언트 ID 찾기:**
@@ -202,7 +202,7 @@ sudo profiles -P | grep -A10 "com.anthropic.claudefordesktop"
 2. **General** → **Profiles** (또는 **Privacy & Security** → **Profiles**)
 3. **"AgentCore Gateway Configuration"** 또는 **"Claude 3P"** 프로필 확인
 4. 프로필 상세 정보에서 다음 필드 존재 확인:
-   - `inferenceBedrockRegion`: `ap-northeast-2`
+   - `inferenceBedrockRegion`: `us-east-1`
    - `inferenceBedrockGateway`: Gateway URL
    - `managedMcpServers`: AgentCore Gateway 항목
 

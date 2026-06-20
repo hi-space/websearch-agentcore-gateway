@@ -51,12 +51,12 @@ terraform output
 ```
 
 필요한 값 (setup 스크립트가 자동으로 읽습니다):
-- **cognito_domain_url**: `https://websearch-gw-xxx.auth.ap-northeast-2.amazoncognito.com` (전체 URL)
+- **cognito_domain_url**: `https://websearch-gw-xxx.auth.us-east-1.amazoncognito.com` (전체 URL)
 - **auth_m2m_client_id**: M2M (Machine-to-Machine) 클라이언트 ID
 - **auth_m2m_client_secret**: M2M 클라이언트 시크릿 (`terraform output -raw auth_m2m_client_secret`)
 - **auth_m2m_scope**: `agentcore/invoke`
-- **gateway_url**: `https://...gateway.bedrock-agentcore.ap-northeast-2.amazonaws.com/mcp`
-- **region**: `ap-northeast-2` (고정)
+- **gateway_url**: `https://...gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp`
+- **region**: `us-east-1` (고정)
 
 **주의**: 반드시 **M2M 클라이언트**(`auth_m2m_client_id`)와 그 시크릿을 사용하세요.
 `cognito_client_id`(웹 클라이언트)는 시크릿이 없어 client_credentials 그랜트에 사용할 수 없습니다.
@@ -109,7 +109,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
 
 - **Gateway URL 직접 지정**:
   ```powershell
-  .\setup-windows.ps1 -GatewayUrl "https://bedrock-agentcore-xxx.ap-northeast-2.bedrock.amazonaws.com"
+  .\setup-windows.ps1 -GatewayUrl "https://bedrock-agentcore-xxx.us-east-1.bedrock.amazonaws.com"
   ```
 
 - **Terraform 디렉토리 지정**:
@@ -132,10 +132,10 @@ Terraform 출력 값을 그대로 붙여 넣으세요.
 #### 입력 예시
 
 ```
-Cognito domain: https://websearch-gw-abc123.auth.ap-northeast-2.amazoncognito.com
+Cognito domain: https://websearch-gw-abc123.auth.us-east-1.amazoncognito.com
 Cognito client ID (M2M credentials): 7abc123def456xyz
-Gateway URL (https://gateway.example.com): https://bedrock-agentcore-mygateway.ap-northeast-2.bedrock.amazonaws.com
-AWS region (ap-northeast-2): ap-northeast-2
+Gateway URL (https://gateway.example.com): https://bedrock-agentcore-mygateway.us-east-1.bedrock.amazonaws.com
+AWS region (us-east-1): us-east-1
 ```
 
 ### 6단계: 토큰 획득 확인
@@ -277,7 +277,7 @@ reg import $regPath
 .\setup-windows.ps1 -ForceLogin
 
 # 또는 수동으로 토큰 획득
-$env:COGNITO_DOMAIN = "https://websearch-gw-xxx.auth.ap-northeast-2.amazoncognito.com"
+$env:COGNITO_DOMAIN = "https://websearch-gw-xxx.auth.us-east-1.amazoncognito.com"
 $env:CLIENT_ID = "7abc123def456xyz"
 .\agentcore-token.ps1
 ```
@@ -321,10 +321,10 @@ foreach ($path in $cachePaths) {
 ### config.env
 
 ```bash
-COGNITO_DOMAIN="https://websearch-gw-abc123.auth.ap-northeast-2.amazoncognito.com"
+COGNITO_DOMAIN="https://websearch-gw-abc123.auth.us-east-1.amazoncognito.com"
 CLIENT_ID="7abc123def456xyz"
-GATEWAY_URL="https://bedrock-agentcore-mygateway.ap-northeast-2.bedrock.amazonaws.com"
-REGION="ap-northeast-2"
+GATEWAY_URL="https://bedrock-agentcore-mygateway.us-east-1.bedrock.amazonaws.com"
+REGION="us-east-1"
 ```
 
 **용도:** `agentcore-token.ps1` 헬퍼 스크립트가 읽어 토큰 갱신 시 사용
@@ -351,7 +351,7 @@ REGION="ap-northeast-2"
 Windows Registry Editor Version 5.00
 
 [HKEY_CURRENT_USER\SOFTWARE\Policies\Claude]
-"InferenceBedrockRegion"="ap-northeast-2"
+"InferenceBedrockRegion"="us-east-1"
 "ManagedMcpServers"="[{\"url\":\"https://bedrock-agentcore-...\",\"name\":\"AgentCore Gateway\",\"headersHelper\":\"...\\\agentcore-token.ps1\"}]"
 ```
 
@@ -494,8 +494,8 @@ Get-Content "$env:APPDATA\Claude-3p\configLibrary\*.json" |
 
 Gateway URL 형식 확인 (반드시 `https://`로 시작):
 ```
-✓ https://bedrock-agentcore-mygateway.ap-northeast-2.bedrock.amazonaws.com
-✗ bedrock-agentcore-mygateway.ap-northeast-2.bedrock.amazonaws.com (http:// 누락)
+✓ https://bedrock-agentcore-mygateway.us-east-1.bedrock.amazonaws.com
+✗ bedrock-agentcore-mygateway.us-east-1.bedrock.amazonaws.com (http:// 누락)
 ```
 
 Terraform 출력에서 직접 복사:

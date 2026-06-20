@@ -102,7 +102,7 @@ def lambda_handler(event, context):
 
 **Lambda Runtime:**
 
-- `AWS_REGION` — AWS region (ap-northeast-2)
+- `AWS_REGION` — AWS region (us-east-1)
 - `WORKLOAD_TOKEN` — AgentCore workload identity token (injected by Gateway)
 - `IDENTITY_PROVIDER_ARN` — Credential provider ARN (from Terraform module)
 - `OTEL_EXPORTER_OTLP_ENDPOINT` — Optional OTEL endpoint for tracing

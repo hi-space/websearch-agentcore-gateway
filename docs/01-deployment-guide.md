@@ -16,7 +16,7 @@ WebSearch Tool Gateway 배포를 위해 다음 사항을 확인하세요.
 
 - **AWS 계정**: 활성 계정 필요
 - **로그인**: AWS Management Console에 로그인 (관리자 권한 권장)
-- **리전**: **ap-northeast-2 (Seoul)** 로 설정 확인
+- **리전**: **us-east-1 (N. Virginia)** 로 설정 확인
   - AgentCore는 15개 리전에서만 지원하며, 한국(서울)도 포함
   - Console 우측 상단 리전 드롭다운에서 "서울" 선택
 
@@ -52,7 +52,7 @@ _(스크린샷: Bedrock Model access 페이지에서 AgentCore 활성화 상태)
 
 #### 1.2.2 AgentCore 권한 확인
 
-AgentCore를 배포할 리전(ap-northeast-2)에서 활성화 여부 재확인.
+AgentCore를 배포할 리전(us-east-1)에서 활성화 여부 재확인.
 
 ---
 
@@ -97,7 +97,7 @@ aws configure --profile default
 # 프롬프트:
 # AWS Access Key ID: [Access Key 입력]
 # AWS Secret Access Key: [Secret Key 입력]
-# Default region name: ap-northeast-2
+# Default region name: us-east-1
 # Default output format: json
 ```
 
@@ -147,7 +147,7 @@ cp terraform.tfvars.example terraform.tfvars
 ```hcl
 project_name = "websearch-gw"
 environment  = "dev"
-aws_region   = "ap-northeast-2"
+aws_region   = "us-east-1"
 
 # ============================================================
 # 검색 엔진 토글 및 API 키
@@ -200,7 +200,7 @@ enable_otlp_export = false
 #### 3.2.1 주요 설정 항목 설명
 
 - **project_name**: 프로젝트 식별자. S3 버킷, 리소스 이름에 사용됨
-- **aws_region**: 반드시 `ap-northeast-2` (서울)
+- **aws_region**: 반드시 `us-east-1` (버지니아)
 - **enable_tavily / enable_brave**: 자주 사용하는 2개 엔진. 활성화 권장
 - **tavily_api_key**: Tavily에서 발급받은 API 키. 빈 문자열 시 엔진 비활성화
 - **auth_mode**: Cognito (기본) 또는 외부 OIDC 제공자
@@ -234,7 +234,7 @@ cd /path/to/websearch-tool-gateway/infra/scripts
 Web Search Tool Gateway — Terraform Deploy
 ==========================================
 Project: websearch-gw
-Region:  ap-northeast-2
+Region:  us-east-1
 Account: 123456789012
 
 Step 1: Creating S3 state bucket and DynamoDB lock table...
@@ -243,8 +243,8 @@ Step 1: Creating S3 state bucket and DynamoDB lock table...
 Backend config:
 terraform {
   backend "s3" {
-    bucket         = "websearch-gw-tfstate-123456789012-ap-northeast-2"
-    region         = "ap-northeast-2"
+    bucket         = "websearch-gw-tfstate-123456789012-us-east-1"
+    region         = "us-east-1"
     encrypt        = true
     dynamodb_table = "websearch-gw-tfstate-lock"
     key            = "dev/terraform.tfstate"
@@ -307,7 +307,7 @@ Terraform initialized successfully
 Infrastructure deployed successfully!
 
 Gateway URL:
-https://gateway-abcdef123456.bedrock-agentcore.ap-northeast-2.amazonaws.com
+https://gateway-abcdef123456.bedrock-agentcore.us-east-1.amazonaws.com
 
 Next steps:
   1. Seed API keys: ./scripts/seed-api-keys.sh
@@ -329,8 +329,8 @@ cat /tmp/deployment-outputs.json | jq .
 주요 출력값:
 
 - **gateway_id**: `gateway-abcdef123456`
-- **gateway_url**: `https://gateway-abcdef123456.bedrock-agentcore.ap-northeast-2.amazonaws.com`
-- **cognito_domain**: `websearch-gw-abc123.auth.ap-northeast-2.amazoncognito.com`
+- **gateway_url**: `https://gateway-abcdef123456.bedrock-agentcore.us-east-1.amazonaws.com`
+- **cognito_domain**: `websearch-gw-abc123.auth.us-east-1.amazoncognito.com`
 - **cognito_client_id**: M2M 클라이언트 ID (Cowork 설정에 사용)
 - **enabled_engines**: 활성화된 검색 엔진 목록
 
@@ -354,7 +354,7 @@ cd /path/to/websearch-tool-gateway/infra/scripts
 Seeding API Keys
 ==========================================
 Project: websearch-gw
-Region:  ap-northeast-2
+Region:  us-east-1
 
 Seeding API keys:
   ✓ tavily: Seeded
@@ -385,7 +385,7 @@ API 키가 정상 등록되었는지 확인하려면, AWS CLI로 직접 조회:
 
 ```bash
 aws bedrock-agentcore-control list-api-key-credential-providers \
-  --region ap-northeast-2
+  --region us-east-1
 ```
 
 **출력 예시:**
@@ -395,12 +395,12 @@ aws bedrock-agentcore-control list-api-key-credential-providers \
   "providers": [
     {
       "name": "tavily",
-      "arn": "arn:aws:bedrock-agentcore:ap-northeast-2:123456789012:identity-provider/...",
+      "arn": "arn:aws:bedrock-agentcore:us-east-1:123456789012:identity-provider/...",
       "status": "ACTIVE"
     },
     {
       "name": "brave",
-      "arn": "arn:aws:bedrock-agentcore:ap-northeast-2:123456789012:identity-provider/...",
+      "arn": "arn:aws:bedrock-agentcore:us-east-1:123456789012:identity-provider/...",
       "status": "ACTIVE"
     }
   ]
@@ -487,7 +487,7 @@ curl -s -X POST "$GATEWAY_URL" \
 # 예: Tavily Lambda 호출
 aws lambda invoke \
   --function-name websearch-gw-dev-tavily \
-  --region ap-northeast-2 \
+  --region us-east-1 \
   --payload '{"query": "AWS Bedrock AgentCore", "num_results": 3}' \
   response.json
 
@@ -534,10 +534,10 @@ pnpm install
 cp .env.example .env.local
 
 # .env.local에 Terraform output 값 입력:
-# NEXT_PUBLIC_REGION=ap-northeast-2
+# NEXT_PUBLIC_REGION=us-east-1
 # NEXT_PUBLIC_GATEWAY_ID=gateway-abcdef123456
-# NEXT_PUBLIC_GATEWAY_URL=https://gateway-abcdef123456.bedrock-agentcore.ap-northeast-2.amazonaws.com
-# NEXT_PUBLIC_COGNITO_DOMAIN=websearch-gw-abc123.auth.ap-northeast-2.amazoncognito.com
+# NEXT_PUBLIC_GATEWAY_URL=https://gateway-abcdef123456.bedrock-agentcore.us-east-1.amazonaws.com
+# NEXT_PUBLIC_COGNITO_DOMAIN=websearch-gw-abc123.auth.us-east-1.amazoncognito.com
 # NEXT_PUBLIC_COGNITO_CLIENT_ID=<cognito_client_id>
 
 pnpm dev
@@ -557,21 +557,21 @@ Gateway 호출, 성능 메트릭, 감사 로그를 CloudWatch에서 확인:
 
 ### Q: Terraform apply 중 "MissingRegionError" 에러
 
-**A**: AWS_REGION이 ap-northeast-2로 설정되지 않음.
+**A**: AWS_REGION이 us-east-1로 설정되지 않음.
 
 ```bash
-export AWS_REGION=ap-northeast-2
+export AWS_REGION=us-east-1
 ./deploy.sh apply
 ```
 
-또는 `terraform.tfvars`에서 `aws_region = "ap-northeast-2"` 확인.
+또는 `terraform.tfvars`에서 `aws_region = "us-east-1"` 확인.
 
 ### Q: "AgentCore not available in this region"
 
 **A**: Bedrock AgentCore가 해당 리전에서 활성화되지 않음.
 
 1. AWS Console → Bedrock → Model access 확인
-2. 리전을 ap-northeast-2 (Seoul)로 변경
+2. 리전을 us-east-1 (N. Virginia)로 변경
 3. AgentCore access 요청 및 승인 대기
 
 ### Q: Seed API keys 실행 후 "provider may not exist" 에러
@@ -601,7 +601,7 @@ terraform output gateway_url
 
 배포 완료 후 다음을 확인하세요:
 
-- [ ] AWS 계정에서 ap-northeast-2 (Seoul) 리전 선택
+- [ ] AWS 계정에서 us-east-1 (N. Virginia) 리전 선택
 - [ ] Bedrock AgentCore preview 활성화 (Model access에서 "Access granted")
 - [ ] Terraform 1.7 이상, AWS CLI v2 설치
 - [ ] AWS 자격증명 설정 (aws configure)

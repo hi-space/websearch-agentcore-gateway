@@ -1,6 +1,6 @@
 # WebSearch Tool Gateway — Technical Architecture
 
-**Version**: 1.1 | **Date**: 2026-05-31 | **AWS Region**: ap-northeast-2 (Seoul)
+**Version**: 1.1 | **Date**: 2026-05-31 | **AWS Region**: us-east-1 (N. Virginia)
 
 ## Executive Summary
 
@@ -189,7 +189,7 @@ resource "aws_bedrockagentcore_gateway_target" "mcp_server" {
 3. **OIDC Configuration** (issuer = Cognito IdP URL, not the hosted-UI domain):
    - Discovery URL: `{issuer_url}/.well-known/openid-configuration`
    - Token endpoint: `https://{cognito_domain}/oauth2/token`
-   - Issuer URL: `https://cognito-idp.ap-northeast-2.amazonaws.com/{user_pool_id}`
+   - Issuer URL: `https://cognito-idp.us-east-1.amazonaws.com/{user_pool_id}`
 
 **Access tokens** are obtained via the `client_credentials` grant (no interactive
 browser login in the Cowork/dashboard paths — see [Token Refresh](#token-refresh-mechanism)):

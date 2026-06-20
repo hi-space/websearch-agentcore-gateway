@@ -90,7 +90,8 @@ case "$ACTION" in
     echo ""
     echo "Next steps:"
     echo "  1. Seed API keys: $SCRIPT_DIR/seed-api-keys.sh"
-    echo "  2. Set up Cowork: cowork/setup-mac.sh or setup-windows.ps1"
+    echo "  2. Create Web Search target: $SCRIPT_DIR/create-web-search-target.sh"
+    echo "  3. Set up Cowork: cowork/setup-mac.sh or setup-windows.ps1"
     ;;
 
   destroy)
