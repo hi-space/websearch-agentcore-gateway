@@ -18,6 +18,7 @@ locals {
   firecrawl_enabled     = var.enable_firecrawl
   you_enabled           = var.enable_you
   tavily_lambda_enabled = var.enable_tavily_lambda
+  searxng_enabled       = var.enable_searxng
 
   lambda_tools_enabled = {
     serper        = local.serper_enabled
@@ -29,6 +30,7 @@ locals {
     firecrawl     = local.firecrawl_enabled
     you           = local.you_enabled
     tavily_lambda = local.tavily_lambda_enabled
+    searxng       = local.searxng_enabled
   }
 
   # Filter to only enabled tools
@@ -39,7 +41,7 @@ locals {
   # MCP server targets (external hosted MCP servers)
   mcp_server_targets = {
     # Tavily: hosted MCP server endpoint
-    tavily = var.enable_tavily && var.tavily_api_key != "" ? {
+    tavily = var.enable_tavily ? {
       endpoint = "https://mcp.tavily.com/mcp/"
     } : null
   }
@@ -85,42 +87,42 @@ module "identity_providers" {
   aws_region   = var.aws_region
 
   api_key_providers = {
-    tavily = var.enable_tavily && var.tavily_api_key != "" ? {
+    tavily = var.enable_tavily ? {
       display_name = "Tavily Search"
       description  = "Tavily web search API"
     } : null
 
-    brave = var.enable_brave && var.brave_api_key != "" ? {
+    brave = var.enable_brave ? {
       display_name = "Brave Search"
       description  = "Brave independent web search"
     } : null
 
-    serper = var.enable_serper && var.serper_api_key != "" ? {
+    serper = var.enable_serper ? {
       display_name = "Serper Search"
       description  = "Serper SERP API"
     } : null
 
-    exa = var.enable_exa && var.exa_api_key != "" ? {
+    exa = var.enable_exa ? {
       display_name = "Exa Search"
       description  = "Exa neural search API"
     } : null
 
-    perplexity = var.enable_perplexity && var.perplexity_api_key != "" ? {
+    perplexity = var.enable_perplexity ? {
       display_name = "Perplexity Sonar"
       description  = "Perplexity Sonar API"
     } : null
 
-    anthropic = var.enable_anthropic && var.anthropic_api_key != "" ? {
+    anthropic = var.enable_anthropic ? {
       display_name = "Anthropic Claude"
       description  = "Anthropic Claude built-in web search"
     } : null
 
-    firecrawl = var.enable_firecrawl && var.firecrawl_api_key != "" ? {
+    firecrawl = var.enable_firecrawl ? {
       display_name = "Firecrawl Search"
       description  = "Firecrawl web search API"
     } : null
 
-    you = var.enable_you && var.you_api_key != "" ? {
+    you = var.enable_you ? {
       display_name = "You.com Search"
       description  = "You.com web search API"
     } : null
@@ -135,6 +137,52 @@ locals {
   filtered_identity_providers = nonsensitive({
     for k, v in module.identity_providers.credential_provider_arns : k => v
   })
+}
+
+# ============================================================
+# Per-engine Secrets Manager containers (values seeded out-of-band)
+# ============================================================
+locals {
+  tool_secret_engines = {
+    serper        = "Serper SERP API key"
+    exa           = "Exa neural search API key"
+    perplexity    = "Perplexity Sonar API key"
+    brave         = "Brave Search API key"
+    anthropic     = "Anthropic Claude API key"
+    firecrawl     = "Firecrawl web search API key"
+    you           = "You.com search API key"
+    tavily_lambda = "Tavily API key (Lambda tool)"
+  }
+}
+
+module "tool_secret" {
+  for_each = local.tool_secret_engines
+  source   = "../../modules/tool-secret"
+
+  name        = "${var.project_name}/${var.environment}/tool/${each.key}"
+  description = each.value
+  tags = {
+    Environment = var.environment
+    Engine      = each.key
+  }
+}
+
+locals {
+  tool_secret_arns = { for k, m in module.tool_secret : k => m.secret_arn }
+}
+
+# ============================================================
+# SearXNG self-hosted metasearch (VPC + ECS Fargate + internal ALB)
+# ============================================================
+# Gated entirely on enable_searxng: when false, nothing here is created.
+
+module "searxng" {
+  count  = var.enable_searxng ? 1 : 0
+  source = "../../modules/searxng"
+
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
 }
 
 # ============================================================
@@ -154,35 +202,30 @@ module "lambda_tools" {
   tool_name   = each.key
   source_root = local.tools_root
 
+  # SearXNG runs inside the VPC and is reached via the internal ALB; attach the
+  # Lambda to the same VPC. All other tools stay outside any VPC (null).
+  vpc_config = each.key == "searxng" && var.enable_searxng ? {
+    subnet_ids         = module.searxng[0].private_subnet_ids
+    security_group_ids = [module.searxng[0].lambda_security_group_id]
+  } : null
+
+  secret_arn = lookup(local.tool_secret_arns, each.key, "")
+
+  enable_secret_policy = contains(keys(local.tool_secret_engines), each.key)
+
   env_vars = merge(
-    # DuckDuckGo has no API key and therefore no Identity provider; only inject ARN when one exists.
+    # AgentCore Identity provider ARN (vault fallback path; kept for MCP-token parity).
     contains(keys(local.filtered_identity_providers), each.key) ? {
       IDENTITY_PROVIDER_ARN = local.filtered_identity_providers[each.key]
     } : {},
-    each.key == "serper" && var.serper_api_key != "" ? {
-      SERPER_API_KEY = var.serper_api_key
+    # Secrets Manager ARN for the engine's API key (primary path). The Lambda
+    # fetches the value at runtime with its own IAM role — no key in env/state.
+    lookup(local.tool_secret_arns, each.key, "") != "" ? {
+      "${upper(each.key == "tavily_lambda" ? "tavily" : each.key)}_SECRET_ARN" = local.tool_secret_arns[each.key]
     } : {},
-    each.key == "exa" && var.exa_api_key != "" ? {
-      EXA_API_KEY = var.exa_api_key
-    } : {},
-    each.key == "perplexity" && var.perplexity_api_key != "" ? {
-      PERPLEXITY_API_KEY = var.perplexity_api_key
-    } : {},
-    each.key == "brave" && var.brave_api_key != "" ? {
-      BRAVE_API_KEY = var.brave_api_key
-    } : {},
-    each.key == "anthropic" && var.anthropic_api_key != "" ? {
-      ANTHROPIC_API_KEY = var.anthropic_api_key
-    } : {},
-    each.key == "firecrawl" && var.firecrawl_api_key != "" ? {
-      FIRECRAWL_API_KEY = var.firecrawl_api_key
-    } : {},
-    each.key == "you" && var.you_api_key != "" ? {
-      YOU_API_KEY = var.you_api_key
-    } : {},
-    # tavily_lambda reuses the Tavily key, injected directly as an env var.
-    each.key == "tavily_lambda" && var.tavily_api_key != "" ? {
-      TAVILY_API_KEY = var.tavily_api_key
+    # SearXNG has no API key; it needs the instance URL (internal ALB DNS).
+    each.key == "searxng" && var.enable_searxng ? {
+      SEARXNG_URL = "http://${module.searxng[0].alb_dns_name}"
     } : {},
   )
 
@@ -190,7 +233,7 @@ module "lambda_tools" {
   memory_size        = 512
   log_retention_days = 7
 
-  depends_on = [module.identity_providers]
+  depends_on = [module.identity_providers, module.searxng, module.tool_secret]
 }
 
 # ============================================================
@@ -207,6 +250,68 @@ module "gateway_mcp_targets" {
       description         = "${k} hosted MCP server"
     }
   }
+}
+
+# ============================================================
+# AgentCore Browser (custom resource) + browser task Lambda
+# ============================================================
+
+module "browser" {
+  count  = var.enable_browser ? 1 : 0
+  source = "../../modules/browser"
+
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+}
+
+module "browser_tool" {
+  count  = var.enable_browser ? 1 : 0
+  source = "../../modules/gateway-lambda-tool"
+
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+  account_id   = local.account_id
+
+  tool_name   = "browser"
+  source_root = local.tools_root
+
+  # browser-use + playwright exceed the Lambda zip limit (250 MB unzipped), so
+  # the browser tool ships as a container image (ECR) instead of a zip.
+  # x86_64 because the build host can't cross-build/emulate arm64; the tool
+  # drives a remote AgentCore Browser over CDP, so Lambda arch is immaterial.
+  package_type = "Image"
+  architecture = "x86_64"
+
+  env_vars = {
+    BROWSER_ID       = module.browser[0].browser_id
+    BEDROCK_MODEL_ID = var.browser_model_id
+    # Lambda's filesystem is read-only except /tmp. browser-use writes config and
+    # cache under $HOME / XDG dirs, so point them all at /tmp.
+    HOME                   = "/tmp"
+    XDG_CONFIG_HOME        = "/tmp/.config"
+    XDG_CACHE_HOME         = "/tmp/.cache"
+    XDG_DATA_HOME          = "/tmp/.local/share"
+    BROWSER_USE_CONFIG_DIR = "/tmp/.config/browseruse"
+  }
+
+  browser_arn           = module.browser[0].browser_arn
+  enable_browser_policy = true
+  # browser-use invokes Bedrock from inside the Lambda. Default grants the
+  # Claude Haiku 4.5 foundation-model + cross-region inference-profile ARNs;
+  # override via var.browser_model_arns if you change var.browser_model_id.
+  bedrock_model_arns = length(var.browser_model_arns) > 0 ? var.browser_model_arns : [
+    "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5*",
+    "arn:aws:bedrock:*:${local.account_id}:inference-profile/*anthropic.claude-haiku-4-5*",
+  ]
+
+  # browser-use + playwright is a large/slow dependency tree; give it headroom.
+  timeout            = 300
+  memory_size        = 2048
+  log_retention_days = 7
+
+  depends_on = [module.browser]
 }
 
 # ============================================================
@@ -240,7 +345,12 @@ module "gateway" {
     tavily = "tavilyApiKey"
   }
 
-  depends_on = [module.auth, module.lambda_tools, module.gateway_mcp_targets]
+  browser_tool_arn      = var.enable_browser ? module.browser_tool[0].function_arn : ""
+  enable_browser_target = var.enable_browser
+
+  enable_web_search = var.enable_web_search
+
+  depends_on = [module.auth, module.lambda_tools, module.gateway_mcp_targets, module.browser_tool]
 }
 
 # ============================================================

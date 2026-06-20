@@ -4,7 +4,7 @@ Terraform configuration for AWS AgentCore Gateway + Identity Providers + Lambda 
 
 ## Prerequisites
 
-- AWS Account with AgentCore preview access (ap-northeast-2)
+- AWS Account with AgentCore preview access (us-east-1)
 - Terraform >= 1.11.0
 - AWS CLI v2 with `bedrock-agentcore-control` plugin
 - Python 3.12 (for Lambda build)
@@ -19,19 +19,11 @@ cd infra
 ./scripts/deploy.sh bootstrap
 ```
 
-Outputs the backend configuration. Copy to `environments/dev/backend.tf`:
-
-```hcl
-terraform {
-  backend "s3" {
-    bucket         = "websearch-gw-tfstate-<account>-ap-northeast-2"
-    region         = "ap-northeast-2"
-    encrypt        = true
-    dynamodb_table = "websearch-gw-tfstate-lock"
-    key            = "dev/terraform.tfstate"
-  }
-}
-```
+This creates the state bucket and lock table. The bucket name embeds your
+account ID, so the backend block in `environments/dev/backend.tf` is left
+empty on purpose — the settings are injected at init time via
+`-backend-config` (handled automatically by `./scripts/deploy.sh init`),
+keeping the account-specific bucket name out of version control.
 
 ### 2. Configure Variables
 
@@ -72,7 +64,33 @@ Outputs:
 
 Populates API keys into AgentCore Identity credential providers.
 
-### 5. Dashboard & Cowork Setup
+### 5. Post-apply: managed connectors & evaluators (not Terraform-managed)
+
+Two AgentCore resources are created **out-of-band by scripts, not Terraform**, and
+must be run after `apply`. Both rely on recent AgentCore control-plane APIs that the
+Terraform AWS provider does not yet expose, and the system `botocore` is too old to
+know them — so each script needs a fresh boto3 (run it with `PYTHON=` pointing at a
+venv where you've `pip install -U boto3 botocore`). us-east-1 only.
+
+```bash
+# 5a. Managed Web Search connector target (the `agentcore` engine).
+#     Grants nothing new in TF — the gateway role's InvokeWebSearch permission is
+#     created by Terraform when enable_web_search=true; this attaches the target.
+./scripts/create-web-search-target.sh
+
+# 5b. Search-quality LLM-as-a-judge evaluators (relevance + authority) used by the
+#     dashboard playground's quality card. Rubrics live in infra/evaluators/*.json.
+PYTHON=/path/to/venv/bin/python ./scripts/create-evaluators.sh
+```
+
+`create-evaluators.sh` is **idempotent**: it skips an evaluator whose name already
+exists. Because `create_evaluator` is **immutable**, changing a rubric in
+`infra/evaluators/*.json` means bumping the version suffix in the script's evaluator
+names (e.g. `search_relevance_v2` → `_v3`) so a fresh evaluator is created, then
+swapping the printed ids into the dashboard env (step 6). Delete superseded
+evaluators manually via `delete_evaluator` once the new ones are wired up.
+
+### 6. Dashboard & Cowork Setup
 
 Generate `.env.local` for Next.js dashboard:
 
@@ -81,6 +99,17 @@ cd ../dashboard
 terraform output -json -chdir=../infra/environments/dev | jq -r '.dashboard_env.value | to_entries[] | "\(.key)=\(.value)"' > .env.local
 pnpm dev
 ```
+
+If you ran step 5b, set the evaluator ids it printed in `.env.local` so the
+playground quality card can call them (these are not in Terraform outputs):
+
+```
+JUDGE_RELEVANCE_EVALUATOR_ID=search_relevance_v2-XXXXXXXX
+JUDGE_AUTHORITY_EVALUATOR_ID=search_authority_v2-XXXXXXXX
+```
+
+`dashboard/gen-env.sh` preserves existing `JUDGE_*` values on regeneration, so this
+only needs doing once per evaluator version. Restart the dev server after editing.
 
 Set up Cowork client (macOS/Windows):
 
@@ -109,9 +138,12 @@ infra/
 │   ├── gateway-lambda-tool/ # Lambda function packaging + IAM
 │   ├── gateway-mcp-target/ # External MCP server target config
 │   └── observability/      # CloudWatch Logs + Vended Logs + Transaction Search
+├── evaluators/             # LLM-as-a-judge rubrics (relevance.json, authority.json)
 ├── scripts/
 │   ├── deploy.sh           # Orchestrate bootstrap → init → plan → apply
 │   ├── seed-api-keys.sh    # Populate Identity providers with API keys
+│   ├── create-web-search-target.sh  # Post-apply: managed Web Search connector (not TF)
+│   ├── create-evaluators.sh         # Post-apply: search-quality evaluators (not TF)
 │   └── destroy.sh          # Destroy infrastructure
 └── README.md (this file)
 ```
@@ -202,7 +234,7 @@ terraform apply
 ```bash
 ./scripts/destroy.sh
 # Manually delete S3 state bucket (contains tfstate files)
-aws s3 rb s3://websearch-gw-tfstate-<account>-ap-northeast-2 --force
+aws s3 rb s3://websearch-gw-tfstate-<account>-us-east-1 --force
 ```
 
 ## Environment Separation

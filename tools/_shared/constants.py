@@ -1,7 +1,7 @@
 """Constants for search handlers."""
 
 # Gateway Lambda environment and configuration
-DEFAULT_AWS_REGION = "ap-northeast-2"
+DEFAULT_AWS_REGION = "us-east-1"
 DEFAULT_NUM_RESULTS = 10
 MAX_NUM_RESULTS = 20
 MIN_NUM_RESULTS = 1

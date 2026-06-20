@@ -472,3 +472,48 @@ describe('groupIntoToolCalls', () => {
     expect(calls[0].query).toBe('first');
   });
 });
+
+describe('caller identity join', () => {
+  it('attaches callerSub/callerClientId from the identity log line', () => {
+    const trace = 'abc123';
+    const lines = [
+      line(
+        {
+          trace_id: trace,
+          span_id: 's1',
+          event_timestamp: 1000,
+          body: { requestBody: '{method=tools/call, params={name=serper___web_search, arguments={query=x}}}' },
+        },
+        1000
+      ),
+      line(
+        {
+          trace_id: trace,
+          event_timestamp: 1100,
+          body: { log: '{"event": "caller_identity", "engine": "serper", "sub": "user-9", "client_id": "web", "raw_present": true}' },
+        },
+        1100
+      ),
+    ];
+    const calls = groupIntoToolCalls(lines);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].callerSub).toBe('user-9');
+    expect(calls[0].callerClientId).toBe('web');
+  });
+
+  it('leaves caller fields null when no identity line is present', () => {
+    const calls = groupIntoToolCalls([
+      line(
+        {
+          trace_id: 't2',
+          span_id: 's2',
+          event_timestamp: 2000,
+          body: { requestBody: '{method=tools/call, params={name=serper___web_search, arguments={query=x}}}' },
+        },
+        2000
+      ),
+    ]);
+    expect(calls[0].callerSub).toBeNull();
+    expect(calls[0].callerClientId).toBeNull();
+  });
+});

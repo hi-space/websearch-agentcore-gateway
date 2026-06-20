@@ -10,6 +10,7 @@ from _shared.identity import get_api_key
 from _shared.response import normalize_response
 from _shared.search_params import apply_serper
 from _shared.otel import create_span
+from _shared.caller_identity import extract_caller_identity
 
 
 def extract_gateway_input(event: Dict[str, Any]) -> Dict[str, str]:
@@ -22,6 +23,12 @@ def extract_gateway_input(event: Dict[str, Any]) -> Dict[str, str]:
 def lambda_handler(event, context):
     """Lambda handler for Serper (Google Search) queries."""
     start_time = time.time()
+    # Stamp caller identity into the log stream so the audit view can join
+    # "who" (from the inbound JWT) with "what" (the tool call). The gateway
+    # does not forward claims downstream, so we recover them from the event.
+    import json as _json
+    _ident = extract_caller_identity(event)
+    print(_json.dumps({"event": "caller_identity", "engine": "serper", **_ident}))
 
     try:
         # Extract input from event

@@ -8,12 +8,77 @@ import pytest
 import responses
 
 
+class TestSecretsManagerResolution:
+    """get_api_key() resolves from Secrets Manager when *_SECRET_ARN is set."""
+
+    def setup_method(self):
+        # Clear the warm-Lambda cache between tests.
+        from _shared import identity
+        identity._api_key_cache.clear()
+
+    def teardown_method(self):
+        from _shared import identity
+        identity._api_key_cache.clear()
+        for k in ["SERPER_SECRET_ARN"]:
+            os.environ.pop(k, None)
+
+    def test_reads_plain_string_secret(self):
+        os.environ["SERPER_SECRET_ARN"] = (
+            "arn:aws:secretsmanager:us-east-1:913524902871:secret:websearch-gw/dev/tool/serper-AbCdEf"
+        )
+        fake_client = MagicMock()
+        fake_client.get_secret_value.return_value = {"SecretString": "sk-plain-123"}
+        with patch("boto3.client", return_value=fake_client):
+            from _shared.identity import get_api_key
+            key = get_api_key("serper")
+        assert key == "sk-plain-123"
+        fake_client.get_secret_value.assert_called_once_with(
+            SecretId="arn:aws:secretsmanager:us-east-1:913524902871:secret:websearch-gw/dev/tool/serper-AbCdEf"
+        )
+
+    def test_reads_json_secret_with_api_key_field(self):
+        os.environ["SERPER_SECRET_ARN"] = (
+            "arn:aws:secretsmanager:us-east-1:913524902871:secret:websearch-gw/dev/tool/serper-AbCdEf"
+        )
+        fake_client = MagicMock()
+        fake_client.get_secret_value.return_value = {"SecretString": '{"api_key": "sk-json-456"}'}
+        with patch("boto3.client", return_value=fake_client):
+            from _shared.identity import get_api_key
+            key = get_api_key("serper")
+        assert key == "sk-json-456"
+
+    def test_falls_back_to_env_when_no_secret_arn(self):
+        os.environ.pop("SERPER_SECRET_ARN", None)
+        os.environ["SERPER_API_KEY"] = "sk-env-789"
+        try:
+            from _shared.identity import get_api_key
+            key = get_api_key("serper")
+            assert key == "sk-env-789"
+        finally:
+            os.environ.pop("SERPER_API_KEY", None)
+
+    def test_falls_back_to_env_on_secrets_manager_error(self):
+        os.environ["SERPER_SECRET_ARN"] = (
+            "arn:aws:secretsmanager:us-east-1:913524902871:secret:websearch-gw/dev/tool/serper-AbCdEf"
+        )
+        os.environ["SERPER_API_KEY"] = "sk-env-fallback"
+        fake_client = MagicMock()
+        fake_client.get_secret_value.side_effect = Exception("AccessDenied")
+        try:
+            with patch("boto3.client", return_value=fake_client):
+                from _shared.identity import get_api_key
+                key = get_api_key("serper")
+            assert key == "sk-env-fallback"
+        finally:
+            os.environ.pop("SERPER_API_KEY", None)
+
+
 @pytest.fixture(autouse=True)
 def setup_env():
     """Setup environment variables for tests."""
-    os.environ["AWS_REGION"] = "ap-northeast-2"
+    os.environ["AWS_REGION"] = "us-east-1"
     os.environ["WORKLOAD_TOKEN"] = "test-token"
-    os.environ["IDENTITY_PROVIDER_ARN"] = "arn:aws:bedrock-agentcore:ap-northeast-2:123456789012:identity-provider/test"
+    os.environ["IDENTITY_PROVIDER_ARN"] = "arn:aws:bedrock-agentcore:us-east-1:123456789012:identity-provider/test"
     yield
     # Cleanup
     for key in ["AWS_REGION", "WORKLOAD_TOKEN", "IDENTITY_PROVIDER_ARN"]:
@@ -532,6 +597,95 @@ class TestTavilyLambdaHandler:
         assert "error" in result
 
 
+class TestSearxngHandler:
+    """Test SearXNG handler (no API key; reads SEARXNG_URL)."""
+
+    @responses.activate
+    def test_success(self):
+        """Test successful SearXNG query."""
+        os.environ["SEARXNG_URL"] = "http://searxng.internal"
+
+        responses.add(
+            responses.GET,
+            "http://searxng.internal/search",
+            json={
+                "results": [
+                    {
+                        "title": "Result 1",
+                        "url": "https://example.com/1",
+                        "content": "Snippet 1",
+                        "score": 1.5,
+                    },
+                    {
+                        "title": "Result 2",
+                        "url": "https://example.com/2",
+                        "content": "Snippet 2",
+                    },
+                ]
+            },
+            status=200,
+        )
+
+        from searxng.handler import lambda_handler
+
+        result = lambda_handler({"query": "test search"}, None)
+
+        assert result["engine"] == "searxng"
+        assert len(result["results"]) == 2
+        assert result["results"][0]["title"] == "Result 1"
+        assert result["results"][0]["snippet"] == "Snippet 1"
+        assert result["results"][0]["score"] == 1.5
+
+        del os.environ["SEARXNG_URL"]
+
+    def test_missing_query(self):
+        """Test handler with missing query parameter."""
+        os.environ["SEARXNG_URL"] = "http://searxng.internal"
+
+        from searxng.handler import lambda_handler
+
+        result = lambda_handler({}, None)
+
+        assert result["engine"] == "searxng"
+        assert len(result["results"]) == 0
+        assert "error" in result
+
+        del os.environ["SEARXNG_URL"]
+
+    def test_missing_url(self):
+        """Test handler when SEARXNG_URL is not configured."""
+        os.environ.pop("SEARXNG_URL", None)
+
+        from searxng.handler import lambda_handler
+
+        result = lambda_handler({"query": "test search"}, None)
+
+        assert result["engine"] == "searxng"
+        assert len(result["results"]) == 0
+        assert "error" in result
+
+    @responses.activate
+    def test_api_error(self):
+        """Test handler with upstream API error."""
+        os.environ["SEARXNG_URL"] = "http://searxng.internal"
+
+        responses.add(
+            responses.GET,
+            "http://searxng.internal/search",
+            status=500,
+        )
+
+        from searxng.handler import lambda_handler
+
+        result = lambda_handler({"query": "test search"}, None)
+
+        assert result["engine"] == "searxng"
+        assert len(result["results"]) == 0
+        assert "error" in result
+
+        del os.environ["SEARXNG_URL"]
+
+
 class TestResponseNormalization:
     """Test response normalization utilities."""
 
@@ -563,3 +717,63 @@ class TestResponseNormalization:
         response = normalize_response([], "tavily_lambda", 50, answer="hello")
 
         assert response["answer"] == "hello"
+
+
+class TestCallerIdentityLogging:
+    """serper handler logs caller identity at entry (for audit join)."""
+
+    def test_logs_caller_identity_line(self, capsys):
+        import base64, json as _json
+        def _jwt(payload):
+            b = lambda o: base64.urlsafe_b64encode(_json.dumps(o).encode()).decode().rstrip("=")
+            return f"{b({'alg':'RS256'})}.{b(payload)}.sig"
+        os.environ["SERPER_API_KEY"] = "sk-test"
+        event = {
+            "input": {"query": "python"},
+            "headers": {"authorization": f"Bearer {_jwt({'sub': 'user-9', 'client_id': 'web'})}"},
+        }
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.POST,
+                "https://google.serper.dev/search",
+                json={"organic": []},
+                status=200,
+            )
+            from serper.handler import lambda_handler
+            lambda_handler(event, None)
+        logged = capsys.readouterr().out
+        assert '"event": "caller_identity"' in logged
+        assert '"sub": "user-9"' in logged
+        os.environ.pop("SERPER_API_KEY", None)
+
+
+class TestBrowserHandler:
+    """Test AgentCore Browser task handler (input layer only; heavy deps are lazy-imported)."""
+
+    def test_missing_task(self):
+        """Missing 'task' returns an error envelope without invoking the browser."""
+        os.environ["BROWSER_ID"] = "test_browser_id"
+        from browser.handler import lambda_handler
+
+        result = lambda_handler({}, None)
+
+        assert result["task"] == ""
+        assert result["result"] == ""
+        assert "error" in result
+        assert "latency_ms" in result
+
+    def test_extract_gateway_input_nested(self):
+        """Gateway wraps params under 'input'; direct invocation passes them flat."""
+        from browser.handler import extract_gateway_input
+
+        assert extract_gateway_input({"input": {"task": "go"}}) == {"task": "go"}
+        assert extract_gateway_input({"task": "go"}) == {"task": "go"}
+
+    def test_clamp_max_steps(self):
+        """max_steps is clamped to the 1-50 contract range."""
+        from browser.handler import clamp_max_steps
+
+        assert clamp_max_steps(0) == 1
+        assert clamp_max_steps(15) == 15
+        assert clamp_max_steps(999) == 50
+        assert clamp_max_steps("7") == 7

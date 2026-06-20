@@ -14,6 +14,7 @@ except ImportError:
 from _shared.response import normalize_response
 from _shared.search_params import ddg_kwargs
 from _shared.otel import create_span
+from _shared.caller_identity import extract_caller_identity
 
 
 def extract_gateway_input(event: Dict[str, Any]) -> Dict[str, str]:
@@ -26,6 +27,9 @@ def extract_gateway_input(event: Dict[str, Any]) -> Dict[str, str]:
 def lambda_handler(event, context):
     """Lambda handler for DuckDuckGo web search (no API key)."""
     start_time = time.time()
+    import json as _json
+    _ident = extract_caller_identity(event)
+    print(_json.dumps({"event": "caller_identity", "engine": "duckduckgo", **_ident}))
 
     try:
         if not DDGS_AVAILABLE:

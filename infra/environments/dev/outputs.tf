@@ -116,3 +116,8 @@ output "dashboard_env" {
   }
   description = "Environment variables for Next.js dashboard .env.local"
 }
+
+output "browser_id" {
+  value       = var.enable_browser ? module.browser[0].browser_id : null
+  description = "AgentCore custom Browser ID (null when disabled)"
+}

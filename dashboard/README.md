@@ -48,10 +48,10 @@ cp .env.example .env.local
 Fill in the values from your Terraform outputs:
 
 ```env
-NEXT_PUBLIC_REGION=ap-northeast-2
+NEXT_PUBLIC_REGION=us-east-1
 NEXT_PUBLIC_GATEWAY_ID=<gateway-id>
 NEXT_PUBLIC_GATEWAY_URL=https://<gateway-endpoint>
-NEXT_PUBLIC_COGNITO_DOMAIN=https://<domain>.auth.ap-northeast-2.amazoncognito.com
+NEXT_PUBLIC_COGNITO_DOMAIN=https://<domain>.auth.us-east-1.amazoncognito.com
 NEXT_PUBLIC_COGNITO_CLIENT_ID=<client-id>
 ```
 

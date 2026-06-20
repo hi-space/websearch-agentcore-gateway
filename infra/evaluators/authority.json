@@ -1,0 +1,26 @@
+{
+  "llmAsAJudge": {
+    "modelConfig": {
+      "bedrockEvaluatorModelConfig": {
+        "modelId": "global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+        "inferenceConfig": { "maxTokens": 500, "temperature": 1.0 }
+      }
+    },
+    "instructions": "You are evaluating the AUTHORITY and trustworthiness of a web search engine's result sources. You are given the search QUERY and the engine's top results (title, snippet, URL for each).\n\nJudge ONLY source authority — whether the domains are credible, primary, and reputable for this query. Reward official documentation, primary sources, established institutions, and recognized experts. Penalize content farms, spam, SEO-bait, aggregators, and auto-generated pages. Do NOT judge topical relevance or freshness; those are scored separately.\n\nUse the FULL scale and discriminate aggressively: two result sets should rarely receive the SAME score unless they are genuinely equal in source quality. Reserve the very top (0.95-1.0) for a set sourced almost entirely from primary or official authorities. A single low-credibility source among otherwise strong ones should pull the score down.\n\nQuery: {context}\nEngine results: {assistant_turn}",
+    "ratingScale": {
+      "numerical": [
+        { "value": 1.0, "label": "Authoritative", "definition": "Sources are almost entirely primary, official, or highly reputable for this topic." },
+        { "value": 0.9, "label": "Excellent", "definition": "Strong, credible sources throughout; at most a trivially weaker entry." },
+        { "value": 0.8, "label": "Very trustworthy", "definition": "Mostly credible sources with one clearly weaker entry." },
+        { "value": 0.7, "label": "Trustworthy", "definition": "Generally credible, but a couple of lower-quality or secondary sources." },
+        { "value": 0.6, "label": "Above mixed", "definition": "More credible than not, but noticeable reliance on secondary sources." },
+        { "value": 0.5, "label": "Mixed", "definition": "A roughly even mix of credible and questionable sources." },
+        { "value": 0.4, "label": "Below mixed", "definition": "Mostly secondary or low-quality sources, with a few credible ones." },
+        { "value": 0.3, "label": "Weak", "definition": "Mostly low-quality, SEO-bait, or unverified sources." },
+        { "value": 0.2, "label": "Very weak", "definition": "Predominantly content farms or aggregators." },
+        { "value": 0.1, "label": "Marginal", "definition": "Almost no credible sources." },
+        { "value": 0.0, "label": "Untrustworthy", "definition": "Sources are spam, content farms, or have no credibility." }
+      ]
+    }
+  }
+}

@@ -35,7 +35,7 @@ flowchart TD
 
 ### 전제 조건
 
-- AWS 계정 (ap-northeast-2 리전)
+- AWS 계정 (us-east-1 리전)
 - Terraform 1.7+
 - AWS CLI v2
 - macOS/Linux 또는 Windows PowerShell
@@ -263,7 +263,7 @@ cd infra
 aws lambda invoke \
   --function-name websearch-gw-dev-tool-serper \
   --payload '{"query": "test", "num_results": 5}' \
-  --region ap-northeast-2 \
+  --region us-east-1 \
   response.json
 cat response.json | jq
 ```
@@ -279,7 +279,7 @@ aws cloudwatch get-metric-statistics \
   --start-time $(date -d '1 hour ago' -Iseconds) \
   --end-time $(date -Iseconds) \
   --period 300 \
-  --region ap-northeast-2
+  --region us-east-1
 ```
 
 ---

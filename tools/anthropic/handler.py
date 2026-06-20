@@ -20,6 +20,7 @@ import requests
 from _shared.identity import get_api_key
 from _shared.response import normalize_response
 from _shared.otel import create_span
+from _shared.caller_identity import extract_caller_identity
 
 ANTHROPIC_VERSION = "2023-06-01"
 # Cheapest model that supports the web_search tool; override via env.
@@ -38,6 +39,9 @@ def extract_gateway_input(event: Dict[str, Any]) -> Dict[str, str]:
 def lambda_handler(event, context):
     """Lambda handler for Anthropic Claude built-in web search."""
     start_time = time.time()
+    import json as _json
+    _ident = extract_caller_identity(event)
+    print(_json.dumps({"event": "caller_identity", "engine": "anthropic", **_ident}))
 
     try:
         # Extract input from event

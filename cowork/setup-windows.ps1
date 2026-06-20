@@ -132,7 +132,7 @@ if (-not $GatewayUrl) {
     $GatewayUrl = Read-SecureInput "Gateway URL (https://gateway.example.com)"
 }
 if (-not $Region) {
-    $Region = Read-SecureInput "AWS region (ap-northeast-2)" -Default "ap-northeast-2"
+    $Region = Read-SecureInput "AWS region (us-east-1)" -Default "us-east-1"
 }
 
 # Validate gateway URL

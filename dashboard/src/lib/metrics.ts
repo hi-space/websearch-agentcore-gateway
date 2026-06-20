@@ -1,6 +1,6 @@
 import { computeConsensus } from './eval';
 
-export type Axis = 'latency' | 'quality' | 'consensus' | 'count';
+export type Axis = 'latency' | 'consensus' | 'count';
 
 export interface EngineResultItem {
   title?: string;
@@ -24,13 +24,11 @@ export interface EngineMetrics {
   latencyMs: number | null;
   resultCount: number;
   consensus: number;       // 0..1
-  quality: number | null;  // judge 점수, 미실행 시 null
   hasError: boolean;
 }
 
 export function deriveMetrics(
   results: Record<string, EngineResult>,
-  quality: Record<string, number> | null,
 ): EngineMetrics[] {
   const urls: Record<string, string[]> = {};
   for (const [engine, r] of Object.entries(results)) {
@@ -47,7 +45,6 @@ export function deriveMetrics(
       latencyMs: typeof r.latency_ms === 'number' ? r.latency_ms : null,
       resultCount: Array.isArray(r.results) ? r.results.length : 0,
       consensus: consensus[engine] ?? 0,
-      quality: quality?.[engine] ?? null,
       hasError,
     };
   });
@@ -64,7 +61,6 @@ export interface ScoreboardBar {
 function axisValue(m: EngineMetrics, axis: Axis): number | null {
   switch (axis) {
     case 'latency': return m.latencyMs;
-    case 'quality': return m.quality;
     case 'consensus': return m.consensus;
     case 'count': return m.resultCount;
     default: throw new Error(`Unknown axis: ${axis}`);

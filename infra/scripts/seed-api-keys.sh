@@ -58,10 +58,9 @@ seed_key() {
 
   aws bedrock-agentcore-control update-api-key-credential-provider \
     --name "$provider_name" \
-    --api-key-wo "$api_key" \
-    --api-key-wo-version "v1" \
+    --api-key "$api_key" \
     --region "$AWS_REGION" \
-    2>/dev/null && echo "  ✓ $provider_name: Seeded" || echo "  ✗ $provider_name: Failed (provider may not exist)"
+    >/dev/null 2>&1 && echo "  ✓ $provider_name: Seeded" || echo "  ✗ $provider_name: Failed (provider may not exist)"
 }
 
 echo "Seeding API keys:"

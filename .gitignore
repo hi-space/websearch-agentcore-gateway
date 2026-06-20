@@ -139,3 +139,10 @@ outputs.json
 
 # Internal planning docs (not published)
 **/docs/superpowers/
+
+# Terraform plan output (binary, environment-specific — never commit)
+tfplan
+*.tfplan
+
+# Firecrawl scrape cache (research artifact — not source)
+.firecrawl/
