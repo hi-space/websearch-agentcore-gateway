@@ -115,6 +115,15 @@ export function ToolCallRow({ call }: { call: ToolCall }) {
             <div className="font-mono text-xs text-muted-foreground break-all">
               trace_id: {call.traceId} · span_id: {call.spanId ?? '—'}
             </div>
+            <div className="text-[11px] text-muted-foreground">
+              호출자: {call.callerSub ?? '—'}
+              {call.callerClientId ? ` · client_id: ${call.callerClientId}` : ''}
+              {call.callerSub == null && (
+                <span className="ml-1 italic opacity-70">
+                  (게이트웨이는 신원을 다운스트림으로 전달하지 않음 — CloudTrail sub 필요)
+                </span>
+              )}
+            </div>
           </section>
 
           <button
