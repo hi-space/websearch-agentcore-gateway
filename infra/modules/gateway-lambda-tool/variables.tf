@@ -116,3 +116,9 @@ variable "secret_arn" {
   description = "If set, grants this Lambda secretsmanager:GetSecretValue on this secret ARN (the tool's API key)."
   default     = ""
 }
+
+variable "enable_secret_policy" {
+  type        = bool
+  description = "Whether to attach the Secrets Manager GetSecretValue policy. Plan-time-known bool because secret_arn is a computed ARN. Set true only for tools that have a secret."
+  default     = false
+}

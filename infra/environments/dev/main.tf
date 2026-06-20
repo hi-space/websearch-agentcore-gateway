@@ -211,6 +211,8 @@ module "lambda_tools" {
 
   secret_arn = lookup(local.tool_secret_arns, each.key, "")
 
+  enable_secret_policy = contains(keys(local.tool_secret_engines), each.key)
+
   env_vars = merge(
     # AgentCore Identity provider ARN (vault fallback path; kept for MCP-token parity).
     contains(keys(local.filtered_identity_providers), each.key) ? {

@@ -159,7 +159,7 @@ resource "aws_iam_role_policy" "bedrock_agentcore" {
 # Tool secret: read this engine's API key from Secrets Manager at runtime.
 # Conditionally created so tools without a key (duckduckgo, searxng) are unaffected.
 resource "aws_iam_role_policy" "secret" {
-  count = var.secret_arn != "" ? 1 : 0
+  count = var.enable_secret_policy ? 1 : 0
   name  = "tool-secret"
   role  = aws_iam_role.lambda.id
   policy = jsonencode({
