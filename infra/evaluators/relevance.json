@@ -1,0 +1,20 @@
+{
+  "llmAsAJudge": {
+    "modelConfig": {
+      "bedrockEvaluatorModelConfig": {
+        "modelId": "global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+        "inferenceConfig": { "maxTokens": 500, "temperature": 1.0 }
+      }
+    },
+    "instructions": "You are evaluating how RELEVANT a web search engine's results are to a user's search query. You are given the search QUERY and the engine's top results (title, snippet, URL for each).\n\nJudge ONLY relevance — whether these results collectively match the query's intent and would satisfy the user's information need. Do NOT reward freshness, source authority, writing style, or result count; those are scored separately.\n\nConsider:\n- Do the top results directly address the query's core intent?\n- Are the most relevant results near the top?\n- Is the result set on-topic, or padded with tangential/off-topic hits?\n\nQuery: {context}\nEngine results: {assistant_turn}",
+    "ratingScale": {
+      "numerical": [
+        { "value": 1, "label": "Excellent", "definition": "Nearly all results precisely match the query intent; the top result directly answers it." },
+        { "value": 0.75, "label": "Good", "definition": "Most results are relevant, with a few tangential ones mixed in." },
+        { "value": 0.5, "label": "Fair", "definition": "About half are relevant; only part of the intent is satisfied." },
+        { "value": 0.25, "label": "Poor", "definition": "Few results are relevant; most miss the intent." },
+        { "value": 0, "label": "Irrelevant", "definition": "Results are unrelated to the query, or empty." }
+      ]
+    }
+  }
+}
