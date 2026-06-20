@@ -104,8 +104,8 @@ variable "enable_web_search" {
 }
 
 variable "enable_inference_target" {
-  description = "Register a Bedrock model as an inference (LLM-routing) gateway target via the out-of-band script. us-east-1 only; provider cannot express inference targets yet."
   type        = bool
+  description = "Register a Bedrock model as an inference (LLM-routing) gateway target via the out-of-band script. us-east-1 only; provider cannot express inference targets yet."
   default     = false
 }
 

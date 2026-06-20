@@ -66,7 +66,9 @@ mcp_members = (
 if "connector" not in mcp_members:
     sys.exit(
         f"  ✗ Installed botocore {botocore.__version__} has no connector/inference "
-        "target type. Upgrade: pip install --upgrade boto3 botocore"
+        "target type.\n"
+        "    Upgrade with: pip install --upgrade boto3 botocore\n"
+        "    (or run this script with PYTHON=/path/to/venv/bin/python)"
     )
 
 existing = [t.get("name") for t in client.list_gateway_targets(gatewayIdentifier=gid).get("items", [])]
