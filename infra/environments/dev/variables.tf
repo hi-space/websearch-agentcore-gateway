@@ -12,12 +12,12 @@ variable "environment" {
 
 variable "aws_region" {
   type        = string
-  description = "AWS region (must be ap-northeast-2)"
-  default     = "ap-northeast-2"
+  description = "AWS region (must be us-east-1)"
+  default     = "us-east-1"
 
   validation {
-    condition     = var.aws_region == "ap-northeast-2"
-    error_message = "Region must be ap-northeast-2 (Seoul) for AgentCore availability."
+    condition     = var.aws_region == "us-east-1"
+    error_message = "Region must be us-east-1 (N. Virginia) — the AgentCore Web Search Tool connector is only available there."
   }
 }
 
@@ -138,6 +138,12 @@ variable "you_api_key" {
 variable "enable_tavily_lambda" {
   type        = bool
   description = "Enable the Lambda-backed Tavily search engine (distinct from the hosted Tavily MCP server target). Reuses tavily_api_key."
+  default     = false
+}
+
+variable "enable_searxng" {
+  type        = bool
+  description = "Enable the SearXNG metasearch engine. Provisions a VPC + ECS Fargate SearXNG instance (internal ALB) and a VPC-attached Lambda tool. Costs ~$70-85/mo when on; nothing when off."
   default     = false
 }
 

@@ -71,3 +71,12 @@ variable "bedrock_model_arns" {
   description = "Bedrock model/inference-profile ARNs the browser tool may invoke."
   default     = []
 }
+
+variable "vpc_config" {
+  type = object({
+    subnet_ids         = list(string)
+    security_group_ids = list(string)
+  })
+  description = "If set, attaches the Lambda to a VPC (used by the SearXNG tool to reach its internal ALB). null leaves the Lambda outside any VPC, unchanged."
+  default     = null
+}
