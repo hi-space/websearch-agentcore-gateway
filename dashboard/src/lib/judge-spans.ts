@@ -72,19 +72,32 @@ export function buildSessionSpans(
 
 interface EvalResultLike {
   value?: number;
+  label?: string;
+  explanation?: string;
   context?: { spanContext?: { traceId?: string } };
 }
 
-/** evaluate 응답(evaluationResults)을 traceId 기준으로 엔진→점수로 변환. */
-export function mapScoresByEngine(
+export interface AxisScore {
+  value: number;
+  label: string | null;
+  explanation: string | null;
+}
+
+/** evaluate 응답(evaluationResults)을 traceId 기준으로 엔진→{점수,라벨,근거}로 변환. */
+export function mapResultsByEngine(
   evaluationResults: EvalResultLike[],
   engineByTraceId: Record<string, string>,
-): Record<string, number> {
-  const out: Record<string, number> = {};
+): Record<string, AxisScore> {
+  const out: Record<string, AxisScore> = {};
   for (const r of evaluationResults) {
     const trace = r.context?.spanContext?.traceId;
-    if (trace && engineByTraceId[trace] != null && typeof r.value === 'number') {
-      out[engineByTraceId[trace]] = r.value;
+    const engine = trace ? engineByTraceId[trace] : undefined;
+    if (engine != null && typeof r.value === 'number') {
+      out[engine] = {
+        value: r.value,
+        label: r.label ?? null,
+        explanation: r.explanation ?? null,
+      };
     }
   }
   return out;

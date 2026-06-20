@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { engineSpanId, engineTraceId, buildSessionSpans, mapScoresByEngine } from './judge-spans';
+import { engineSpanId, engineTraceId, buildSessionSpans, mapResultsByEngine } from './judge-spans';
 
 describe('engineTraceId / engineSpanId', () => {
   it('produces a 32-char hex trace id, distinct per index', () => {
@@ -49,18 +49,20 @@ describe('buildSessionSpans', () => {
   });
 });
 
-describe('mapScoresByEngine', () => {
-  it('maps evaluation results back to engines via traceId', () => {
+describe('mapResultsByEngine', () => {
+  it('maps value, label and explanation back to engines via traceId', () => {
     const { engineByTraceId } = buildSessionSpans('q', { exa: [], ddg: [] });
     const [exaTrace, ddgTrace] = Object.keys(engineByTraceId);
-    const scores = mapScoresByEngine(
+    const out = mapResultsByEngine(
       [
-        { value: 0.9, context: { spanContext: { traceId: exaTrace } } },
+        { value: 0.9, label: 'Excellent', explanation: 'spot on', context: { spanContext: { traceId: exaTrace } } },
         { value: 0.4, context: { spanContext: { traceId: ddgTrace } } },
         { value: 0.1, context: { spanContext: { traceId: 'ffffffffffffffffffffffffffffffff' } } },
       ],
       engineByTraceId,
     );
-    expect(scores).toEqual({ exa: 0.9, ddg: 0.4 });
+    expect(out.exa).toEqual({ value: 0.9, label: 'Excellent', explanation: 'spot on' });
+    expect(out.ddg).toEqual({ value: 0.4, label: null, explanation: null });
+    expect(out.unknown).toBeUndefined();
   });
 });
