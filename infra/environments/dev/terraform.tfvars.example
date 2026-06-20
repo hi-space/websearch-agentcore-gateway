@@ -50,6 +50,12 @@ enable_tavily_lambda = false
 # Costs ~$70-85/mo while on (NAT gateway + Fargate + ALB); $0 when off.
 enable_searxng = false
 
+# AgentCore Web Search Tool: fully-managed connector target backed by Amazon's
+# web index. No API key, queries stay within AWS. us-east-1 only. The target is
+# created by scripts/create-web-search-target.sh after apply (the AWS provider
+# can't express the connector target type yet).
+enable_web_search = false
+
 # ============================================================
 # Authentication
 # ============================================================

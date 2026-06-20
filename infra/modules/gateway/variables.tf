@@ -65,3 +65,9 @@ variable "enable_browser_target" {
   description = "Whether to create the browser_task gateway target. Plan-time-known bool because browser_tool_arn is a computed Lambda ARN."
   default     = false
 }
+
+variable "enable_web_search" {
+  type        = bool
+  description = "Whether the AgentCore Web Search Tool connector target will be attached (via scripts/create-web-search-target.sh). Grants the gateway role InvokeWebSearch when true."
+  default     = false
+}

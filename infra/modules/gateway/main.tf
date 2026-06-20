@@ -51,6 +51,21 @@ resource "aws_iam_role_policy" "gateway" {
         Action   = ["secretsmanager:GetSecretValue"]
         Resource = "arn:aws:secretsmanager:${var.aws_region}:${var.account_id}:secret:bedrock-agentcore-identity!default/apikey/*"
       }],
+      # AgentCore Web Search Tool connector target (created out-of-band via
+      # scripts/create-web-search-target.sh — the AWS provider can't express the
+      # connector target type yet). InvokeWebSearch is checked per-request against
+      # the service-owned tool ARN; us-east-1 only.
+      var.enable_web_search ? [{
+        Effect = "Allow"
+        Action = [
+          "bedrock-agentcore:InvokeGateway",
+          "bedrock-agentcore:InvokeWebSearch",
+        ]
+        Resource = [
+          aws_bedrockagentcore_gateway.this.gateway_arn,
+          "arn:aws:bedrock-agentcore:${var.aws_region}:aws:tool/web-search.v1",
+        ]
+      }] : [],
     )
   })
 }
