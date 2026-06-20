@@ -47,11 +47,22 @@ describe('buildSessionSpans', () => {
     const traces = sessionSpans.map((s) => (s as { context: { trace_id: string } }).context.trace_id);
     expect(new Set(traces).size).toBe(2);
   });
+
+  it('skips engines with no results so an empty span cannot poison the evaluate call', () => {
+    const { sessionSpans, engineByTraceId } = buildSessionSpans('q', {
+      good: [{ title: 'A', url: 'https://a', snippet: 's' }],
+      empty: [],
+      blank: [{ title: '', url: '', snippet: '' }],
+    });
+    // 빈 결과 엔진은 span을 만들지 않는다(평가 안 됨으로 남는다).
+    expect(sessionSpans).toHaveLength(1);
+    expect(Object.values(engineByTraceId)).toEqual(['good']);
+  });
 });
 
 describe('mapResultsByEngine', () => {
   it('maps value, label and explanation back to engines via traceId', () => {
-    const { engineByTraceId } = buildSessionSpans('q', { exa: [], ddg: [] });
+    const { engineByTraceId } = buildSessionSpans('q', { exa: [{ title: 'x' }], ddg: [{ title: 'y' }] });
     const [exaTrace, ddgTrace] = Object.keys(engineByTraceId);
     const out = mapResultsByEngine(
       [
@@ -64,5 +75,28 @@ describe('mapResultsByEngine', () => {
     expect(out.exa).toEqual({ value: 0.9, label: 'Excellent', explanation: 'spot on' });
     expect(out.ddg).toEqual({ value: 0.4, label: null, explanation: null });
     expect(out.unknown).toBeUndefined();
+  });
+
+  it('maps partial failures (errorCode, no value) to value=null with the error preserved', () => {
+    const { engineByTraceId } = buildSessionSpans('q', { exa: [{ title: 'x' }], ddg: [{ title: 'y' }] });
+    const [exaTrace, ddgTrace] = Object.keys(engineByTraceId);
+    const out = mapResultsByEngine(
+      [
+        { value: 0.9, context: { spanContext: { traceId: exaTrace } } },
+        {
+          errorCode: 'LogEventMissingException',
+          errorMessage: 'Session span data is incomplete',
+          context: { spanContext: { traceId: ddgTrace } },
+        },
+      ],
+      engineByTraceId,
+    );
+    expect(out.exa.value).toBe(0.9);
+    expect(out.ddg).toEqual({
+      value: null,
+      label: null,
+      explanation: 'Session span data is incomplete',
+      error: 'LogEventMissingException',
+    });
   });
 });
