@@ -143,3 +143,6 @@ outputs.json
 # Terraform plan output (binary, environment-specific — never commit)
 tfplan
 *.tfplan
+
+# Firecrawl scrape cache (research artifact — not source)
+.firecrawl/
