@@ -54,6 +54,36 @@ variable "pip_command" {
   default     = "pip3"
 }
 
+# Packaging mode. "Zip" (default) builds a pip --target zip and uploads it
+# directly — used by every search tool. "Image" builds a Docker image from
+# <source_root>/<tool_name>/Dockerfile, pushes it to a per-tool ECR repo, and
+# runs the Lambda from that image — used by the browser tool, whose
+# browser-use + playwright dependency tree exceeds the 250 MB unzipped limit.
+variable "package_type" {
+  type        = string
+  description = "Lambda packaging mode: \"Zip\" or \"Image\"."
+  default     = "Zip"
+
+  validation {
+    condition     = contains(["Zip", "Image"], var.package_type)
+    error_message = "package_type must be \"Zip\" or \"Image\"."
+  }
+}
+
+# Lambda CPU architecture. Zip tools are built as arm64 (pip --platform). The
+# Image path builds a Docker image for this arch; set x86_64 when the build host
+# can't cross-compile/emulate arm64.
+variable "architecture" {
+  type        = string
+  description = "Lambda architecture: \"arm64\" or \"x86_64\"."
+  default     = "arm64"
+
+  validation {
+    condition     = contains(["arm64", "x86_64"], var.architecture)
+    error_message = "architecture must be \"arm64\" or \"x86_64\"."
+  }
+}
+
 variable "browser_arn" {
   type        = string
   description = "If set, grants this Lambda permission to drive the given AgentCore browser and invoke Bedrock models (used only by the browser tool)."

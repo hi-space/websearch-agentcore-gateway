@@ -261,9 +261,23 @@ module "browser_tool" {
   tool_name   = "browser"
   source_root = local.tools_root
 
+  # browser-use + playwright exceed the Lambda zip limit (250 MB unzipped), so
+  # the browser tool ships as a container image (ECR) instead of a zip.
+  # x86_64 because the build host can't cross-build/emulate arm64; the tool
+  # drives a remote AgentCore Browser over CDP, so Lambda arch is immaterial.
+  package_type = "Image"
+  architecture = "x86_64"
+
   env_vars = {
     BROWSER_ID       = module.browser[0].browser_id
     BEDROCK_MODEL_ID = var.browser_model_id
+    # Lambda's filesystem is read-only except /tmp. browser-use writes config and
+    # cache under $HOME / XDG dirs, so point them all at /tmp.
+    HOME            = "/tmp"
+    XDG_CONFIG_HOME = "/tmp/.config"
+    XDG_CACHE_HOME  = "/tmp/.cache"
+    XDG_DATA_HOME   = "/tmp/.local/share"
+    BROWSER_USE_CONFIG_DIR = "/tmp/.config/browseruse"
   }
 
   browser_arn           = module.browser[0].browser_arn
