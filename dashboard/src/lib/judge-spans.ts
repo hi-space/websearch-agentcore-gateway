@@ -48,7 +48,14 @@ export function buildSessionSpans(
   const endIso = new Date(now).toISOString();
   const startIso = new Date(now - 1000).toISOString();
   const engineByTraceId: Record<string, string> = {};
-  const sessionSpans = Object.entries(engines).map(([engine, results], i) => {
+  // 결과가 없는 엔진(output 빈 문자열)은 span을 만들지 않는다. 빈 output span은
+  // evaluate에서 "LogEventMissingException"을 일으키고, 같은 호출 내 그 뒤의
+  // 멀쩡한 span들까지 줄줄이 실패시킨다(라이브 검증). 평가할 결과 자체가 없으므로
+  // 그냥 제외하면 해당 엔진은 자연히 "평가 안 됨"으로 남는다.
+  const evaluable = Object.entries(engines).filter(([, results]) =>
+    results.some((r) => (r.title ?? '').trim() || (r.snippet ?? '').trim() || (r.url ?? '').trim()),
+  );
+  const sessionSpans = evaluable.map(([engine, results], i) => {
     const traceId = engineTraceId(i);
     engineByTraceId[traceId] = engine;
     const output = results
@@ -74,13 +81,21 @@ interface EvalResultLike {
   value?: number;
   label?: string;
   explanation?: string;
+  // 부분 실패 시 value 대신 errorCode/errorMessage가 온다(라이브 검증:
+  // 빈 output → "LogEventMissingException"). 이 경우 점수 매핑에서 빠지므로
+  // 엔진은 점수 없이 누락된다 → "평가 실패"로 표시하고 서버에 로그를 남긴다.
+  errorCode?: string;
+  errorMessage?: string;
   context?: { spanContext?: { traceId?: string } };
 }
 
 export interface AxisScore {
-  value: number;
+  // 정상 채점이면 0~1 점수, 부분 실패면 null(error에 사유).
+  value: number | null;
   label: string | null;
   explanation: string | null;
+  // evaluate가 이 엔진/축에 대해 errorCode를 돌려줬을 때의 사유. UI는 "평가 실패"로 표시.
+  error?: string | null;
 }
 
 /** evaluate 응답(evaluationResults)을 traceId 기준으로 엔진→{점수,라벨,근거}로 변환. */
@@ -92,11 +107,20 @@ export function mapResultsByEngine(
   for (const r of evaluationResults) {
     const trace = r.context?.spanContext?.traceId;
     const engine = trace ? engineByTraceId[trace] : undefined;
-    if (engine != null && typeof r.value === 'number') {
+    if (engine == null) continue;
+    if (typeof r.value === 'number') {
       out[engine] = {
         value: r.value,
         label: r.label ?? null,
         explanation: r.explanation ?? null,
+      };
+    } else if (r.errorCode || r.errorMessage) {
+      // 부분 실패: 점수는 없지만 사유를 보존해 "평가 실패"로 구분 표시한다.
+      out[engine] = {
+        value: null,
+        label: null,
+        explanation: r.errorMessage ?? null,
+        error: r.errorCode ?? r.errorMessage ?? 'evaluation error',
       };
     }
   }
