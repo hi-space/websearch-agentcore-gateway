@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { AppShell } from '@/components/shell';
-import { Loader2, Wrench, ChevronDown, ChevronUp, Play, FormInput, Code2 } from 'lucide-react';
+import { Loader2, Wrench, ChevronDown, ChevronUp, Play, FormInput, Code2, Sparkles } from 'lucide-react';
+import Link from 'next/link';
 import JsonView from '@uiw/react-json-view';
 import { SchemaForm, isFullyRenderable } from '@/components/schema-form';
 
@@ -21,6 +22,27 @@ export default function InspectorPage() {
   const [inputMode, setInputMode] = useState<'form' | 'json'>('form');
   const [toolResult, setToolResult] = useState<any>(null);
   const [executing, setExecuting] = useState(false);
+  const [inferenceModels, setInferenceModels] = useState<any>(null);
+  const [isLoadingInference, setIsLoadingInference] = useState(true);
+
+  // Load inference models on mount
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const res = await fetch('/api/inference/models');
+        if (res.ok) {
+          const data = await res.json();
+          setInferenceModels(data.models ?? []);
+        }
+      } catch (error) {
+        console.error('Failed to load inference models:', error);
+      } finally {
+        setIsLoadingInference(false);
+      }
+    };
+
+    fetchModels();
+  }, []);
 
   const handleLoadTools = async () => {
     setIsLoading(true);
@@ -126,7 +148,25 @@ export default function InspectorPage() {
       description="게이트웨이의 MCP 도구를 점검하고 테스트"
       icon={Wrench}
     >
-      <div>
+      <div className="space-y-6">
+        {/* Inference Models Note */}
+        {!isLoadingInference && inferenceModels && inferenceModels.length > 0 && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Sparkles className="h-4 w-4" />
+                추론 타깃
+              </CardTitle>
+              <CardDescription>
+                {inferenceModels.length} 개의 모델 ·
+                <Link href="/llm" className="ml-1 text-primary hover:underline">
+                  /llm 에서 호출
+                </Link>
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Tools List */}
           <div className="lg:col-span-1">

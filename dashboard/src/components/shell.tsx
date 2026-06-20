@@ -9,6 +9,7 @@ import {
   FileText,
   Radio,
   Activity,
+  Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,7 @@ export const NAV_ITEMS: Array<{
   hint: string;
 }> = [
   { label: 'Inspector', href: '/inspector', icon: Zap, hint: 'MCP 도구 테스트' },
+  { label: 'LLM', href: '/llm', icon: Sparkles, hint: 'LLM 라우팅' },
   { label: 'Observability', href: '/observability', icon: BarChart3, hint: 'CloudWatch 메트릭' },
   { label: 'Traces', href: '/traces', icon: Activity, hint: 'X-Ray 트레이스' },
   { label: 'Playground', href: '/playground', icon: Gauge, hint: '엔진 비교' },
