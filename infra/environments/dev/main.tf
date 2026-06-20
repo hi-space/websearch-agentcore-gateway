@@ -348,7 +348,8 @@ module "gateway" {
   browser_tool_arn      = var.enable_browser ? module.browser_tool[0].function_arn : ""
   enable_browser_target = var.enable_browser
 
-  enable_web_search = var.enable_web_search
+  enable_web_search       = var.enable_web_search
+  enable_inference_target = var.enable_inference_target
 
   depends_on = [module.auth, module.lambda_tools, module.gateway_mcp_targets, module.browser_tool]
 }

@@ -66,6 +66,14 @@ resource "aws_iam_role_policy" "gateway" {
           "arn:aws:bedrock-agentcore:${var.aws_region}:aws:tool/web-search.v1",
         ]
       }] : [],
+      # AgentCore Inference (LLM-routing) connector target (created out-of-band via
+      # scripts/create-inference-target.sh). Grants permission to invoke Bedrock models
+      # through the inference connector; us-east-1 only.
+      var.enable_inference_target ? [{
+        Effect   = "Allow"
+        Action   = ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"]
+        Resource = "*"
+      }] : [],
     )
   })
 }

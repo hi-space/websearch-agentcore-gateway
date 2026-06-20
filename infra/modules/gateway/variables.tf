@@ -71,3 +71,9 @@ variable "enable_web_search" {
   description = "Whether the AgentCore Web Search Tool connector target will be attached (via scripts/create-web-search-target.sh). Grants the gateway role InvokeWebSearch when true."
   default     = false
 }
+
+variable "enable_inference_target" {
+  type        = bool
+  description = "Whether the AgentCore Inference (LLM-routing) connector target will be attached (via scripts/create-inference-target.sh). Grants the gateway role InvokeModel when true."
+  default     = false
+}
