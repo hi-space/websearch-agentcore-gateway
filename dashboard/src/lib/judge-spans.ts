@@ -3,12 +3,16 @@
  *
  * playground는 에이전트 trace가 아니라 엔진별 raw 검색 결과를 다룬다.
  * evaluate API의 sessionSpans는 document 타입이므로, "쿼리=입력 / 엔진 결과=출력"
- * 형태의 OpenInference LLM span을 엔진당 1개 만들어 보낸다. 응답의
- * context.spanContext.spanId 로 점수를 엔진에 되돌려 매핑한다.
+ * 형태의 OpenInference span을 엔진당 1개 만들어 보낸다.
  *
- * 주의: span attribute 키('input.value'/'output.value'/'openinference.span.kind')는
- * OpenInference 관례를 따른 것이며, 실제 built-in evaluator가 요구하는 정확한 키는
- * Task 4의 PoC 단계에서 실제 호출로 검증/보정한다.
+ * 아래 span 형태는 us-east-1 라이브 evaluate 호출로 검증한 것이다:
+ *  - start_time / end_time 는 ISO-8601 문자열이어야 한다(unixNano는 거부됨).
+ *  - scope.name 은 지원 scope여야 한다('openinference.instrumentation.langchain').
+ *  - openinference.span.kind 는 'AGENT'여야 평가 대상으로 인정된다
+ *    (LLM/CHAIN은 "no spans with model/tool/agent invocation details"로 거부).
+ *  - 엔진별 점수를 따로 받으려면 엔진마다 trace_id를 분리해야 한다. 한 trace에
+ *    여러 span을 넣으면 evaluator가 세션 하나로 합쳐 결과를 1개만 돌려준다.
+ *  - 응답은 context.spanContext.traceId 로 돌아오므로 trace_id 로 역매핑한다.
  */
 
 export interface JudgeResultItem {
@@ -17,62 +21,70 @@ export interface JudgeResultItem {
   snippet?: string;
 }
 
-// 단일 세션·단일 trace로 묶는다(32 hex). 엔진 구분은 span 단위.
-const TRACE_ID = '0'.repeat(31) + '1';
+// 지원되는 instrumentation scope (라이브 검증). strands / langchain 계열만 허용된다.
+const SUPPORTED_SCOPE = 'openinference.instrumentation.langchain';
 
-/** 인덱스 기반 16-hex span id (evaluate의 spanId 길이 제약 = 16). */
+/** 인덱스 기반 32-hex trace id. 엔진마다 분리해야 결과가 엔진별로 1개씩 돌아온다. */
+export function engineTraceId(index: number): string {
+  return (index + 1).toString(16).padStart(32, '0');
+}
+
+/** 인덱스 기반 16-hex span id (span 식별용, evaluate의 span_id 길이 제약 = 16). */
 export function engineSpanId(index: number): string {
   return (index + 1).toString(16).padStart(16, '0');
 }
 
 export interface BuiltSpans {
   sessionSpans: unknown[];
-  spanIdByEngine: Record<string, string>;
+  engineByTraceId: Record<string, string>;
 }
 
 export function buildSessionSpans(
   query: string,
   engines: Record<string, JudgeResultItem[]>,
+  // 합성 span의 타임스탬프(테스트에서 결정적 값 주입용). 미지정 시 호출 시각.
+  now: number = Date.now(),
 ): BuiltSpans {
-  const spanIdByEngine: Record<string, string> = {};
+  const endIso = new Date(now).toISOString();
+  const startIso = new Date(now - 1000).toISOString();
+  const engineByTraceId: Record<string, string> = {};
   const sessionSpans = Object.entries(engines).map(([engine, results], i) => {
-    const spanId = engineSpanId(i);
-    spanIdByEngine[engine] = spanId;
+    const traceId = engineTraceId(i);
+    engineByTraceId[traceId] = engine;
     const output = results
       .map((r, n) => `${n + 1}. ${r.title ?? ''}\n${r.snippet ?? ''}\n${r.url ?? ''}`)
       .join('\n\n');
     return {
       name: `web_search.${engine}`,
-      context: { trace_id: TRACE_ID, span_id: spanId },
+      context: { trace_id: traceId, span_id: engineSpanId(i) },
+      start_time: startIso,
+      end_time: endIso,
+      scope: { name: SUPPORTED_SCOPE },
       attributes: {
-        'openinference.span.kind': 'LLM',
+        'openinference.span.kind': 'AGENT',
         'input.value': query,
         'output.value': output,
       },
     };
   });
-  return { sessionSpans, spanIdByEngine };
+  return { sessionSpans, engineByTraceId };
 }
 
 interface EvalResultLike {
   value?: number;
-  context?: { spanContext?: { spanId?: string } };
+  context?: { spanContext?: { traceId?: string } };
 }
 
-/** evaluate 응답(evaluationResults)을 spanId 기준으로 엔진→점수로 변환. */
+/** evaluate 응답(evaluationResults)을 traceId 기준으로 엔진→점수로 변환. */
 export function mapScoresByEngine(
   evaluationResults: EvalResultLike[],
-  spanIdByEngine: Record<string, string>,
+  engineByTraceId: Record<string, string>,
 ): Record<string, number> {
-  const engineBySpan: Record<string, string> = {};
-  for (const [engine, span] of Object.entries(spanIdByEngine)) {
-    engineBySpan[span] = engine;
-  }
   const out: Record<string, number> = {};
   for (const r of evaluationResults) {
-    const span = r.context?.spanContext?.spanId;
-    if (span && engineBySpan[span] != null && typeof r.value === 'number') {
-      out[engineBySpan[span]] = r.value;
+    const trace = r.context?.spanContext?.traceId;
+    if (trace && engineByTraceId[trace] != null && typeof r.value === 'number') {
+      out[engineByTraceId[trace]] = r.value;
     }
   }
   return out;
