@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { sessionSpans, spanIdByEngine } = buildSessionSpans(body.query, body.engines);
+  const { sessionSpans, engineByTraceId } = buildSessionSpans(body.query, body.engines);
 
   try {
     const res = await client.send(
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
         evaluationInput: { sessionSpans: sessionSpans as never },
       }),
     );
-    const scores = mapScoresByEngine(res.evaluationResults ?? [], spanIdByEngine);
+    const scores = mapScoresByEngine(res.evaluationResults ?? [], engineByTraceId);
     if ((res.evaluationResults?.length ?? 0) > 0 && Object.keys(scores).length === 0) {
       console.warn('AgentCore evaluate returned results but none mapped to a known engine spanId', {
         resultCount: res.evaluationResults?.length,

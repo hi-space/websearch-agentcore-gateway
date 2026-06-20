@@ -1,7 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { engineSpanId, buildSessionSpans, mapScoresByEngine } from './judge-spans';
+import { engineSpanId, engineTraceId, buildSessionSpans, mapScoresByEngine } from './judge-spans';
 
-describe('engineSpanId', () => {
+describe('engineTraceId / engineSpanId', () => {
+  it('produces a 32-char hex trace id, distinct per index', () => {
+    expect(engineTraceId(0)).toHaveLength(32);
+    expect(engineTraceId(0)).not.toBe(engineTraceId(1));
+  });
+
   it('produces a 16-char hex span id per index', () => {
     expect(engineSpanId(0)).toHaveLength(16);
     expect(engineSpanId(0)).not.toBe(engineSpanId(1));
@@ -9,30 +14,52 @@ describe('engineSpanId', () => {
 });
 
 describe('buildSessionSpans', () => {
-  it('builds one span per engine with input=query and output text, mapped by spanId', () => {
-    const { sessionSpans, spanIdByEngine } = buildSessionSpans('best llm', {
-      exa: [{ title: 'A', url: 'https://a', snippet: 's' }],
-      ddg: [{ title: 'B', url: 'https://b', snippet: 't' }],
-    });
+  it('builds one span per engine with a distinct trace, AGENT kind, ISO times, supported scope', () => {
+    const now = Date.parse('2026-06-20T00:00:00.000Z');
+    const { sessionSpans, engineByTraceId } = buildSessionSpans(
+      'best llm',
+      {
+        exa: [{ title: 'A', url: 'https://a', snippet: 's' }],
+        ddg: [{ title: 'B', url: 'https://b', snippet: 't' }],
+      },
+      now,
+    );
     expect(sessionSpans).toHaveLength(2);
-    expect(Object.keys(spanIdByEngine)).toEqual(['exa', 'ddg']);
-    const exaSpan = sessionSpans[0] as { context: { span_id: string }; attributes: Record<string, string> };
-    expect(exaSpan.context.span_id).toBe(spanIdByEngine.exa);
+
+    const exaSpan = sessionSpans[0] as {
+      context: { trace_id: string };
+      start_time: string;
+      end_time: string;
+      scope: { name: string };
+      attributes: Record<string, string>;
+    };
+    // 엔진마다 trace를 분리해야 결과가 엔진별로 1개씩 돌아온다.
+    expect(engineByTraceId[exaSpan.context.trace_id]).toBe('exa');
+    expect(exaSpan.attributes['openinference.span.kind']).toBe('AGENT');
     expect(exaSpan.attributes['input.value']).toBe('best llm');
     expect(exaSpan.attributes['output.value']).toContain('A');
+    // 타임스탬프는 ISO-8601 문자열이어야 한다(unixNano는 거부됨).
+    expect(exaSpan.start_time).toBe('2026-06-19T23:59:59.000Z');
+    expect(exaSpan.end_time).toBe('2026-06-20T00:00:00.000Z');
+    expect(exaSpan.scope.name).toBe('openinference.instrumentation.langchain');
+
+    // 두 엔진의 trace_id는 서로 달라야 한다.
+    const traces = sessionSpans.map((s) => (s as { context: { trace_id: string } }).context.trace_id);
+    expect(new Set(traces).size).toBe(2);
   });
 });
 
 describe('mapScoresByEngine', () => {
-  it('maps evaluation results back to engines via spanId', () => {
-    const { spanIdByEngine } = buildSessionSpans('q', { exa: [], ddg: [] });
+  it('maps evaluation results back to engines via traceId', () => {
+    const { engineByTraceId } = buildSessionSpans('q', { exa: [], ddg: [] });
+    const [exaTrace, ddgTrace] = Object.keys(engineByTraceId);
     const scores = mapScoresByEngine(
       [
-        { value: 0.9, context: { spanContext: { spanId: spanIdByEngine.exa } } },
-        { value: 0.4, context: { spanContext: { spanId: spanIdByEngine.ddg } } },
-        { value: 0.1, context: { spanContext: { spanId: 'unknownspanid000' } } },
+        { value: 0.9, context: { spanContext: { traceId: exaTrace } } },
+        { value: 0.4, context: { spanContext: { traceId: ddgTrace } } },
+        { value: 0.1, context: { spanContext: { traceId: 'ffffffffffffffffffffffffffffffff' } } },
       ],
-      spanIdByEngine,
+      engineByTraceId,
     );
     expect(scores).toEqual({ exa: 0.9, ddg: 0.4 });
   });
