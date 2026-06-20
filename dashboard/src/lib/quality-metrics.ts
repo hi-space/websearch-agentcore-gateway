@@ -58,3 +58,48 @@ export function computeFreshness(
   const median = ages.length % 2 === 0 ? (ages[mid - 1] + ages[mid]) / 2 : ages[mid];
   return { score: ageToScore(median), dated: ages.length, total };
 }
+
+// 종합 점수 가중치(LLM 평가 2축만). relevance 중심 — 검색 품질의 핵심은 의도 일치,
+// authority는 출처 신뢰도. diversity(authority와 충돌 가능)·freshness(쿼리 의존적,
+// published_at이 자주 null)는 신호가 약해 총점에서 제외하고 컬럼으로만 표시한다.
+export const QUALITY_WEIGHTS = {
+  relevance: 0.6,
+  authority: 0.4,
+} as const;
+
+export type QualityAxis = keyof typeof QUALITY_WEIGHTS;
+
+// 종합에 반영되는 전체 축 수(가중치 키 개수). UI가 부분 반영 여부를 판단할 때 쓴다.
+export const QUALITY_AXIS_COUNT = Object.keys(QUALITY_WEIGHTS).length;
+
+/**
+ * 품질 축(relevance·authority, 각 0~1)의 가중 평균으로 종합 점수(0~1)를 낸다.
+ * 측정 불가(null/undefined)인 축은 빼고 **남은 축의 가중치를 재정규화**한다 —
+ * 예: authority가 null이면 relevance 단독 점수가 된다. 사용 가능한 축이 하나도
+ * 없으면 null(총점 표시 불가).
+ *
+ * coverage = 종합에 실제로 반영된 축 수. 일부 축만 반영됐을 때 UI가 신뢰도를
+ * 함께 보여줄 수 있도록 돌려준다.
+ */
+export interface CompositeScore {
+  score: number | null;
+  coverage: number; // 0~QUALITY_AXIS_COUNT: 종합에 반영된 축 수
+}
+
+export function computeComposite(
+  axes: Partial<Record<QualityAxis, number | null | undefined>>,
+): CompositeScore {
+  let weighted = 0;
+  let weightSum = 0;
+  let coverage = 0;
+  for (const axis of Object.keys(QUALITY_WEIGHTS) as QualityAxis[]) {
+    const v = axes[axis];
+    if (typeof v !== 'number' || Number.isNaN(v)) continue;
+    const w = QUALITY_WEIGHTS[axis];
+    weighted += v * w;
+    weightSum += w;
+    coverage += 1;
+  }
+  if (weightSum === 0) return { score: null, coverage: 0 };
+  return { score: weighted / weightSum, coverage };
+}

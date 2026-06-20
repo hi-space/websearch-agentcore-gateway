@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeDiversity, computeFreshness } from './quality-metrics';
+import { computeDiversity, computeFreshness, computeComposite, QUALITY_WEIGHTS } from './quality-metrics';
 
 describe('computeDiversity', () => {
   it('returns unique hostnames over count', () => {
@@ -53,5 +53,50 @@ describe('computeFreshness', () => {
   it('buckets old content to zero', () => {
     const r = computeFreshness(['2020-01-01T00:00:00Z'], now); // >3y
     expect(r.score).toBe(0);
+  });
+});
+
+describe('computeComposite', () => {
+  it('weighted-averages relevance and authority', () => {
+    const { score, coverage } = computeComposite({ relevance: 1, authority: 1 });
+    expect(score).toBeCloseTo(1);
+    expect(coverage).toBe(2);
+  });
+
+  it('applies relevance-heavy weights', () => {
+    // only relevance=1, authority=0 → score === relevance weight (0.6)
+    const { score } = computeComposite({ relevance: 1, authority: 0 });
+    expect(score).toBeCloseTo(QUALITY_WEIGHTS.relevance);
+    // relevance=0, authority=1 → authority weight (0.4)
+    expect(computeComposite({ relevance: 0, authority: 1 }).score).toBeCloseTo(QUALITY_WEIGHTS.authority);
+  });
+
+  it('ignores non-quality axes even if passed in', () => {
+    // diversity/freshness are no longer part of the composite — passing them changes nothing.
+    const base = computeComposite({ relevance: 1, authority: 1 });
+    const withExtra = computeComposite({ relevance: 1, authority: 1, diversity: 0, freshness: 0 } as never);
+    expect(withExtra).toEqual(base);
+  });
+
+  it('renormalizes to the single available axis when the other is null/missing', () => {
+    // authority null → relevance alone
+    const a = computeComposite({ relevance: 0.8, authority: null });
+    expect(a.score).toBeCloseTo(0.8);
+    expect(a.coverage).toBe(1);
+    // relevance missing → authority alone
+    const b = computeComposite({ authority: 0.5 });
+    expect(b.score).toBeCloseTo(0.5);
+    expect(b.coverage).toBe(1);
+  });
+
+  it('returns null when no axis is available', () => {
+    expect(computeComposite({})).toEqual({ score: null, coverage: 0 });
+    expect(computeComposite({ relevance: null, authority: undefined })).toEqual({ score: null, coverage: 0 });
+  });
+
+  it('ignores NaN values', () => {
+    const { score, coverage } = computeComposite({ relevance: NaN, authority: 0.5 });
+    expect(score).toBeCloseTo(0.5);
+    expect(coverage).toBe(1);
   });
 });
