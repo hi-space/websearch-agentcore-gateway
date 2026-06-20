@@ -72,9 +72,6 @@ resource "aws_iam_role_policy" "gateway" {
       # bedrock-mantle action namespace (model discovery + bearer-token inference),
       # mirroring the AWS-managed AmazonBedrockMantleInferenceAccess policy. This is
       # distinct from bedrock:InvokeModel. us-east-1 only.
-      # Marketplace Subscribe/ViewSubscriptions (from the managed policy) is only
-      # needed for 3rd-party Marketplace models; first-party Bedrock models don't
-      # require it, so it's omitted to keep these statement objects homogeneous.
       var.enable_inference_target ? [
         {
           Effect   = "Allow"
@@ -85,6 +82,22 @@ resource "aws_iam_role_policy" "gateway" {
           Effect   = "Allow"
           Action   = ["bedrock-mantle:CallWithBearerToken"]
           Resource = "*"
+        },
+      ] : [],
+      # Marketplace Subscribe/ViewSubscriptions lets bedrock-mantle serve 3rd-party
+      # Marketplace models (deepseek, gemma, minimax, …). Without it, those models
+      # appear in /inference/v1/models but return HTTP 404 on invocation because the
+      # account hasn't subscribed. Kept as its own concat element because the
+      # aws:CalledViaLast condition makes its object shape differ from the mantle
+      # statements above (a single conditional list can't mix object shapes).
+      var.enable_inference_target ? [
+        {
+          Effect   = "Allow"
+          Action   = ["aws-marketplace:Subscribe", "aws-marketplace:ViewSubscriptions"]
+          Resource = "*"
+          Condition = {
+            StringEquals = { "aws:CalledViaLast" = "bedrock-mantle.amazonaws.com" }
+          }
         },
       ] : [],
     )
