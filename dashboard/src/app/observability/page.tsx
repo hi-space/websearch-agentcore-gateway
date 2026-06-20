@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AppShell } from '@/components/shell';
+import { estimateCost } from '@/lib/cost';
 import {
   Loader2,
   BarChart3,
@@ -281,6 +282,10 @@ export default function ObservabilityPage() {
   const auth = metrics?.auth;
   const summary = metrics?.summary;
   const tools = useMemo(() => metrics?.tools ?? [], [metrics]);
+  const cost = useMemo(
+    () => estimateCost(tools.map((t) => ({ name: t.name, invocations: t.invocations }))),
+    [tools]
+  );
   const trend = metrics?.toolTrend ?? [];
   const trendSeries = metrics?.toolTrendSeries ?? [];
 
@@ -425,6 +430,36 @@ export default function ObservabilityPage() {
                     />
                   </div>
                 )}
+
+                {/* ---- Cost estimate card ---- */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      비용 추정 <span title="추정치 — 정확한 청구는 Bedrock Usage / Cost Explorer 확인">★</span>
+                    </CardTitle>
+                    <CardDescription>
+                      게이트웨이는 토큰·비용 메트릭을 발행하지 않습니다. 호출 수 × 엔진별 단가표로 산출한 추정치입니다.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-semibold tabular-nums">
+                      ${cost.totalUsd.toFixed(2)}
+                      <span className="ml-2 text-xs text-muted-foreground">/ 선택 기간</span>
+                    </div>
+                    <div className="mt-3 space-y-1">
+                      {cost.perTool
+                        .slice()
+                        .sort((a, b) => b.estUsd - a.estUsd)
+                        .slice(0, 6)
+                        .map((r) => (
+                          <div key={r.name} className="flex justify-between text-xs text-muted-foreground">
+                            <span className="truncate">{r.engine}</span>
+                            <span className="tabular-nums">${r.estUsd.toFixed(2)}</span>
+                          </div>
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
 
                 {/* ---- Headline: per-tool call volume over time ---- */}
                 {trend.length > 0 && trendSeries.length > 0 && (
