@@ -56,7 +56,7 @@ def _from_identity_provider(provider_name: str) -> Optional[str]:
 
     client = boto3.client(
         "bedrock-agentcore",
-        region_name=os.environ.get("AWS_REGION", "ap-northeast-2"),
+        region_name=os.environ.get("AWS_REGION", "us-east-1"),
     )
     response = client.get_resource_api_key(
         identityProviderArn=identity_provider_arn,

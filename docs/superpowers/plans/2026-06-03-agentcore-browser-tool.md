@@ -681,6 +681,6 @@ Expected: 정리 완료.
 
 `enable_browser=true`를 `terraform.tfvars`에 추가하고 사용자 승인 하에 `terraform apply`.
 배포 후 통합 검증: Gateway MCP로 `browser_task("example.com을 열어 페이지 제목을 알려줘")`
-호출 → `result` 텍스트 반환 확인, Bedrock InvokeModel 권한/모델 가용성(Seoul) 확인.
+호출 → `result` 텍스트 반환 확인, Bedrock InvokeModel 권한/모델 가용성(N. Virginia) 확인.
 ```
 

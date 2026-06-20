@@ -20,7 +20,7 @@
 ```
 ┌─────────────────────────────────────────┐
 │   AgentCore Gateway                     │
-│   (ap-northeast-2)                      │
+│   (us-east-1)                      │
 └──────────────┬──────────────────────────┘
                │
     ┌──────────┴──────────┐
@@ -356,19 +356,19 @@ cp .env.example .env.local
 terraform -chdir=../infra/environments/dev output -json | jq '.dashboard_env.value'
 # 출력:
 # {
-#   "NEXT_PUBLIC_REGION": "ap-northeast-2",
+#   "NEXT_PUBLIC_REGION": "us-east-1",
 #   "NEXT_PUBLIC_GATEWAY_ID": "gateway-abc123",
 #   "NEXT_PUBLIC_GATEWAY_URL": "https://gateway.example.com",
-#   "NEXT_PUBLIC_COGNITO_DOMAIN": "websearch-gw-dev.auth.ap-northeast-2.amazoncognito.com",
+#   "NEXT_PUBLIC_COGNITO_DOMAIN": "websearch-gw-dev.auth.us-east-1.amazoncognito.com",
 #   "NEXT_PUBLIC_COGNITO_CLIENT_ID": "client-id-xyz"
 # }
 
 # 3. .env.local 수정
 cat >> .env.local << EOF
-NEXT_PUBLIC_REGION=ap-northeast-2
+NEXT_PUBLIC_REGION=us-east-1
 NEXT_PUBLIC_GATEWAY_ID=gateway-abc123
 NEXT_PUBLIC_GATEWAY_URL=https://gateway.example.com
-NEXT_PUBLIC_COGNITO_DOMAIN=websearch-gw-dev.auth.ap-northeast-2.amazoncognito.com
+NEXT_PUBLIC_COGNITO_DOMAIN=websearch-gw-dev.auth.us-east-1.amazoncognito.com
 NEXT_PUBLIC_COGNITO_CLIENT_ID=client-id-xyz
 AWS_PROFILE=default
 EOF
@@ -542,7 +542,7 @@ CloudWatch → Dashboards → Create Dashboard
     ],
     "period": 300,
     "stat": "Average",
-    "region": "ap-northeast-2",
+    "region": "us-east-1",
     "title": "AgentCore Gateway Overview"
   }
 }

@@ -123,7 +123,7 @@ if [ -z "$GATEWAY_URL" ]; then
   read -rp "Gateway URL (https://gateway.example.com): " GATEWAY_URL
 fi
 if [ -z "$REGION" ]; then
-  read -rp "AWS region (ap-northeast-2): " REGION
+  read -rp "AWS region (us-east-1): " REGION
 fi
 
 # Validate gateway URL
