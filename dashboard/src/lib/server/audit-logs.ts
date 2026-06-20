@@ -104,6 +104,24 @@ export function extractLatencyMs(responseBody: string): number | null {
   return m ? Number(m[1]) : null;
 }
 
+// The tool logs a JSON line `{"event":"caller_identity","sub":...,"client_id":...}`
+// (gateway does not forward JWT claims downstream — see audit blog T1). Find it
+// within a trace group and return the identity, or nulls.
+function extractCallerIdentity(group: ParsedLine[]): { sub: string | null; clientId: string | null } {
+  for (const l of group) {
+    const text = l.log ?? '';
+    if (text.includes('"event": "caller_identity"') || text.includes('"event":"caller_identity"')) {
+      try {
+        const obj = JSON.parse(text);
+        return { sub: obj.sub ?? null, clientId: obj.client_id ?? null };
+      } catch {
+        // ignore malformed line
+      }
+    }
+  }
+  return { sub: null, clientId: null };
+}
+
 // responseBody → the tool result's `text` payload (the real JSON the tool
 // returned), else null. The result is logged as
 // `content=[{type=text, text={...json...}}]`, so we locate `text=` and extract
@@ -217,6 +235,8 @@ export interface ToolCall {
   errorMessage: string | null;
   response: string | null; // the tool's actual result text (success responses)
   latencyMs: number | null;
+  callerSub: string | null; // from the caller_identity log line (inbound JWT sub)
+  callerClientId: string | null; // inbound JWT client_id
   raw: unknown[]; // original parsed line bodies, for the JSON fallback view
 }
 
@@ -295,6 +315,8 @@ export function groupIntoToolCalls(lines: GatewayRawLine[]): ToolCall[] {
       group.length > 1 ? group[group.length - 1].eventTimestamp - group[0].eventTimestamp : null;
     const latencyMs = embeddedLatency ?? computedLatency;
 
+    const caller = extractCallerIdentity(group);
+
     calls.push({
       traceId,
       spanId: group[0].spanId,
@@ -309,6 +331,8 @@ export function groupIntoToolCalls(lines: GatewayRawLine[]): ToolCall[] {
       errorMessage,
       response,
       latencyMs,
+      callerSub: caller.sub,
+      callerClientId: caller.clientId,
       raw: group.map((l) => l.full),
     });
   }

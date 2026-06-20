@@ -19,6 +19,8 @@ export interface ToolCall {
   errorMessage: string | null;
   response: string | null;
   latencyMs: number | null;
+  callerSub: string | null;
+  callerClientId: string | null;
   raw: unknown[];
 }
 
