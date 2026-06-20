@@ -1,5 +1,6 @@
 'use client';
 
+import { Calendar, Star } from 'lucide-react';
 import { type EngineResult } from '@/lib/metrics';
 import { normalizeUrl } from '@/lib/eval';
 
@@ -79,10 +80,21 @@ export function ResultDetail({
               <p className="line-clamp-2 text-xs text-muted-foreground">{r.snippet}</p>
             )}
             {(r.published_at || typeof r.score === 'number') && (
-              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                {r.published_at && <span>{formatPublishedAt(r.published_at)}</span>}
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                {r.published_at && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground/70">
+                    <Calendar className="h-2.5 w-2.5" />
+                    {formatPublishedAt(r.published_at)}
+                  </span>
+                )}
                 {typeof r.score === 'number' && (
-                  <span title="엔진이 매긴 관련도 점수">score {r.score.toFixed(2)}</span>
+                  <span
+                    title="엔진이 매긴 관련도 점수"
+                    className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary"
+                  >
+                    <Star className="h-2.5 w-2.5" />
+                    {r.score.toFixed(2)}
+                  </span>
                 )}
               </div>
             )}
