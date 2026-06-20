@@ -22,11 +22,6 @@ export function EngineMetricCard({
     >
       <div className="flex items-center justify-between">
         <span className="font-medium capitalize">{m.engine}</span>
-        {m.quality !== null && (
-          <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary">
-            Q {m.quality.toFixed(1)}
-          </span>
-        )}
       </div>
       <div className="mt-1 text-xs text-muted-foreground">
         {m.hasError ? (

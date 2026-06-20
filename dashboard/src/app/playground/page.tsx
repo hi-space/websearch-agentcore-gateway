@@ -13,6 +13,7 @@ import { deriveMetrics, type EngineResult } from '@/lib/metrics';
 import { Scoreboard } from '@/components/playground/Scoreboard';
 import { EngineMetricCard } from '@/components/playground/EngineMetricCard';
 import { ResultDetail } from '@/components/playground/ResultDetail';
+import { SearchQualityCard } from '@/components/playground/SearchQualityCard';
 
 const JUDGE_ENABLED = process.env.NEXT_PUBLIC_JUDGE_ENABLED === '1';
 
@@ -29,8 +30,10 @@ export default function PlaygroundPage() {
 
   // 우측 상세에 표시할 엔진
   const [activeEngine, setActiveEngine] = useState<string | null>(null);
-  // judge 품질 점수 (엔진 -> 점수)
-  const [quality, setQuality] = useState<Record<string, number> | null>(null);
+  // judge 다축 점수 (엔진 -> AxisScore)
+  const [relevance, setRelevance] = useState<Record<string, import('@/lib/judge-spans').AxisScore> | null>(null);
+  const [authority, setAuthority] = useState<Record<string, import('@/lib/judge-spans').AxisScore> | null>(null);
+  const [judged, setJudged] = useState(false);
   const [judgeLoading, setJudgeLoading] = useState(false);
 
   useEffect(() => {
@@ -70,7 +73,9 @@ export default function PlaygroundPage() {
 
     setIsLoading(true);
     setError(null);
-    setQuality(null);
+    setRelevance(null);
+    setAuthority(null);
+    setJudged(false);
     try {
       const response = await fetch('/api/mcp/parallel-search', {
         method: 'POST',
@@ -99,7 +104,7 @@ export default function PlaygroundPage() {
   const handleJudge = async () => {
     if (!results) return;
     setJudgeLoading(true);
-    setQuality(null);
+    setJudged(false);
     try {
       const enginesPayload: Record<string, Array<{ title?: string; url?: string; snippet?: string }>> = {};
       for (const [engine, r] of Object.entries(results)) {
@@ -120,7 +125,9 @@ export default function PlaygroundPage() {
       if (!res.ok) {
         setError(data.details || data.error || 'AI 품질 평가 실패');
       } else {
-        setQuality(data.scores as Record<string, number>);
+        setRelevance(data.relevance ?? null);
+        setAuthority(data.authority ?? null);
+        setJudged(true);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -141,8 +148,8 @@ export default function PlaygroundPage() {
   };
 
   const metrics = useMemo(
-    () => (results ? deriveMetrics(results, quality) : []),
-    [results, quality],
+    () => (results ? deriveMetrics(results) : []),
+    [results],
   );
 
   const shareCounts = useMemo(() => {
@@ -250,7 +257,7 @@ export default function PlaygroundPage() {
           <>
             <Card className="mb-6">
               <CardContent className="py-4">
-                <Scoreboard metrics={metrics} qualityReady={quality !== null} />
+                <Scoreboard metrics={metrics} />
               </CardContent>
             </Card>
 
@@ -306,6 +313,24 @@ export default function PlaygroundPage() {
                 </CardContent>
               </Card>
             </div>
+
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="text-base">검색 품질 상세</CardTitle>
+                <CardDescription>
+                  엔진별 5개 축 비교 — Relevance가 가장 중요합니다. AI 평가를 실행하면
+                  Relevance·Authority 점수와 판단 근거가 채워집니다.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SearchQualityCard
+                  results={results}
+                  relevance={relevance}
+                  authority={authority}
+                  judged={judged}
+                />
+              </CardContent>
+            </Card>
           </>
         )}
       </div>

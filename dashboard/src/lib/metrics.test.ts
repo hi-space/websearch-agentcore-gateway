@@ -8,21 +8,19 @@ const results: Record<string, EngineResult> = {
 };
 
 describe('deriveMetrics', () => {
-  it('derives latency, count, consensus, error flag, and quality when provided', () => {
-    const m = deriveMetrics(results, { fast: 9 });
+  it('derives latency, count, consensus, and error flag', () => {
+    const m = deriveMetrics(results);
     const fast = m.find((x) => x.engine === 'fast')!;
     expect(fast.latencyMs).toBe(400);
     expect(fast.resultCount).toBe(2);
     expect(fast.consensus).toBeCloseTo(0.5); // x.com/1 shared, x.com/2 not => 1/2
-    expect(fast.quality).toBe(9);
     expect(m.find((x) => x.engine === 'broken')!.hasError).toBe(true);
-    expect(m.find((x) => x.engine === 'slow')!.quality).toBeNull();
   });
 });
 
 describe('scoreboardBars', () => {
   it('latency: fastest engine gets the longest bar and isBest', () => {
-    const m = deriveMetrics(results, null);
+    const m = deriveMetrics(results);
     const bars = scoreboardBars(m, 'latency');
     const fast = bars.find((b) => b.engine === 'fast')!;
     const slow = bars.find((b) => b.engine === 'slow')!;
@@ -33,14 +31,9 @@ describe('scoreboardBars', () => {
   });
 
   it('count: largest engine gets the longest bar', () => {
-    const m = deriveMetrics(results, null);
+    const m = deriveMetrics(results);
     const bars = scoreboardBars(m, 'count');
     expect(bars.find((b) => b.engine === 'fast')!.fraction).toBeCloseTo(1); // 2/2
     expect(bars.find((b) => b.engine === 'slow')!.fraction).toBeCloseTo(0.5); // 1/2
-  });
-
-  it('errored or null-value engines get fraction 0', () => {
-    const m = deriveMetrics(results, null);
-    expect(scoreboardBars(m, 'quality').every((b) => b.fraction === 0)).toBe(true); // no quality yet
   });
 });
