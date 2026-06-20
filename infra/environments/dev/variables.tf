@@ -31,24 +31,10 @@ variable "enable_tavily" {
   default     = true
 }
 
-variable "tavily_api_key" {
-  type        = string
-  description = "Tavily API key"
-  default     = ""
-  sensitive   = true
-}
-
 variable "enable_brave" {
   type        = bool
   description = "Enable Brave search engine"
   default     = true
-}
-
-variable "brave_api_key" {
-  type        = string
-  description = "Brave API key"
-  default     = ""
-  sensitive   = true
 }
 
 variable "enable_serper" {
@@ -57,24 +43,10 @@ variable "enable_serper" {
   default     = false
 }
 
-variable "serper_api_key" {
-  type        = string
-  description = "Serper API key"
-  default     = ""
-  sensitive   = true
-}
-
 variable "enable_exa" {
   type        = bool
   description = "Enable Exa search engine"
   default     = false
-}
-
-variable "exa_api_key" {
-  type        = string
-  description = "Exa API key"
-  default     = ""
-  sensitive   = true
 }
 
 variable "enable_duckduckgo" {
@@ -89,24 +61,10 @@ variable "enable_perplexity" {
   default     = false
 }
 
-variable "perplexity_api_key" {
-  type        = string
-  description = "Perplexity API key"
-  default     = ""
-  sensitive   = true
-}
-
 variable "enable_anthropic" {
   type        = bool
   description = "Enable Anthropic Claude built-in web search engine"
   default     = false
-}
-
-variable "anthropic_api_key" {
-  type        = string
-  description = "Anthropic API key"
-  default     = ""
-  sensitive   = true
 }
 
 variable "enable_firecrawl" {
@@ -115,24 +73,10 @@ variable "enable_firecrawl" {
   default     = false
 }
 
-variable "firecrawl_api_key" {
-  type        = string
-  description = "Firecrawl API key"
-  default     = ""
-  sensitive   = true
-}
-
 variable "enable_you" {
   type        = bool
   description = "Enable You.com search engine"
   default     = false
-}
-
-variable "you_api_key" {
-  type        = string
-  description = "You.com API key"
-  default     = ""
-  sensitive   = true
 }
 
 variable "enable_tavily_lambda" {
