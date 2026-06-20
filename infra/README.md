@@ -81,7 +81,19 @@ venv where you've `pip install -U boto3 botocore`). us-east-1 only.
 # 5b. Search-quality LLM-as-a-judge evaluators (relevance + authority) used by the
 #     dashboard playground's quality card. Rubrics live in infra/evaluators/*.json.
 PYTHON=/path/to/venv/bin/python ./scripts/create-evaluators.sh
+
+# 5c. (Demo) Inference target: route a Bedrock model through the gateway as an
+#     LLM-routing target. Gated on enable_inference_target=true; the gateway role's
+#     bedrock:InvokeModel permission is created by Terraform when that flag is set,
+#     and this script attaches the target. Same out-of-band reason as 5a (the
+#     provider can't express inference/connector targets yet). us-east-1 only.
+PYTHON=/path/to/venv/bin/python ./scripts/create-inference-target.sh
 ```
+
+> **5c is demoware** illustrating the "LLM Gateway" lens — one Bedrock model behind
+> the gateway. The connector `targetConfiguration` shape is recent; the script
+> introspects the installed botocore model and exits with upgrade guidance if it's
+> too old, so an outdated SDK fails cleanly rather than sending a malformed request.
 
 `create-evaluators.sh` is **idempotent**: it skips an evaluator whose name already
 exists. Because `create_evaluator` is **immutable**, changing a rubric in
@@ -143,6 +155,7 @@ infra/
 │   ├── deploy.sh           # Orchestrate bootstrap → init → plan → apply
 │   ├── seed-api-keys.sh    # Populate Identity providers with API keys
 │   ├── create-web-search-target.sh  # Post-apply: managed Web Search connector (not TF)
+│   ├── create-inference-target.sh   # Post-apply (demo): Bedrock LLM-routing target (not TF)
 │   ├── create-evaluators.sh         # Post-apply: search-quality evaluators (not TF)
 │   └── destroy.sh          # Destroy infrastructure
 └── README.md (this file)
