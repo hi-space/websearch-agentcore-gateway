@@ -29,6 +29,19 @@ _ENV_VAR_BY_PROVIDER = {
     "you": "YOU_API_KEY",
 }
 
+# Maps a provider name to the env var holding its Secrets Manager secret ARN.
+_SECRET_ARN_ENV_BY_PROVIDER = {
+    "serper": "SERPER_SECRET_ARN",
+    "exa": "EXA_SECRET_ARN",
+    "perplexity": "PERPLEXITY_SECRET_ARN",
+    "tavily": "TAVILY_SECRET_ARN",
+    "tavily_lambda": "TAVILY_SECRET_ARN",
+    "brave": "BRAVE_SECRET_ARN",
+    "anthropic": "ANTHROPIC_SECRET_ARN",
+    "firecrawl": "FIRECRAWL_SECRET_ARN",
+    "you": "YOU_SECRET_ARN",
+}
+
 
 def _from_env(provider_name: str) -> Optional[str]:
     """Read the engine-specific API key env var, if present."""
@@ -38,6 +51,42 @@ def _from_env(provider_name: str) -> Optional[str]:
         if value:
             return value
     return None
+
+
+def _from_secrets_manager(provider_name: str) -> Optional[str]:
+    """Primary path: fetch the key from AWS Secrets Manager.
+
+    The Lambda's own IAM role is authorized for GetSecretValue on this ARN, so
+    no workload token is required (unlike the AgentCore Identity vault path).
+    The secret may be a raw string or a JSON object with an "api_key" field.
+    """
+    secret_arn_env = _SECRET_ARN_ENV_BY_PROVIDER.get(provider_name)
+    if not secret_arn_env:
+        return None
+    secret_arn = os.environ.get(secret_arn_env)
+    if not secret_arn:
+        return None
+
+    import boto3  # lazy import; tests patch boto3.client
+
+    client = boto3.client(
+        "secretsmanager",
+        region_name=os.environ.get("AWS_REGION", "us-east-1"),
+    )
+    response = client.get_secret_value(SecretId=secret_arn)
+    raw = response.get("SecretString")
+    if not raw:
+        return None
+    raw = raw.strip()
+    if raw.startswith("{"):
+        import json
+
+        try:
+            parsed = json.loads(raw)
+            return parsed.get("api_key") or parsed.get(provider_name)
+        except (ValueError, TypeError):
+            return raw
+    return raw
 
 
 def _from_identity_provider(provider_name: str) -> Optional[str]:
@@ -71,8 +120,9 @@ def get_api_key(provider_name: str) -> Optional[str]:
 
     Resolution order:
       1. Cached value (per warm Lambda).
-      2. Engine-specific environment variable (primary for Lambda targets).
-      3. AgentCore Identity GetResourceApiKey (fallback, requires workload token).
+      2. AWS Secrets Manager (primary, requires *_SECRET_ARN env var).
+      3. Engine-specific environment variable (fallback for Lambda targets).
+      4. AgentCore Identity GetResourceApiKey (fallback, requires workload token).
 
     Args:
         provider_name: Provider identifier (e.g. 'serper', 'exa', 'perplexity').
@@ -86,7 +136,10 @@ def get_api_key(provider_name: str) -> Optional[str]:
     if provider_name in _api_key_cache:
         return _api_key_cache[provider_name]
 
-    api_key = _from_env(provider_name)
+    api_key = _from_secrets_manager(provider_name)
+
+    if not api_key:
+        api_key = _from_env(provider_name)
 
     if not api_key:
         try:

@@ -8,6 +8,56 @@ import pytest
 import responses
 
 
+class TestSecretsManagerResolution:
+    """get_api_key() resolves from Secrets Manager when *_SECRET_ARN is set."""
+
+    def setup_method(self):
+        # Clear the warm-Lambda cache between tests.
+        from _shared import identity
+        identity._api_key_cache.clear()
+
+    def teardown_method(self):
+        from _shared import identity
+        identity._api_key_cache.clear()
+        for k in ["SERPER_SECRET_ARN"]:
+            os.environ.pop(k, None)
+
+    def test_reads_plain_string_secret(self):
+        os.environ["SERPER_SECRET_ARN"] = (
+            "arn:aws:secretsmanager:us-east-1:913524902871:secret:websearch-gw/dev/tool/serper-AbCdEf"
+        )
+        fake_client = MagicMock()
+        fake_client.get_secret_value.return_value = {"SecretString": "sk-plain-123"}
+        with patch("boto3.client", return_value=fake_client):
+            from _shared.identity import get_api_key
+            key = get_api_key("serper")
+        assert key == "sk-plain-123"
+        fake_client.get_secret_value.assert_called_once_with(
+            SecretId="arn:aws:secretsmanager:us-east-1:913524902871:secret:websearch-gw/dev/tool/serper-AbCdEf"
+        )
+
+    def test_reads_json_secret_with_api_key_field(self):
+        os.environ["SERPER_SECRET_ARN"] = (
+            "arn:aws:secretsmanager:us-east-1:913524902871:secret:websearch-gw/dev/tool/serper-AbCdEf"
+        )
+        fake_client = MagicMock()
+        fake_client.get_secret_value.return_value = {"SecretString": '{"api_key": "sk-json-456"}'}
+        with patch("boto3.client", return_value=fake_client):
+            from _shared.identity import get_api_key
+            key = get_api_key("serper")
+        assert key == "sk-json-456"
+
+    def test_falls_back_to_env_when_no_secret_arn(self):
+        os.environ.pop("SERPER_SECRET_ARN", None)
+        os.environ["SERPER_API_KEY"] = "sk-env-789"
+        try:
+            from _shared.identity import get_api_key
+            key = get_api_key("serper")
+            assert key == "sk-env-789"
+        finally:
+            os.environ.pop("SERPER_API_KEY", None)
+
+
 @pytest.fixture(autouse=True)
 def setup_env():
     """Setup environment variables for tests."""
