@@ -14,6 +14,7 @@ import requests
 from _shared.response import normalize_response
 from _shared.search_params import apply_searxng
 from _shared.otel import create_span
+from _shared.caller_identity import extract_caller_identity
 
 
 def extract_gateway_input(event: Dict[str, Any]) -> Dict[str, str]:
@@ -26,6 +27,9 @@ def extract_gateway_input(event: Dict[str, Any]) -> Dict[str, str]:
 def lambda_handler(event, context):
     """Lambda handler for SearXNG metasearch."""
     start_time = time.time()
+    import json as _json
+    _ident = extract_caller_identity(event)
+    print(_json.dumps({"event": "caller_identity", "engine": "searxng", **_ident}))
 
     try:
         input_params = extract_gateway_input(event)

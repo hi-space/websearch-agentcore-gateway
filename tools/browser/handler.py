@@ -12,6 +12,8 @@ import os
 import time
 from typing import Any, Dict
 
+from _shared.caller_identity import extract_caller_identity
+
 DEFAULT_MODEL_ID = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
 BROWSER_PROFILE_TIMEOUT_MS = 150000  # 150s per browser-use operation
 
@@ -66,6 +68,9 @@ async def _run(task: str, max_steps: int, region: str) -> str:
 def lambda_handler(event, context):
     """Lambda entry point for browser_task."""
     start_time = time.time()
+    import json as _json
+    _ident = extract_caller_identity(event)
+    print(_json.dumps({"event": "caller_identity", "engine": "browser", **_ident}))
     params = extract_gateway_input(event)
     task = params.get("task")
     max_steps = clamp_max_steps(params.get("max_steps", 15))
