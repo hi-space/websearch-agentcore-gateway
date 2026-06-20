@@ -1,14 +1,11 @@
 """API key retrieval for Lambda search tools.
 
-Lambda gateway targets carry their own outbound API key. Terraform injects it as
-an engine-specific environment variable (e.g. SERPER_API_KEY) sourced from
-tfvars / the AgentCore Identity seed. This is distinct from MCP *server* targets
-(Tavily/Brave), where the gateway injects credentials from the token vault using
-the workload identity token — Lambda targets do not receive a workload token.
-
-For defense in depth we still support the AgentCore Identity data-plane
-(GetResourceApiKey) as a fallback when a workload token is present in the
-environment, but the primary path is the direct env var.
+Lambda tools retrieve keys from AWS Secrets Manager (primary path, via GetSecretValue
+using the Lambda's own IAM role). Environment variables (e.g. SERPER_API_KEY) serve as
+a fallback for backward compatibility. The AgentCore Identity vault (GetResourceApiKey)
+is a further fallback when a workload token is present. This is distinct from MCP
+*server* targets (Tavily/Brave), where the gateway injects credentials from the token
+vault using the workload identity token.
 """
 
 import os
@@ -69,11 +66,17 @@ def _from_secrets_manager(provider_name: str) -> Optional[str]:
 
     import boto3  # lazy import; tests patch boto3.client
 
-    client = boto3.client(
-        "secretsmanager",
-        region_name=os.environ.get("AWS_REGION", "us-east-1"),
-    )
-    response = client.get_secret_value(SecretId=secret_arn)
+    try:
+        client = boto3.client(
+            "secretsmanager",
+            region_name=os.environ.get("AWS_REGION", "us-east-1"),
+        )
+        response = client.get_secret_value(SecretId=secret_arn)
+    except Exception:
+        # On any AWS error (AccessDenied, ResourceNotFound, throttling, etc.),
+        # fall back to env var or identity provider resolution.
+        return None
+
     raw = response.get("SecretString")
     if not raw:
         return None

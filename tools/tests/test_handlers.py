@@ -57,6 +57,21 @@ class TestSecretsManagerResolution:
         finally:
             os.environ.pop("SERPER_API_KEY", None)
 
+    def test_falls_back_to_env_on_secrets_manager_error(self):
+        os.environ["SERPER_SECRET_ARN"] = (
+            "arn:aws:secretsmanager:us-east-1:913524902871:secret:websearch-gw/dev/tool/serper-AbCdEf"
+        )
+        os.environ["SERPER_API_KEY"] = "sk-env-fallback"
+        fake_client = MagicMock()
+        fake_client.get_secret_value.side_effect = Exception("AccessDenied")
+        try:
+            with patch("boto3.client", return_value=fake_client):
+                from _shared.identity import get_api_key
+                key = get_api_key("serper")
+            assert key == "sk-env-fallback"
+        finally:
+            os.environ.pop("SERPER_API_KEY", None)
+
 
 @pytest.fixture(autouse=True)
 def setup_env():

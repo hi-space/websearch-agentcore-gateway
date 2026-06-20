@@ -81,7 +81,7 @@ variable "enable_you" {
 
 variable "enable_tavily_lambda" {
   type        = bool
-  description = "Enable the Lambda-backed Tavily search engine (distinct from the hosted Tavily MCP server target). Reuses tavily_api_key."
+  description = "Enable the Lambda-backed Tavily search engine (distinct from the hosted Tavily MCP server target). Its API key is stored in AWS Secrets Manager."
   default     = false
 }
 
