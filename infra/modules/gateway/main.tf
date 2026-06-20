@@ -67,13 +67,26 @@ resource "aws_iam_role_policy" "gateway" {
         ]
       }] : [],
       # AgentCore Inference (LLM-routing) connector target (created out-of-band via
-      # scripts/create-inference-target.sh). Grants permission to invoke Bedrock models
-      # through the inference connector; us-east-1 only.
-      var.enable_inference_target ? [{
-        Effect   = "Allow"
-        Action   = ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"]
-        Resource = "*"
-      }] : [],
+      # scripts/create-inference-target.sh). The bedrock-mantle inference connector
+      # authenticates to the Mantle endpoint as the gateway role and needs the
+      # bedrock-mantle action namespace (model discovery + bearer-token inference),
+      # mirroring the AWS-managed AmazonBedrockMantleInferenceAccess policy. This is
+      # distinct from bedrock:InvokeModel. us-east-1 only.
+      # Marketplace Subscribe/ViewSubscriptions (from the managed policy) is only
+      # needed for 3rd-party Marketplace models; first-party Bedrock models don't
+      # require it, so it's omitted to keep these statement objects homogeneous.
+      var.enable_inference_target ? [
+        {
+          Effect   = "Allow"
+          Action   = ["bedrock-mantle:Get*", "bedrock-mantle:List*", "bedrock-mantle:CreateInference"]
+          Resource = "arn:aws:bedrock-mantle:*:*:project/*"
+        },
+        {
+          Effect   = "Allow"
+          Action   = ["bedrock-mantle:CallWithBearerToken"]
+          Resource = "*"
+        },
+      ] : [],
     )
   })
 }
