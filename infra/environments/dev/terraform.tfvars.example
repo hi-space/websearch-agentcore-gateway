@@ -1,6 +1,6 @@
 project_name = "websearch-gw"
 environment  = "dev"
-aws_region   = "ap-northeast-2"
+aws_region   = "us-east-1"
 
 # ============================================================
 # Search Engines (toggle and provide API keys as needed)
@@ -44,6 +44,11 @@ you_api_key = "" # Set your You.com API key to enable
 # Tavily (Lambda): Lambda-backed Tavily target, distinct from the hosted
 # Tavily MCP server target above. Reuses tavily_api_key.
 enable_tavily_lambda = false
+
+# SearXNG: self-hosted metasearch. No API key — enabling provisions a VPC +
+# ECS Fargate SearXNG instance (internal ALB) and a VPC-attached Lambda tool.
+# Costs ~$70-85/mo while on (NAT gateway + Fargate + ALB); $0 when off.
+enable_searxng = false
 
 # ============================================================
 # Authentication

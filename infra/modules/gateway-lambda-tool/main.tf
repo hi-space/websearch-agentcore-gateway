@@ -127,6 +127,14 @@ resource "aws_iam_role_policy" "browser" {
   })
 }
 
+# VPC-attached tools (SearXNG) need ENI management perms to run in a VPC.
+# AWS-managed AWSLambdaVPCAccessExecutionRole grants exactly these actions.
+resource "aws_iam_role_policy_attachment" "vpc_access" {
+  count      = var.vpc_config != null ? 1 : 0
+  role       = aws_iam_role.lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+}
+
 # ============================================================
 # CloudWatch Log Group
 # ============================================================
@@ -163,10 +171,19 @@ resource "aws_lambda_function" "this" {
     )
   }
 
+  dynamic "vpc_config" {
+    for_each = var.vpc_config != null ? [var.vpc_config] : []
+    content {
+      subnet_ids         = vpc_config.value.subnet_ids
+      security_group_ids = vpc_config.value.security_group_ids
+    }
+  }
+
   depends_on = [
     aws_cloudwatch_log_group.lambda,
     aws_iam_role_policy.logs,
     aws_iam_role_policy.bedrock_agentcore,
     aws_iam_role_policy.browser,
+    aws_iam_role_policy_attachment.vpc_access,
   ]
 }

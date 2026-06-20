@@ -18,6 +18,7 @@ locals {
   firecrawl_enabled     = var.enable_firecrawl
   you_enabled           = var.enable_you
   tavily_lambda_enabled = var.enable_tavily_lambda
+  searxng_enabled       = var.enable_searxng
 
   lambda_tools_enabled = {
     serper        = local.serper_enabled
@@ -29,6 +30,7 @@ locals {
     firecrawl     = local.firecrawl_enabled
     you           = local.you_enabled
     tavily_lambda = local.tavily_lambda_enabled
+    searxng       = local.searxng_enabled
   }
 
   # Filter to only enabled tools
@@ -138,6 +140,20 @@ locals {
 }
 
 # ============================================================
+# SearXNG self-hosted metasearch (VPC + ECS Fargate + internal ALB)
+# ============================================================
+# Gated entirely on enable_searxng: when false, nothing here is created.
+
+module "searxng" {
+  count  = var.enable_searxng ? 1 : 0
+  source = "../../modules/searxng"
+
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+}
+
+# ============================================================
 # Lambda Tools (conditional for each enabled engine)
 # ============================================================
 
@@ -153,6 +169,13 @@ module "lambda_tools" {
 
   tool_name   = each.key
   source_root = local.tools_root
+
+  # SearXNG runs inside the VPC and is reached via the internal ALB; attach the
+  # Lambda to the same VPC. All other tools stay outside any VPC (null).
+  vpc_config = each.key == "searxng" && var.enable_searxng ? {
+    subnet_ids         = module.searxng[0].private_subnet_ids
+    security_group_ids = [module.searxng[0].lambda_security_group_id]
+  } : null
 
   env_vars = merge(
     # DuckDuckGo has no API key and therefore no Identity provider; only inject ARN when one exists.
@@ -184,13 +207,17 @@ module "lambda_tools" {
     each.key == "tavily_lambda" && var.tavily_api_key != "" ? {
       TAVILY_API_KEY = var.tavily_api_key
     } : {},
+    # SearXNG has no API key; it needs the instance URL (internal ALB DNS).
+    each.key == "searxng" && var.enable_searxng ? {
+      SEARXNG_URL = "http://${module.searxng[0].alb_dns_name}"
+    } : {},
   )
 
   timeout            = 60
   memory_size        = 512
   log_retention_days = 7
 
-  depends_on = [module.identity_providers]
+  depends_on = [module.identity_providers, module.searxng]
 }
 
 # ============================================================

@@ -11,9 +11,9 @@ import responses
 @pytest.fixture(autouse=True)
 def setup_env():
     """Setup environment variables for tests."""
-    os.environ["AWS_REGION"] = "ap-northeast-2"
+    os.environ["AWS_REGION"] = "us-east-1"
     os.environ["WORKLOAD_TOKEN"] = "test-token"
-    os.environ["IDENTITY_PROVIDER_ARN"] = "arn:aws:bedrock-agentcore:ap-northeast-2:123456789012:identity-provider/test"
+    os.environ["IDENTITY_PROVIDER_ARN"] = "arn:aws:bedrock-agentcore:us-east-1:123456789012:identity-provider/test"
     yield
     # Cleanup
     for key in ["AWS_REGION", "WORKLOAD_TOKEN", "IDENTITY_PROVIDER_ARN"]:
@@ -530,6 +530,95 @@ class TestTavilyLambdaHandler:
         assert result["engine"] == "tavily_lambda"
         assert len(result["results"]) == 0
         assert "error" in result
+
+
+class TestSearxngHandler:
+    """Test SearXNG handler (no API key; reads SEARXNG_URL)."""
+
+    @responses.activate
+    def test_success(self):
+        """Test successful SearXNG query."""
+        os.environ["SEARXNG_URL"] = "http://searxng.internal"
+
+        responses.add(
+            responses.GET,
+            "http://searxng.internal/search",
+            json={
+                "results": [
+                    {
+                        "title": "Result 1",
+                        "url": "https://example.com/1",
+                        "content": "Snippet 1",
+                        "score": 1.5,
+                    },
+                    {
+                        "title": "Result 2",
+                        "url": "https://example.com/2",
+                        "content": "Snippet 2",
+                    },
+                ]
+            },
+            status=200,
+        )
+
+        from searxng.handler import lambda_handler
+
+        result = lambda_handler({"query": "test search"}, None)
+
+        assert result["engine"] == "searxng"
+        assert len(result["results"]) == 2
+        assert result["results"][0]["title"] == "Result 1"
+        assert result["results"][0]["snippet"] == "Snippet 1"
+        assert result["results"][0]["score"] == 1.5
+
+        del os.environ["SEARXNG_URL"]
+
+    def test_missing_query(self):
+        """Test handler with missing query parameter."""
+        os.environ["SEARXNG_URL"] = "http://searxng.internal"
+
+        from searxng.handler import lambda_handler
+
+        result = lambda_handler({}, None)
+
+        assert result["engine"] == "searxng"
+        assert len(result["results"]) == 0
+        assert "error" in result
+
+        del os.environ["SEARXNG_URL"]
+
+    def test_missing_url(self):
+        """Test handler when SEARXNG_URL is not configured."""
+        os.environ.pop("SEARXNG_URL", None)
+
+        from searxng.handler import lambda_handler
+
+        result = lambda_handler({"query": "test search"}, None)
+
+        assert result["engine"] == "searxng"
+        assert len(result["results"]) == 0
+        assert "error" in result
+
+    @responses.activate
+    def test_api_error(self):
+        """Test handler with upstream API error."""
+        os.environ["SEARXNG_URL"] = "http://searxng.internal"
+
+        responses.add(
+            responses.GET,
+            "http://searxng.internal/search",
+            status=500,
+        )
+
+        from searxng.handler import lambda_handler
+
+        result = lambda_handler({"query": "test search"}, None)
+
+        assert result["engine"] == "searxng"
+        assert len(result["results"]) == 0
+        assert "error" in result
+
+        del os.environ["SEARXNG_URL"]
 
 
 class TestResponseNormalization:

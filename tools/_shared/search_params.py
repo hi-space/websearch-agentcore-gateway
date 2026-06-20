@@ -50,6 +50,15 @@ _DDG_REGION = {
     "CN": "cn-zh", "BR": "br-pt", "ES": "es-es", "IT": "it-it",
 }
 
+# SearXNG has no country knob; it filters by UI `language`. Map the country code
+# to a best-effort language for the codes we localize for. Unknown codes are
+# dropped so SearXNG falls back to its configured default.
+_SEARXNG_LANGUAGE = {
+    "US": "en", "GB": "en", "UK": "en", "CA": "en", "AU": "en", "IN": "en",
+    "KR": "ko", "JP": "ja", "CN": "zh", "DE": "de", "FR": "fr", "ES": "es",
+    "IT": "it", "BR": "pt",
+}
+
 
 def normalize_freshness(value: Optional[str]) -> Optional[str]:
     """Return the freshness value if valid, else None."""
@@ -141,6 +150,16 @@ def apply_perplexity(payload: Dict[str, Any], freshness: Optional[str], country:
         opts = payload.setdefault("web_search_options", {})
         opts.setdefault("user_location", {})["country"] = c
     return payload
+
+
+def apply_searxng(params: Dict[str, Any], freshness: Optional[str], country: Optional[str]) -> Dict[str, Any]:
+    f = normalize_freshness(freshness)
+    if f:
+        params["time_range"] = f  # SearXNG accepts day|week|month|year directly
+    c = normalize_country(country)
+    if c and c in _SEARXNG_LANGUAGE:
+        params["language"] = _SEARXNG_LANGUAGE[c]
+    return params
 
 
 def ddg_kwargs(freshness: Optional[str], country: Optional[str]) -> Dict[str, Any]:
