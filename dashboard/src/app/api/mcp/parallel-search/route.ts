@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { listTools, callTool, unwrapToolText } from '@/lib/server/mcp';
-import { engineFromToolName, filterEnginesBySelection } from '@/lib/engines';
+import {
+  engineFromToolName,
+  filterEnginesBySelection,
+  buildToolArgs,
+  normalizeConnectorResponse,
+  CONNECTOR_ENGINE,
+} from '@/lib/engines';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,22 +53,25 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const args: Record<string, unknown> = { query, num_results };
-  if (country) args.country = country;
-
   const entries = await Promise.all(
     searchTools.map(async ({ name, engine }) => {
       const startedAt = Date.now();
       try {
-        const result = await callTool(name, args);
-        const data = unwrapToolText(result) as Record<string, unknown>;
+        const result = await callTool(name, buildToolArgs(engine, { query, num_results, country }));
+        const raw = unwrapToolText(result) as Record<string, unknown>;
+        // AgentCore 커넥터는 {results:[{title,url,text,publishedDate}]} 형태라 공통
+        // SearchResponse로 정규화한다. Lambda 엔진은 이미 정규화되어 있어 그대로 둔다.
+        const data = engine === CONNECTOR_ENGINE ? normalizeConnectorResponse(raw) : raw;
         return [
           engine,
           {
             ...data,
             isError: result.isError,
             // Prefer the tool-reported latency, fall back to round-trip time.
-            latency_ms: typeof data.latency_ms === 'number' ? data.latency_ms : Date.now() - startedAt,
+            latency_ms:
+              typeof (raw as { latency_ms?: unknown }).latency_ms === 'number'
+                ? (raw as { latency_ms: number }).latency_ms
+                : Date.now() - startedAt,
           },
         ] as const;
       } catch (error) {
