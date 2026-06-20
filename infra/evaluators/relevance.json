@@ -6,14 +6,20 @@
         "inferenceConfig": { "maxTokens": 500, "temperature": 1.0 }
       }
     },
-    "instructions": "You are evaluating how RELEVANT a web search engine's results are to a user's search query. You are given the search QUERY and the engine's top results (title, snippet, URL for each).\n\nJudge ONLY relevance — whether these results collectively match the query's intent and would satisfy the user's information need. Do NOT reward freshness, source authority, writing style, or result count; those are scored separately.\n\nConsider:\n- Do the top results directly address the query's core intent?\n- Are the most relevant results near the top?\n- Is the result set on-topic, or padded with tangential/off-topic hits?\n\nQuery: {context}\nEngine results: {assistant_turn}",
+    "instructions": "You are evaluating how RELEVANT a web search engine's results are to a user's search query. You are given the search QUERY and the engine's top results (title, snippet, URL for each).\n\nJudge ONLY relevance — whether these results collectively match the query's intent and would satisfy the user's information need. Do NOT reward freshness, source authority, writing style, or result count; those are scored separately.\n\nUse the FULL scale and discriminate aggressively: two result sets should rarely receive the SAME score unless they are genuinely equal in quality. Reserve the very top (0.95-1.0) for a near-perfect set — the best possible answers, ideally ranked, with no filler. Penalize generic or overview pages when the query wants specifics, weak ordering (best results not near the top), and tangential or off-topic hits.\n\nConsider:\n- Do the top results directly address the query's core intent?\n- Are the most relevant results near the top?\n- Is the result set on-topic, or padded with tangential/off-topic hits?\n\nQuery: {context}\nEngine results: {assistant_turn}",
     "ratingScale": {
       "numerical": [
-        { "value": 1, "label": "Excellent", "definition": "Nearly all results precisely match the query intent; the top result directly answers it." },
-        { "value": 0.75, "label": "Good", "definition": "Most results are relevant, with a few tangential ones mixed in." },
-        { "value": 0.5, "label": "Fair", "definition": "About half are relevant; only part of the intent is satisfied." },
-        { "value": 0.25, "label": "Poor", "definition": "Few results are relevant; most miss the intent." },
-        { "value": 0, "label": "Irrelevant", "definition": "Results are unrelated to the query, or empty." }
+        { "value": 1.0, "label": "Perfect", "definition": "Near-perfect: the best possible answers, ideally ranked, no filler." },
+        { "value": 0.9, "label": "Excellent", "definition": "Directly addresses the intent; strong top results; only trivial gaps." },
+        { "value": 0.8, "label": "Very good", "definition": "Mostly excellent but one weaker entry or slightly suboptimal ordering." },
+        { "value": 0.7, "label": "Good", "definition": "Clearly relevant overall, with a couple of shallow or tangential hits." },
+        { "value": 0.6, "label": "Above fair", "definition": "Relevant but noticeably shallow or generic for the query." },
+        { "value": 0.5, "label": "Fair", "definition": "About half the results satisfy the intent." },
+        { "value": 0.4, "label": "Below fair", "definition": "A minority are relevant; several off-topic or generic hits." },
+        { "value": 0.3, "label": "Poor", "definition": "Few results are relevant; most miss the intent." },
+        { "value": 0.2, "label": "Very poor", "definition": "Barely relevant; mostly off-topic." },
+        { "value": 0.1, "label": "Marginal", "definition": "Almost nothing relevant." },
+        { "value": 0.0, "label": "Irrelevant", "definition": "Results are unrelated to the query, or empty." }
       ]
     }
   }

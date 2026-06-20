@@ -83,9 +83,13 @@ while True:
         break
 
 # Evaluator names must match [a-zA-Z][a-zA-Z0-9_]{0,47} — underscores only, no hyphens.
+# Bump the version suffix whenever the rubric in *.json changes: create_evaluator is
+# immutable + this script skips existing names, so a same-name evaluator would keep the
+# OLD rubric. v2 = finer 11-anchor ratingScale to spread scores (see
+# docs/superpowers/specs/2026-06-20-search-quality-score-discrimination-design.md).
 EVALUATORS = [
-    ("search_relevance", os.path.join(eval_dir, "relevance.json")),
-    ("search_authority", os.path.join(eval_dir, "authority.json")),
+    ("search_relevance_v2", os.path.join(eval_dir, "relevance.json")),
+    ("search_authority_v2", os.path.join(eval_dir, "authority.json")),
 ]
 
 for name, path in EVALUATORS:
