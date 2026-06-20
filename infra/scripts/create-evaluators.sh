@@ -70,31 +70,42 @@ if "CreateEvaluator" not in ops:
         "    (or run this script with PYTHON=/path/to/venv/bin/python)"
     )
 
-existing = {e.get("name"): e for e in client.list_evaluators().get("items", [])}
+# list_evaluators paginates; collect all pages by evaluatorName.
+existing = {}
+token = None
+while True:
+    kwargs = {"nextToken": token} if token else {}
+    page = client.list_evaluators(**kwargs)
+    for e in page.get("evaluators", []):
+        existing[e.get("evaluatorName")] = e
+    token = page.get("nextToken")
+    if not token:
+        break
 
+# Evaluator names must match [a-zA-Z][a-zA-Z0-9_]{0,47} — underscores only, no hyphens.
 EVALUATORS = [
-    ("search-relevance", os.path.join(eval_dir, "relevance.json")),
-    ("search-authority", os.path.join(eval_dir, "authority.json")),
+    ("search_relevance", os.path.join(eval_dir, "relevance.json")),
+    ("search_authority", os.path.join(eval_dir, "authority.json")),
 ]
 
 for name, path in EVALUATORS:
     if name in existing:
-        eid = existing[name].get("evaluatorId") or existing[name].get("id")
+        eid = existing[name].get("evaluatorId")
         print(f"  ✓ Evaluator '{name}' already exists — id={eid}")
         continue
     with open(path) as f:
         config = json.load(f)
     print(f"  ⏳ Creating evaluator '{name}'...")
     resp = client.create_evaluator(
-        name=name,
+        evaluatorName=name,
         evaluatorConfig=config,
-        evaluationLevel="TRACE",
+        level="TRACE",
     )
-    eid = resp.get("evaluatorId") or resp.get("id")
+    eid = resp.get("evaluatorId")
     print(f"  ✓ Created '{name}' — id={eid}")
 
 print("")
 print("  Set these in dashboard/.env.local:")
-print("    JUDGE_RELEVANCE_EVALUATOR_ID=<search-relevance id above>")
-print("    JUDGE_AUTHORITY_EVALUATOR_ID=<search-authority id above>")
+print("    JUDGE_RELEVANCE_EVALUATOR_ID=<search_relevance id above>")
+print("    JUDGE_AUTHORITY_EVALUATOR_ID=<search_authority id above>")
 PY
