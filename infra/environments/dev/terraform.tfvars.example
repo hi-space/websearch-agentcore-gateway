@@ -56,6 +56,11 @@ enable_searxng = false
 # can't express the connector target type yet).
 enable_web_search = false
 
+# AgentCore Inference Target: Register a Bedrock model as an LLM-routing gateway
+# target via the out-of-band script. us-east-1 only; the target is created by
+# scripts/register-inference-target.sh after apply.
+# enable_inference_target = false  # demo: route an LLM through the gateway (out-of-band script)
+
 # ============================================================
 # Authentication
 # ============================================================

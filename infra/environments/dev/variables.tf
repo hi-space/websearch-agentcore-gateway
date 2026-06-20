@@ -103,6 +103,12 @@ variable "enable_web_search" {
   default     = false
 }
 
+variable "enable_inference_target" {
+  description = "Register a Bedrock model as an inference (LLM-routing) gateway target via the out-of-band script. us-east-1 only; provider cannot express inference targets yet."
+  type        = bool
+  default     = false
+}
+
 variable "browser_model_id" {
   type        = string
   description = "Bedrock model ID that browser-use drives inside the browser tool Lambda"
